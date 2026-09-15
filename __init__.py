@@ -327,6 +327,48 @@ try:
 
     logger.info("翻译功能端点已注册：/agnes-translate/*")
 
+    # ============================================================
+    # 节点分类管理端点（category_overrides.json 规则存取）
+    # ============================================================
+
+    import os as _os
+    _CATEGORY_OVERRIDES_FILE = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "category_overrides.json")
+
+    @PromptServer.instance.routes.get("/uiiiaiii/category-overrides")
+    async def get_category_overrides(request):
+        """读取节点分类管理规则（无文件时返回空规则）"""
+        try:
+            if _os.path.isfile(_CATEGORY_OVERRIDES_FILE):
+                with open(_CATEGORY_OVERRIDES_FILE, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                data.setdefault("empty_categories", [])
+                return web.json_response(data)
+            return web.json_response({"category_rename": {}, "hidden_categories": [], "node_move": {}, "empty_categories": []})
+        except Exception as e:
+            logger.error("读取分类规则失败：%s", e)
+            return web.json_response({"error": str(e)}, status=500)
+
+    @PromptServer.instance.routes.post("/uiiiaiii/category-overrides")
+    async def set_category_overrides(request):
+        """保存节点分类管理规则（整体覆盖写入）"""
+        try:
+            data = await request.json()
+            clean = {
+                "category_rename": {str(k): str(v) for k, v in (data.get("category_rename") or {}).items() if k and v},
+                "hidden_categories": [str(x) for x in (data.get("hidden_categories") or []) if x],
+                "node_move": {str(k): str(v) for k, v in (data.get("node_move") or {}).items() if k and v},
+                "empty_categories": list(dict.fromkeys(str(x) for x in (data.get("empty_categories") or []) if x)),
+            }
+            with open(_CATEGORY_OVERRIDES_FILE, "w", encoding="utf-8") as f:
+                json.dump(clean, f, ensure_ascii=False, indent=2)
+            logger.info("分类规则已保存（重命名 %d / 隐藏 %d / 移动 %d / 空分类 %d）",
+                        len(clean["category_rename"]), len(clean["hidden_categories"]),
+                        len(clean["node_move"]), len(clean["empty_categories"]))
+            return web.json_response({"status": "ok"})
+        except Exception as e:
+            logger.error("保存分类规则失败：%s", e)
+            return web.json_response({"error": str(e)}, status=500)
+
 except ImportError:
     logger.warning("无法导入 PromptServer，API Key 配置端点未注册")
 
