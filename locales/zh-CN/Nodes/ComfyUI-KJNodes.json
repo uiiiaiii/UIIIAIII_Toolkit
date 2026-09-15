@@ -1,0 +1,4612 @@
+{
+    "NormalizedAmplitudeToMask": {
+        "title": "规格化振幅到遮罩",
+        "description": "用于桥接 AudioScheduler 插件的节点：https://github.com/a1lazydog/ComfyUI-AudioScheduler基于规格化振幅创建遮罩。",
+        "inputs": {
+            "normalized_amp": "规格化幅度"
+        },
+        "outputs": {
+            "MASK": "遮罩"
+        },
+        "widgets": {
+            "width": "宽度",
+            "height": "高度",
+            "frame_offset": "帧偏移",
+            "location_x": "位置_X",
+            "location_y": "位置_Y",
+            "size": "尺寸",
+            "shape": "形状",
+            "color": "颜色"
+        }
+    },
+    "NormalizedAmplitudeToFloatList": {
+        "title": "规格化振幅到浮点列表",
+        "description": "用于桥接 AudioScheduler 插件的节点：https://github.com/a1lazydog/ComfyUI-AudioScheduler基于规格化振幅创建浮点列表。",
+        "inputs": {
+            "normalized_amp": "规格化幅度"
+        },
+        "outputs": {
+            "FLOAT": "浮点"
+        }
+    },
+    "OffsetMaskByNormalizedAmplitude": {
+        "title": "按规格化幅度偏移遮罩",
+        "description": "用于桥接 AudioScheduler 插件的节点：https://github.com/a1lazydog/ComfyUI-AudioScheduler基于规格化振幅偏移遮罩。",
+        "inputs": {
+            "normalized_amp": "规格化幅度",
+            "mask": "遮罩图像"
+        },
+        "outputs": {
+            "mask": "遮罩图像"
+        },
+        "widgets": {
+            "x": "X",
+            "y": "Y",
+            "rotate": "旋转",
+            "angle_multiplier": "角度倍数"
+        }
+    },
+    "ImageTransformByNormalizedAmplitude": {
+        "title": "按规格化幅度变换图像",
+        "description": "用于桥接 AudioScheduler 插件的节点：https://github.com/a1lazydog/ComfyUI-AudioScheduler基于规格化振幅变换图像。",
+        "inputs": {
+            "normalized_amp": "规格化幅度",
+            "image": "图像"
+        },
+        "outputs": {
+            "IMAGE": "图像"
+        },
+        "widgets": {
+            "zoom_scale": "缩放",
+            "x_offset": "X轴偏移",
+            "y_offset": "Y轴偏移",
+            "cumulative": "累积量"
+        }
+    },
+    "BatchCropFromMask": {
+        "title": "遮罩裁剪",
+        "inputs": {
+            "original_images": "原图像",
+            "masks": "遮罩"
+        },
+        "outputs": {
+            "original_images": "原图像",
+            "cropped_images": "裁剪图像",
+            "bboxes": "Bboxes",
+            "width": "宽度",
+            "height": "高度"
+        },
+        "widgets": {
+            "crop_size_mult": "裁剪系数",
+            "bbox_smooth_alpha": "BBox平滑透明"
+        }
+    },
+    "BatchUncrop": {
+        "title": "反裁剪（批次）",
+        "inputs": {
+            "original_images": "原图像",
+            "cropped_images": "裁剪图像",
+            "bboxes": "Bboxes"
+        },
+        "outputs": {
+            "IMAGE": "图像"
+        },
+        "widgets": {
+            "border_blending": "边框融合",
+            "crop_rescale": "重缩放",
+            "border_top": "上边界",
+            "border_bottom": "下边界",
+            "border_left": "左边界",
+            "border_right": "右边界"
+        }
+    },
+    "BatchCropFromMaskAdvanced": {
+        "title": "遮罩裁剪(高级)",
+        "inputs": {
+            "original_images": "原图像",
+            "masks": "遮罩"
+        },
+        "outputs": {
+            "original_images": "原图像",
+            "cropped_images": "裁剪图像",
+            "cropped_masks": "裁剪遮罩",
+            "combined_crop_image": "合并裁剪图像",
+            "combined_crop_masks": "合并裁剪遮罩",
+            "bboxes": "Bboxes",
+            "combined_bounding_box": "合并BBox",
+            "bbox_width": "BBox宽度",
+            "bbox_height": "BBox高度"
+        },
+        "widgets": {
+            "crop_size_mult": "裁剪系数",
+            "bbox_smooth_alpha": "BBox平滑透明"
+        }
+    },
+    "FilterZeroMasksAndCorrespondingImages": {
+        "title": "过滤零遮罩和图像",
+        "description": "过滤掉mask中的所有空掩码（即全部为零）如果提供的话，还可以通过索引过滤掉 original_images中所有相应的图像 original_images（可选）：如果提供，需要具有与mask相同的长度。",
+        "inputs": {
+            "masks": "遮罩",
+            "original_images": "原图像"
+        },
+        "outputs": {
+            "non_zero_masks_out": "非零遮罩",
+            "non_zero_mask_images_out": "非零图像",
+            "zero_mask_images_out": "零图像",
+            "zero_mask_images_out_indexes": "非零遮罩图像索引"
+        }
+    },
+    "InsertImageBatchByIndexes": {
+        "title": "按索引插入图像批次",
+        "description": "此节点需与 FilterZeroMasksAndCorrespondingImages 节点配合使用，_根据 insert_indexes 将 images_to_insert 插入到 images 中。_返回值：images_after_insert - 按原始顺序更新后的图像序列。",
+        "inputs": {
+            "images": "图片",
+            "images_to_insert": "插入图像",
+            "insert_indexes": "插入索引"
+        },
+        "outputs": {
+            "images_after_insert": "图像"
+        }
+    },
+    "BatchUncropAdvanced": {
+        "title": "Uncrop(高级)",
+        "inputs": {
+            "original_images": "原图像",
+            "cropped_images": "裁剪图像",
+            "cropped_masks": "裁剪遮罩",
+            "combined_crop_mask": "合并裁剪遮罩",
+            "bboxes": "Bboxes",
+            "combined_bounding_box": "合并BBox"
+        },
+        "outputs": {
+            "IMAGE": "图像"
+        },
+        "widgets": {
+            "border_blending": "边框融合",
+            "crop_rescale": "重缩放",
+            "use_combined_mask": "使用合并遮罩",
+            "use_square_mask": "使用正方形遮罩"
+        }
+    },
+    "SplitBboxes": {
+        "title": "分离BBox",
+        "description": "将设置索引处的指定bbox列表拆分为两个列表",
+        "inputs": {
+            "bboxes": "Bboxes"
+        },
+        "outputs": {
+            "bboxes_a": "BBox_A",
+            "bboxes_b": "BBox_B"
+        },
+        "widgets": {
+            "index": "索引"
+        }
+    },
+    "BboxToInt": {
+        "title": "BBox到整数",
+        "description": "将从边界框列表中选择的索引返回为整数",
+        "inputs": {
+            "bboxes": "Bboxes"
+        },
+        "outputs": {
+            "x_min": "X最小值",
+            "y_min": "Y最大值",
+            "width": "宽度",
+            "height": "高度",
+            "center_x": "中心X坐标",
+            "center_y": "中心Y坐标"
+        },
+        "widgets": {
+            "index": "索引"
+        }
+    },
+    "BboxVisualize": {
+        "title": "BBox预览",
+        "description": "在图像上显示指定的bbox",
+        "inputs": {
+            "images": "图片",
+            "bboxes": "Bboxes"
+        },
+        "outputs": {
+            "images": "图片"
+        },
+        "widgets": {
+            "line_width": "线宽",
+            "bbox_format": "BBox格式"
+        }
+    },
+    "PlotCoordinates": {
+        "title": "坐标图",
+        "description": "使用 Matplotlib 制作坐标图表序列。",
+        "inputs": {
+            "coordinates": "坐标",
+            "size_multiplier": "尺寸乘数"
+        },
+        "outputs": {
+            "images": "图片",
+            "width": "宽度",
+            "height": "高度",
+            "bbox_width": "BBox宽度",
+            "bbox_height": "BBox高度"
+        },
+        "widgets": {
+            "text": "文本",
+            "width": "宽度",
+            "height": "高度",
+            "bbox_width": "BBox宽度",
+            "bbox_height": "BBox高度"
+        }
+    },
+    "SplineEditor": {
+        "title": "曲线编辑器",
+        "description": "# 开发中 尽量不要在工作流中使用这个节点，可能会遇到大量bug并且不稳定！！  ##用于创建各类值调度的图形化编辑器 **Shift+左键单击** 添加新控制点，**Ctrl+左键单击** 创建中间控制点，**右键单击** 移除控制点。不能删除端点。 右键背景会调出菜单：一些视觉设置，不影响输出效果： - 控制柄可见性  - 显示采样点 **采样精度** 设置采样点数量，从样条线本身返回采样点，和实际控制点无关，由插值类型决定。采样方法： - 时间：沿时间轴采样，用于调度  - 路径：沿曲线路径采样，用于坐标  输出： - 遮罩批次  适用于任何接收遮罩的节点  - 浮点列表  适用于 IPAdapter权重组  - pandas series  适用于 适用于接收 Fizz批次调度 节点 的节点  - torch tensor  适用于不明节点",
+        "inputs": {
+            "points_store": "点位置",
+            "coordinates": "坐标",
+            "bg_image": "背景图像"
+        },
+        "outputs": {
+            "mask": "遮罩图像",
+            "coord_str": "坐标字符串",
+            "float": "浮点",
+            "count": "检测数量",
+            "normalized_str": "规范化字符串"
+        },
+        "widgets": {
+            "mask_width": "遮罩宽度",
+            "mask_height": "遮罩高度",
+            "points_to_sample": "采样精度",
+            "sampling_method": "采样方法",
+            "interpolation": "插值",
+            "tension": "张力",
+            "repeat_output": "重复输出",
+            "float_output_type": "浮点输出类型",
+            "min_value": "最小值",
+            "max_value": "最大值"
+        }
+    },
+    "CreateShapeMaskOnPath": {
+        "title": "创建形状遮罩",
+        "description": "生成指定形状的遮罩或遮罩批次，位置参数为中心位置。",
+        "inputs": {
+            "coordinates": "坐标",
+            "size_multiplier": "尺寸乘数"
+        },
+        "outputs": {
+            "mask": "遮罩图像",
+            "mask_inverted": "反转遮罩"
+        },
+        "widgets": {
+            "shape": "形状",
+            "frame_width": "帧宽度",
+            "frame_height": "帧高度",
+            "shape_width": "形状的宽度",
+            "shape_height": "形状的高度"
+        }
+    },
+    "CreateShapeImageOnPath": {
+        "title": "创建形状图像",
+        "description": "生成指定形状的图像或图像批次，位置参数为中心位置。",
+        "inputs": {
+            "coordinates": "坐标",
+            "size_multiplier": "尺寸乘数"
+        },
+        "outputs": {
+            "image": "图像",
+            "mask": "遮罩图像"
+        },
+        "widgets": {
+            "shape": "形状",
+            "frame_width": "帧宽度",
+            "frame_height": "帧高度",
+            "shape_width": "形状的宽度",
+            "shape_height": "形状的高度",
+            "shape_color": "形状颜色",
+            "bg_color": "背景颜色",
+            "blur_radius": "模糊半径",
+            "intensity": "强度",
+            "trailing": "尾随",
+            "border_width": "边框宽度",
+            "border_color": "边框颜色"
+        }
+    },
+    "CreateTextOnPath": {
+        "title": "创建文本",
+        "description": "创建一个遮罩或一批具有指定文本的遮罩。位置是中心位置。",
+        "inputs": {
+            "coordinates": "坐标",
+            "size_multiplier": "尺寸乘数"
+        },
+        "outputs": {
+            "image": "图像",
+            "mask": "遮罩图像",
+            "mask_inverted": "反转遮罩"
+        },
+        "widgets": {
+            "text": "文本",
+            "frame_width": "帧宽度",
+            "frame_height": "帧高度",
+            "font": "字体",
+            "font_size": "字体大小",
+            "alignment": "对齐",
+            "text_color": "文本颜色"
+        }
+    },
+    "CreateGradientFromCoords": {
+        "title": "从坐标创建渐变图像",
+        "description": "在坐标位置创建渐变图像。",
+        "inputs": {
+            "coordinates": "坐标"
+        },
+        "outputs": {
+            "image": "图像"
+        },
+        "widgets": {
+            "frame_width": "帧宽度",
+            "frame_height": "帧高度",
+            "start_color": "起始色",
+            "end_color": "终点色",
+            "multiplier": "倍数"
+        }
+    },
+    "GradientToFloat": {
+        "title": "渐变到浮点",
+        "description": "计算图像浮点列表",
+        "inputs": {
+            "image": "图像"
+        },
+        "outputs": {
+            "float_x": "浮点_X",
+            "float_y": "浮点_Y"
+        },
+        "widgets": {
+            "steps": "步进"
+        }
+    },
+    "MaskOrImageToWeight": {
+        "title": "遮罩或图像到权重",
+        "description": "获取遮罩或图像批次的平均值，并按 输出类型 输出结果。",
+        "inputs": {
+            "images": "图片",
+            "masks": "遮罩"
+        },
+        "outputs": {
+            "FLOAT": "浮点",
+            "STRING": "字符串"
+        },
+        "widgets": {
+            "output_type": "输出类型"
+        }
+    },
+    "WeightScheduleConvert": {
+        "title": "权重调度转换",
+        "description": "将不同的值列表/序列转换为另一种类型。",
+        "inputs": {
+            "input_values": "输入值",
+            "interpolation_curve": "插值曲线"
+        },
+        "outputs": {
+            "FLOAT": "浮点",
+            "STRING": "字符串",
+            "INT": "整数"
+        },
+        "widgets": {
+            "output_type": "输出类型",
+            "invert": "反转",
+            "repeat": "重复",
+            "remap_to_frames": "重映射到帧",
+            "remap_values": "重映射值",
+            "remap_min": "重映射最小值",
+            "remap_max": "重映射最大值"
+        }
+    },
+    "FloatToMask": {
+        "title": "浮点到遮罩",
+        "description": "根据输入的浮点数值生成一批遮罩。批大小由输入浮点值的长度决定。每个遮罩都以指定的宽度和高度生成。",
+        "inputs": {
+            "input_values": "输入值"
+        },
+        "outputs": {
+            "MASK": "遮罩"
+        },
+        "widgets": {
+            "width": "宽度",
+            "height": "高度"
+        }
+    },
+    "WeightScheduleExtend": {
+        "title": "权重调度扩展",
+        "description": "扩展不同的值列表/系列，并根据需要进行转换",
+        "inputs": {
+            "input_values_1": "输入值_1",
+            "input_values_2": "输入值_2"
+        },
+        "outputs": {
+            "FLOAT": "浮点"
+        },
+        "widgets": {
+            "output_type": "输出类型"
+        }
+    },
+    "FloatToSigmas": {
+        "title": "浮点到Sigmas",
+        "description": "从浮点列表创建sigmas tensor",
+        "inputs": {
+            "float_list": "浮点列表"
+        },
+        "outputs": {
+            "SIGMAS": "Sigmas"
+        }
+    },
+    "SigmasToFloat": {
+        "title": "Sigmas到浮点",
+        "description": "从sigma张量创建浮点列表。",
+        "inputs": {
+            "sigmas": "噪声调度"
+        },
+        "outputs": {
+            "float": "浮点"
+        }
+    },
+    "GLIGENTextBoxApplyBatchCoords": {
+        "title": "GLIGEN文本框应用(批次坐标)",
+        "description": "这个节点允许在批次中调度 GLIGEN 文本框的位置，和 AnimateDiff-Evolved 一起使用。建议和 曲线编辑器 节点一起使用。 GLIGEN模型可以在 管理器 的 '安装模型' 中下载。或直接在：https://huggingface.co/comfyanonymous/GLIGEN_pruned_safetensors/tree/main 下载。   输入： - **Latent** 输入用于计算批次大小 - **CLIP** 是文本编码器，与其他CLIP输入相同 - **GLIGEN模型** 连接到 GLIGEN加载器 节点 - **坐标** 接收坐标点json字符串，和 曲线编辑器 节点兼容。 - **文本** 文本框位置的提示词 - **宽度** 和 **高度** 设置 GLIGEN文本框 的尺寸  输出：- **条件** 连接到 CLIP文本编码 和 采样器 中间 - **坐标预览** 用于预览坐标和BBox",
+        "inputs": {
+            "conditioning_to": "条件",
+            "latents": "Latents",
+            "clip": "CLIP",
+            "gligen_textbox_model": "GLIGEN文本框模型",
+            "coordinates": "坐标",
+            "size_multiplier": "尺寸乘数"
+        },
+        "outputs": {
+            "conditioning": "条件",
+            "coord_preview": "坐标预览"
+        },
+        "widgets": {
+            "text": "文本",
+            "width": "宽度",
+            "height": "高度"
+        }
+    },
+    "CreateInstanceDiffusionTracking": {
+        "title": "创建实例扩散跟踪",
+        "description": "生成用于 InstanceDiffusion 的跟踪数据：https://github.com/logtd/ComfyUI-InstanceDiffusionInstanceDiffusion 提示词格式：`\"class_id.class_name\": \"prompt\"`示例：`\"1.head\": \"((head))\"`",
+        "inputs": {
+            "coordinates": "坐标",
+            "size_multiplier": "尺寸乘数"
+        },
+        "outputs": {
+            "tracking": "tracking追踪",
+            "prompt": "提示词",
+            "width": "宽度",
+            "height": "高度",
+            "bbox_width": "BBox宽度",
+            "bbox_height": "BBox高度"
+        },
+        "widgets": {
+            "width": "宽度",
+            "height": "高度",
+            "bbox_width": "BBox宽度",
+            "bbox_height": "BBox高度",
+            "class_name": "类名",
+            "class_id": "类ID",
+            "prompt": "提示词",
+            "fit_in_frame": "适应框架"
+        }
+    },
+    "AppendInstanceDiffusionTracking": {
+        "title": "附加实例扩散跟踪",
+        "description": "附加跟踪数据与实例扩散使用：https://github.com/logtd/ComfyUI-InstanceDiffusion",
+        "inputs": {
+            "tracking_1": "跟踪_1",
+            "tracking_2": "跟踪_2",
+            "prompt_1": "提示词_1",
+            "prompt_2": "提示词_2"
+        },
+        "outputs": {
+            "tracking": "tracking追踪",
+            "prompt": "提示词"
+        }
+    },
+    "InterpolateCoords": {
+        "title": "坐标插值",
+        "description": "依据曲线插入坐标",
+        "inputs": {
+            "coordinates": "坐标",
+            "interpolation_curve": "插值曲线"
+        },
+        "outputs": {
+            "coordinates": "坐标"
+        }
+    },
+    "DrawInstanceDiffusionTracking": {
+        "title": "绘制实例扩散跟踪",
+        "description": "调用来自 CreateInstanceDiffusionTracking 节点的跟踪数据进行绘制",
+        "inputs": {
+            "image": "图像",
+            "tracking": "tracking追踪"
+        },
+        "outputs": {
+            "image": "图像"
+        },
+        "widgets": {
+            "box_line_width": "框线宽度",
+            "draw_text": "绘制文本",
+            "font": "字体",
+            "font_size": "字体大小"
+        }
+    },
+    "PointsEditor": {
+        "title": "点编辑器",
+        "description": "# 进行中\n暂时不要将其作为工作流程的一部分，\n可能包含许多错误，稳定性不\n保证！！\n\n## 用于创建坐标的图形编辑器\n\n**Shift + 点击** 添加正（绿色）点。\n**Shift + 右键点击** 添加负（红色）点。\n**右键点击一个点** 删除它。\n**Ctrl + 点击** 绘制边界框。\n**拖动边界框角** 调整大小，**拖动内部** 移动。\n**右键点击边界框** 删除它。\n\n要添加图像，请选择节点并复制/粘贴或拖入图像。\n或者从 bg_image 输入在队列时（批次的第一帧）。\n\n**图像会保存到节点和工作流元数据中**\n您可以通过右键点击画布从上下文菜单中清除图像。",
+        "inputs": {
+            "points_store": "点位置",
+            "coordinates": "坐标",
+            "neg_coordinates": "负坐标",
+            "bbox_store": "BBox位置",
+            "bboxes": "Bboxes",
+            "bg_image": "背景图像"
+        },
+        "outputs": {
+            "positive_coords": "正面坐标",
+            "negative_coords": "负面坐标",
+            "bbox": "BBox",
+            "bbox_mask": "BBox遮罩",
+            "cropped_image": "裁剪图像"
+        },
+        "widgets": {
+            "bbox_format": "BBox格式",
+            "width": "宽度",
+            "height": "高度",
+            "normalize": "规格化"
+        }
+    },
+    "CutAndDragOnPath": {
+        "title": "路径剪切拖动",
+        "description": "从图像中切除掩膜区域，并沿路径拖动该区域。若启用修复且未提供背景图，则使用 OpenCV TELEA 算法填充切除区域。",
+        "inputs": {
+            "image": "图像",
+            "coordinates": "坐标",
+            "mask": "遮罩图像",
+            "bg_image": "背景图像"
+        },
+        "outputs": {
+            "image": "图像",
+            "mask": "遮罩图像"
+        },
+        "widgets": {
+            "frame_width": "帧宽度",
+            "frame_height": "帧高度",
+            "inpaint": "修复"
+        }
+    },
+    "ImagePass": {
+        "title": "图像桥接",
+        "description": "传递图像到下一个节点",
+        "inputs": {
+            "image": "图像"
+        },
+        "outputs": {
+            "IMAGE": "图像"
+        }
+    },
+    "ColorMatch": {
+        "title": "图像调色",
+        "description": "color-matcher（图像调色）可以在转换图像之间的色彩样式，用于照片、绘画、序列帧的自动调色以及光场定格修正。基于 Reinhard 等算法，Pitie 等人提出的 Monge-Kantorovich Linearization (MKL) 算法以及我们结合经典直方图匹配对 Multi-Variate Gaussian Distribution (MVGD)算法的分析解决方案。如下所示，我们的 HM-MVGD-HM 符合方法优于现有方法。https://github.com/hahnec/color-matcher/",
+        "inputs": {
+            "image_ref": "参考图像",
+            "image_target": "目标图像"
+        },
+        "outputs": {
+            "image": "图像"
+        },
+        "widgets": {
+            "method": "方法",
+            "strength": "强度",
+            "multithread": "多线程"
+        }
+    },
+    "SaveImageWithAlpha": {
+        "title": "保存带Alpha通道图像",
+        "description": "将图像和蒙版保存为.PNG，蒙版作为Alpha通道。",
+        "inputs": {
+            "images": "图片",
+            "mask": "遮罩图像"
+        },
+        "widgets": {
+            "filename_prefix": "文件名前缀"
+        }
+    },
+    "ImageConcanate": {
+        "title": "图像合并",
+        "description": "按方向合并两个图像。",
+        "inputs": {
+            "image1": "图像 1",
+            "image2": "图像 2",
+            "direction": "方向"
+        },
+        "outputs": {
+            "output": "输出"
+        },
+        "widgets": {
+            "match_image_size": "匹配图像尺寸"
+        }
+    },
+    "ImageConcatFromBatch": {
+        "title": "图像合并（批次）",
+        "description": "从图像批次中获取图像，然后按照列数排列为单个图像。",
+        "inputs": {
+            "images": "图片"
+        },
+        "outputs": {
+            "IMAGE": "图像"
+        },
+        "widgets": {
+            "num_columns": "列数",
+            "match_image_size": "匹配图像尺寸",
+            "max_resolution": "最大分辨率"
+        }
+    },
+    "ImageGridComposite2x2": {
+        "title": "图像栅格合并2x2",
+        "description": "将 4 个输入图像合并为 2x2 表格。",
+        "inputs": {
+            "image1": "图像 1",
+            "image2": "图像 2",
+            "image3": "图像 3",
+            "image4": "图像4"
+        },
+        "outputs": {
+            "IMAGE": "图像"
+        }
+    },
+    "ImageGridComposite3x3": {
+        "title": "图像栅格合并3x3",
+        "description": "将 9 个输入图像合并为 3x3 表格。",
+        "inputs": {
+            "image1": "图像 1",
+            "image2": "图像 2",
+            "image3": "图像 3",
+            "image4": "图像4",
+            "image5": "图像5",
+            "image6": "图像6",
+            "image7": "图像_7",
+            "image8": "图像_8",
+            "image9": "图像_9"
+        },
+        "outputs": {
+            "IMAGE": "图像"
+        }
+    },
+    "Image Grid To Batch": {
+        "title": "图像网格到批处理",
+        "inputs": {
+            "image": "图像"
+        },
+        "widgets": {
+            "columns": "列",
+            "rows": "行",
+            "delay": "延迟"
+        },
+        "outputs": {
+            "IMAGE": "图像"
+        }
+    },
+    "ImageBatchTestPattern": {
+        "title": "图像批次图案",
+        "description": "生成一批图像，图像中渲染有选定字体的连续数字。",
+        "inputs": {
+            "font": "字体"
+        },
+        "outputs": {
+            "image": "图像"
+        },
+        "widgets": {
+            "batch_size": "批次大小",
+            "start_from": "起始值",
+            "text_x": "位置_X",
+            "text_y": "位置_Y",
+            "width": "宽度",
+            "height": "高度",
+            "font_size": "字体大小"
+        }
+    },
+    "ImageGrabPIL": {
+        "title": "PIL画面捕捉",
+        "description": "按屏幕坐标捕捉区域。用于实时采样。",
+        "outputs": {
+            "image": "图像"
+        },
+        "widgets": {
+            "x": "X",
+            "y": "Y",
+            "width": "宽度",
+            "height": "高度",
+            "num_frames": "帧数",
+            "delay": "延迟"
+        }
+    },
+    "Screencap_mss": {
+        "title": "屏幕捕捉MSS",
+        "description": "按屏幕坐标捕捉区域。用于实时采样。",
+        "outputs": {
+            "image": "图像"
+        },
+        "widgets": {
+            "x": "X",
+            "y": "Y",
+            "width": "宽度",
+            "height": "高度",
+            "num_frames": "帧数",
+            "delay": "延迟"
+        }
+    },
+    "WebcamCaptureCV2": {
+        "title": "相机捕捉CV2",
+        "description": "使用 CV2 调用网页相机捕捉屏幕。用于实时采样。",
+        "outputs": {
+            "image": "图像"
+        },
+        "widgets": {
+            "x": "X",
+            "y": "Y",
+            "width": "宽度",
+            "height": "高度",
+            "cam_index": "相机序号",
+            "release": "释放时间"
+        }
+    },
+    "AddLabel": {
+        "title": "添加标签",
+        "description": "Creates a new with the given text, and concatenates it to  \neither above or below the input image.  \nNote that this changes the input image's height!  \nFonts are loaded from this folder:  \nComfyUI/custom_nodes/ComfyUI-KJNodes/fonts",
+        "inputs": {
+            "image": "图像",
+            "caption": "说明/描述"
+        },
+        "outputs": {
+            "IMAGE": "图像"
+        },
+        "widgets": {
+            "text_x": "位置_X",
+            "text_y": "位置_Y",
+            "height": "高度",
+            "font_size": "字体大小",
+            "font_color": "字体颜色",
+            "label_color": "背景颜色",
+            "font": "字体",
+            "text": "文本",
+            "direction": "方向"
+        }
+    },
+    "GetImageSizeAndCount": {
+        "title": "获取图像尺寸数量",
+        "description": "输出图像的宽度、高度、批次大小",
+        "inputs": {
+            "image": "图像"
+        },
+        "outputs": {
+            "image": "图像",
+            "width": "宽度",
+            "height": "高度",
+            "count": "检测数量"
+        }
+    },
+    "ImageBatchRepeatInterleaving": {
+        "title": "复制图像批次",
+        "description": "按指定次数复制批次中的图像。例如包含 5 个图像的批次：0,1,2,3,4重复 2 次后变为：0,0,1,1,2,2,3,3,4,4",
+        "inputs": {
+            "images": "图片",
+            "mask": "遮罩图像"
+        },
+        "outputs": {
+            "IMAGE": "图像",
+            "MASK": "遮罩"
+        },
+        "widgets": {
+            "repeats": "次数"
+        }
+    },
+    "ImageUpscaleWithModelBatched": {
+        "title": "使用模型批量放大图像",
+        "description": "与ComfyUI原生模型放大节点相同，但允许设置子批次以减少显存使用。可选地按比例降采样结果。",
+        "inputs": {
+            "upscale_model": "放大模型",
+            "images": "图片"
+        },
+        "outputs": {
+            "IMAGE": "图像"
+        },
+        "widgets": {
+            "per_batch": "每批",
+            "downscale_ratio": "降采样比例",
+            "downscale_method": "缩小方法",
+            "precision": "精度"
+        }
+    },
+    "ImageNormalize_Neg1_To_1": {
+        "title": "图像规格化-1到1",
+        "description": "规格化图像到 [-1,1]",
+        "inputs": {
+            "images": "图片"
+        },
+        "outputs": {
+            "IMAGE": "图像"
+        }
+    },
+    "RemapImageRange": {
+        "title": "重映射图像范围",
+        "description": "将图像值重新映射到指定的范围。",
+        "inputs": {
+            "image": "图像"
+        },
+        "outputs": {
+            "IMAGE": "图像"
+        },
+        "widgets": {
+            "min": "最小值",
+            "max": "最大值",
+            "clamp": "截取"
+        }
+    },
+    "SplitImageChannels": {
+        "title": "分离图像通道",
+        "description": "分离图像为单通道图像，alpha通道分离为遮罩。",
+        "inputs": {
+            "image": "图像"
+        },
+        "outputs": {
+            "red": "红色",
+            "green": "绿色",
+            "blue": "蓝色",
+            "mask": "遮罩图像"
+        }
+    },
+    "MergeImageChannels": {
+        "title": "合并图像通道",
+        "description": "合并通道为图像",
+        "inputs": {
+            "red": "红色",
+            "green": "绿色",
+            "blue": "蓝色",
+            "alpha": "透明"
+        },
+        "outputs": {
+            "image": "图像"
+        }
+    },
+    "ImagePadForOutpaintMasked": {
+        "title": "外补画板（遮罩）",
+        "inputs": {
+            "image": "图像",
+            "mask": "遮罩图像"
+        },
+        "outputs": {
+            "IMAGE": "图像",
+            "MASK": "遮罩"
+        },
+        "widgets": {
+            "left": "左侧",
+            "top": "顶部",
+            "right": "右侧",
+            "bottom": "底部",
+            "feathering": "羽化"
+        }
+    },
+    "ImagePadForOutpaintTargetSize": {
+        "title": "外补画板（尺寸）",
+        "inputs": {
+            "image": "图像",
+            "mask": "遮罩图像"
+        },
+        "outputs": {
+            "IMAGE": "图像",
+            "MASK": "遮罩"
+        },
+        "widgets": {
+            "target_width": "目标宽度",
+            "target_height": "目标高度",
+            "feathering": "羽化",
+            "upscale_method": "高级插值"
+        }
+    },
+    "ImagePrepForICLora": {
+        "title": "ICLora图像准备",
+        "inputs": {
+            "reference_image": "参考图像",
+            "latent_image": "Latent",
+            "latent_mask": "Latent遮罩",
+            "reference_mask": "遮罩"
+        },
+        "outputs": {
+            "IMAGE": "图像",
+            "MASK": "遮罩"
+        },
+        "widgets": {
+            "output_width": "输出宽度",
+            "output_height": "输出高度",
+            "border_width": "边框宽度"
+        }
+    },
+    "ImageAndMaskPreview": {
+        "title": "图像和蒙版预览",
+        "description": "预览图像或蒙版，当两个输入都使用时，将蒙版合成在图像之上。启用pass_through时，预览被禁用，合成结果从composite输出返回，这样可以将预览传递给视频合成等节点。支持RGBA格式的mask_color，可按颜色调整透明度。",
+        "inputs": {
+            "image": "图像",
+            "mask": "遮罩图像"
+        },
+        "outputs": {
+            "composite": "图像"
+        },
+        "widgets": {
+            "mask_opacity": "遮罩不透明度",
+            "mask_color": "遮罩颜色",
+            "RGB (255,255,255) or RGBA (255,255,255,128) or Hex (#RRGGBB / #RRGGBBAA)": "RGB (255,255,255) 或 RGBA (255,255,255,128) 或十六进制 (#RRGGBB / #RRGGBBAA)",
+            "pass_through": "穿透"
+        }
+    },
+    "CrossFadeImages": {
+        "title": "交叉渐隐图像",
+        "inputs": {
+            "images_1": "图像1",
+            "images_2": "图像2"
+        },
+        "outputs": {
+            "IMAGE": "图像"
+        },
+        "widgets": {
+            "interpolation": "插值",
+            "transition_start_index": "开始过渡序号",
+            "transitioning_frames": "过渡帧",
+            "start_level": "起始色值",
+            "end_level": "最终色值"
+        }
+    },
+    "CrossFadeImagesMulti": {
+        "title": "多重交叉渐隐图像",
+        "inputs": {
+            "image_1": "图像1",
+            "image_2": "图像2"
+        },
+        "outputs": {
+            "IMAGE": "图像"
+        },
+        "widgets": {
+            "inputcount": "输入数量",
+            "interpolation": "插值",
+            "transitioning_frames": "过渡帧"
+        }
+    },
+    "TransitionImagesMulti": {
+        "title": "多重过渡图像",
+        "description": "创建图像之间的过渡。",
+        "inputs": {
+            "image_1": "图像1",
+            "image_2": "图像2"
+        },
+        "outputs": {
+            "IMAGE": "图像"
+        },
+        "widgets": {
+            "inputcount": "输入数量",
+            "interpolation": "插值",
+            "transition_type": "过渡类型",
+            "transitioning_frames": "过渡帧",
+            "blur_radius": "模糊半径",
+            "reverse": "反转",
+            "device": "设备"
+        }
+    },
+    "TransitionImagesInBatch": {
+        "title": "批次内过渡图像",
+        "description": "在批处理图像之间创建过渡",
+        "inputs": {
+            "images": "图片"
+        },
+        "outputs": {
+            "IMAGE": "图像"
+        },
+        "widgets": {
+            "interpolation": "插值",
+            "transition_type": "过渡类型",
+            "transitioning_frames": "过渡帧",
+            "blur_radius": "模糊半径",
+            "reverse": "反转",
+            "device": "设备"
+        }
+    },
+    "ShuffleImageBatch": {
+        "title": "打乱图像批次",
+        "inputs": {
+            "images": "图片"
+        },
+        "outputs": {
+            "IMAGE": "图像"
+        },
+        "widgets": {
+            "seed": "随机种子"
+        }
+    },
+    "GetImageRangeFromBatch": {
+        "title": "获取图像范围",
+        "description": "根据输入图像批次以及参数，创建新图像批次。",
+        "inputs": {
+            "images": "图片",
+            "masks": "遮罩"
+        },
+        "outputs": {
+            "IMAGE": "图像",
+            "MASK": "遮罩"
+        },
+        "widgets": {
+            "start_index": "开始索引",
+            "num_frames": "帧数"
+        }
+    },
+    "GetLatentRangeFromBatch": {
+        "title": "获取Latent范围",
+        "description": "Returns a range of latents from a batch.",
+        "inputs": {
+            "latents": "Latents"
+        },
+        "outputs": {
+            "LATENT": "Latent"
+        },
+        "widgets": {
+            "start_index": "开始索引",
+            "num_frames": "帧数"
+        }
+    },
+    "Insert_Latent_To_Index": {
+        "title": "插入Latent到索引",
+        "inputs": {
+            "source": "源",
+            "destination": "目标"
+        },
+        "widgets": {
+            "index": "索引"
+        },
+        "outputs": {
+            "latent": "Latent"
+        }
+    },
+    "GetImagesFromBatchIndexed": {
+        "title": "从批次获取图像",
+        "description": "按索引编号选择图像。",
+        "inputs": {
+            "images": "图片"
+        },
+        "outputs": {
+            "IMAGE": "图像"
+        },
+        "widgets": {
+            "indexes": "索引"
+        }
+    },
+    "InsertImagesToBatchIndexed": {
+        "title": "插入图像到索引批次",
+        "description": "将指定索引处的图像插入原始图像批处理中。",
+        "inputs": {
+            "original_images": "原图像",
+            "images_to_insert": "插入图像"
+        },
+        "outputs": {
+            "IMAGE": "图像"
+        },
+        "widgets": {
+            "indexes": "索引",
+            "mode": "模式"
+        }
+    },
+    "PadImageBatchInterleaved": {
+        "title": "图像批次交错填充",
+        "description": "在批处理中的图像之间插入空帧。",
+        "inputs": {
+            "images": "图片"
+        },
+        "outputs": {
+            "images": "图片",
+            "masks": "遮罩"
+        },
+        "widgets": {
+            "empty_frames_per_image": "每图像空帧数",
+            "pad_frame_value": "填充帧值",
+            "add_after_last": "在末尾添加"
+        }
+    },
+    "ReplaceImagesInBatch": {
+        "title": "替换图像批次",
+        "description": "从指定的起始索引开始，替换批处理中的图像。用替换图像。",
+        "inputs": {
+            "original_images": "原图像",
+            "replacement_images": "替换图像",
+            "original_masks": "原始遮罩",
+            "replacement_masks": "替换遮罩"
+        },
+        "outputs": {
+            "IMAGE": "图像",
+            "MASK": "遮罩"
+        },
+        "widgets": {
+            "start_index": "开始索引"
+        }
+    },
+    "ReverseImageBatch": {
+        "title": "反转图像批次",
+        "description": "反转批处理中图像的顺序。",
+        "inputs": {
+            "images": "图片"
+        },
+        "outputs": {
+            "IMAGE": "图像"
+        }
+    },
+    "ImageBatchMulti": {
+        "title": "图像组合批次（多重）",
+        "description": "合并多个图像为图像批次。可以通过\"输入数量\"设置输入接口数量，点击更新刷新接口。",
+        "inputs": {
+            "image_1": "图像1",
+            "image_2": "图像2"
+        },
+        "outputs": {
+            "images": "图片"
+        },
+        "widgets": {
+            "inputcount": "输入数量"
+        }
+    },
+    "ImageTensorList": {
+        "title": "图像张量列表",
+        "description": "从输入图像创建图像列表。",
+        "inputs": {
+            "image1": "图像 1",
+            "image2": "图像 2"
+        },
+        "outputs": {
+            "IMAGE": "图像"
+        }
+    },
+    "ImageAddMulti": {
+        "title": "图像混合（多重）",
+        "description": "混合多个图像。可以通过\"输入数量\"设置输入接口数量，点击更新刷新接口。",
+        "inputs": {
+            "image_1": "图像1",
+            "image_2": "图像2"
+        },
+        "outputs": {
+            "images": "图片"
+        },
+        "widgets": {
+            "inputcount": "输入数量",
+            "blending": "混合",
+            "blend_amount": "混合量"
+        }
+    },
+    "ImageConcatMulti": {
+        "title": "图像合并（多个）",
+        "description": "按方向合并多个图像。单击更新以更新输入数量。",
+        "inputs": {
+            "image_1": "图像1",
+            "direction": "方向",
+            "image_2": "图像2"
+        },
+        "outputs": {
+            "output": "输出"
+        },
+        "widgets": {
+            "inputcount": "输入数量",
+            "match_image_size": "匹配图像尺寸"
+        }
+    },
+    "PreviewAnimation": {
+        "title": "预览动画",
+        "inputs": {
+            "images": "图片",
+            "masks": "遮罩"
+        },
+        "widgets": {
+            "fps": "帧率"
+        }
+    },
+    "ImageResizeKJ": {
+        "title": "调整图像大小（已弃用）",
+        "description": "已弃用！\n\n由于ComfyUI前端的变化，不应再使用此节点，请使用该节点的v2版本。此节点仅保留以避免完全破坏旧工作流。",
+        "inputs": {
+            "image": "图像",
+            "get_image_size": "参考图像"
+        },
+        "outputs": {
+            "IMAGE": "图像",
+            "width": "宽度",
+            "height": "高度"
+        },
+        "widgets": {
+            "width": "宽度",
+            "height": "高度",
+            "upscale_method": "高级插值",
+            "keep_proportion": "固定比例",
+            "divisible_by": "可被整除",
+            "crop": "裁剪",
+            "0 will do the default center crop, this is a workaround for the widget order changing with the new frontend, as in old workflows the value of this widget becomes 0 automatically": "0将执行默认的中心裁剪，这是针对新前端中控件顺序变化的变通方法，因为在旧工作流中此控件的值会自动变为0"
+        }
+    },
+    "LoadAndResizeImage": {
+        "title": "加载并调整图像大小",
+        "outputs": {
+            "image": "图像",
+            "mask": "遮罩图像",
+            "width": "宽度",
+            "height": "高度",
+            "image_path": "图像路径"
+        },
+        "widgets": {
+            "image": "图像",
+            "resize": "拉伸",
+            "width": "宽度",
+            "height": "高度",
+            "repeat": "重复",
+            "keep_proportion": "固定比例",
+            "divisible_by": "可被整除",
+            "mask_channel": "遮罩通道",
+            "Channel to use for the mask output": "用于蒙版输出的通道",
+            "background_color": "背景颜色",
+            "Fills the alpha channel with the specified color.": "使用指定颜色填充Alpha通道。"
+        }
+    },
+    "LoadImagesFromFolderKJ": {
+        "title": "加载图像（文件夹）",
+        "description": "将图像从文件夹加载到批处理中，图像被调整大小并加载到批处理中。",
+        "outputs": {
+            "image": "图像",
+            "mask": "遮罩图像",
+            "count": "检测数量",
+            "image_path": "图像路径"
+        },
+        "widgets": {
+            "folder": "文件夹",
+            "width": "宽度",
+            "height": "高度",
+            "keep_aspect_ratio": "保持纵横比",
+            "image_load_cap": "图像读取上限",
+            "start_index": "开始索引",
+            "include_subfolders": "包含子文件夹"
+        }
+    },
+    "ImageGridToBatch": {
+        "title": "图像表格到批次",
+        "description": "将图表转换为单个图像批次。",
+        "inputs": {
+            "image": "图像"
+        },
+        "widgets": {
+            "columns": "列数",
+            "The number of columns in the grid.": "表格的列数。",
+            "rows": "行数",
+            "The number of rows in the grid. Set to 0 for automatic calculation.": "表格的行数，0为自动。"
+        },
+        "outputs": {
+            "IMAGE": "图像"
+        }
+    },
+    "ImageGridtoBatch": {
+        "title": "图像表格到批次",
+        "description": "将图表转换为单个图像批次。",
+        "inputs": {
+            "image": "图像"
+        },
+        "outputs": {
+            "IMAGE": "图像"
+        },
+        "widgets": {
+            "columns": "列数",
+            "The number of columns in the grid.": "表格的列数。",
+            "rows": "行",
+            "The number of rows in the grid. Set to 0 for automatic calculation.": "表格的行数，0为自动。"
+        }
+    },
+    "SaveImageKJ": {
+        "title": "保存图像 KJ",
+        "description": "将输入图像保存到您的ComfyUI输出目录。",
+        "inputs": {
+            "images": "图片",
+            "The images to save.": "要保存的图像。",
+            "caption": "说明/描述",
+            "string to save as .txt file": "要保存为 .txt 文件的字符串"
+        },
+        "outputs": {
+            "filename": "文件名"
+        },
+        "widgets": {
+            "filename_prefix": "文件名前缀",
+            "The prefix for the file to save. This may include formatting information such as %date:yyyy-MM-dd% or %Empty Latent Image.width% to include values from nodes.": "保存文件的前缀。可包含格式化信息，如%date:yyyy-MM-dd%或%Empty Latent Image.width%以包含来自节点的值。",
+            "output_folder": "输出文件夹",
+            "The folder to save the images to.": "保存图像的文件夹。",
+            "caption_file_extension": "标注文件扩展名",
+            "The extension for the caption file. Limited to plain-text/data formats.": "字幕文件的扩展名。仅限于纯文本/数据格式。"
+        }
+    },
+    "SaveStringKJ": {
+        "title": "保存字符串 KJ",
+        "description": "将输入字符串保存到您的 ComfyUI 输出目录。",
+        "inputs": {
+            "string": "字符串",
+            "string to save as .txt file": "要保存为 .txt 文件的字符串"
+        },
+        "outputs": {
+            "filename": "文件名"
+        },
+        "widgets": {
+            "filename_prefix": "文件名前缀",
+            "The prefix for the file to save. This may include formatting information such as %date:yyyy-MM-dd% or %Empty Latent Image.width% to include values from nodes.": "保存文件的前缀。可包含格式化信息，如%date:yyyy-MM-dd%或%Empty Latent Image.width%以包含来自节点的值。",
+            "output_folder": "输出文件夹",
+            "Subfolder within the ComfyUI output directory to save to. Paths resolving outside the output directory are rejected.": "要保存到的 ComfyUI 输出目录中的子文件夹。解析到输出目录之外的路径将被拒绝。",
+            "file_extension": "文件扩展名",
+            "The extension for the saved file. Limited to plain-text/data formats.": "保存文件的扩展名。仅限于纯文本/数据格式。"
+        }
+    },
+    "FastPreview": {
+        "title": "快速预览",
+        "description": "使用二进制 WebSocket 进行快速图像预览，绕过 base64/JSON 开销。",
+        "inputs": {
+            "image": "图像"
+        },
+        "widgets": {
+            "format": "格式转换",
+            "max_size": "最大尺寸",
+            "Maximum width or height for the preview. Images larger than this are downscaled before encoding.": "预览的最大宽度或高度。大于此尺寸的图像在编码前会缩小。"
+        }
+    },
+    "ImageCropByMaskAndResize": {
+        "title": "按遮罩裁剪并缩放",
+        "inputs": {
+            "image": "图像",
+            "mask": "遮罩图像"
+        },
+        "outputs": {
+            "images": "图片",
+            "masks": "遮罩",
+            "bbox": "BBox"
+        },
+        "widgets": {
+            "base_resolution": "基础分辨率",
+            "padding": "分区",
+            "min_crop_resolution": "最小裁剪分辨率",
+            "max_crop_resolution": "最大裁剪分辨率"
+        }
+    },
+    "ImageCropByMask": {
+        "title": "按遮罩裁剪",
+        "description": "根据所提供的遮罩裁剪输入图像",
+        "inputs": {
+            "image": "图像",
+            "mask": "遮罩图像"
+        },
+        "outputs": {
+            "image": "图像"
+        }
+    },
+    "ImageUncropByMask": {
+        "title": "按遮罩反裁剪",
+        "inputs": {
+            "destination": "目标遮罩",
+            "source": "复合图像",
+            "mask": "遮罩图像",
+            "bbox": "BBox"
+        },
+        "outputs": {
+            "image": "图像"
+        }
+    },
+    "ImageCropByMaskBatch": {
+        "title": "按蒙版批量裁剪图像",
+        "description": "根据提供的蒙版裁剪输入图像。",
+        "inputs": {
+            "image": "图像",
+            "masks": "遮罩"
+        },
+        "outputs": {
+            "images": "图片",
+            "masks": "遮罩"
+        },
+        "widgets": {
+            "width": "宽度",
+            "height": "高度",
+            "padding": "分区",
+            "preserve_size": "保留尺寸",
+            "bg_color": "背景颜色",
+            "Color as RGB values in range 0-255 or 0.0-1.0, or color name or hex code": "颜色，使用0-255或0.0-1.0范围的RGB值，或颜色名称或十六进制代码"
+        }
+    },
+    "ImagePadKJ": {
+        "title": "图像填充 KJ",
+        "description": "使用指定的填充值填充输入图像和可选的蒙版。",
+        "inputs": {
+            "image": "图像",
+            "mask": "遮罩图像",
+            "target_width": "目标宽度",
+            "target_height": "目标高度"
+        },
+        "outputs": {
+            "images": "图片",
+            "masks": "遮罩"
+        },
+        "widgets": {
+            "left": "左侧",
+            "right": "右侧",
+            "top": "顶部",
+            "bottom": "底部",
+            "extra_padding": "额外填充",
+            "pad_mode": "填充模式",
+            "color": "颜色",
+            "Color as RGB values in range 0-255 or 0.0-1.0, or color name or hex code": "颜色，使用0-255或0.0-1.0范围的RGB值，或颜色名称或十六进制代码"
+        }
+    },
+    "ImageBatchJoinWithTransition": {
+        "title": "图像批量连接（带过渡效果）",
+        "description": "输入图像",
+        "inputs": {
+            "images_1": "图像1",
+            "images_2": "图像2"
+        },
+        "outputs": {
+            "IMAGE": "图像"
+        },
+        "widgets": {
+            "start_index": "开始索引",
+            "interpolation": "插值",
+            "transition_type": "过渡类型",
+            "transitioning_frames": "过渡帧",
+            "blur_radius": "模糊半径",
+            "reverse": "反转",
+            "device": "设备"
+        }
+    },
+    "Intrinsic_lora_sampling": {
+        "title": "IntrinsicLoRA采样",
+        "description": "采样器使用的内在lora：https://github.com/duxiaodan/intrinsic-lora这些lora很小，因此包含在这个节点包中。",
+        "inputs": {
+            "model": "模型",
+            "clip": "CLIP",
+            "vae": "VAE",
+            "image": "图像",
+            "optional_latent": "Latent(可选)"
+        },
+        "widgets": {
+            "lora_name": "LoRA名称",
+            "task": "任务",
+            "text": "文本",
+            "per_batch": "每批次"
+        },
+        "outputs": {
+            "LATENT": "Latent",
+            "IMAGE": "图像"
+        }
+    },
+    "BatchCLIPSeg": {
+        "title": "批量 CLIPSeg",
+        "description": "使用 CLIPSeg 对图像或图像批次进行分割。",
+        "inputs": {
+            "images": "图片",
+            "text": "文本",
+            "opt_model": "模型",
+            "prev_mask": "上一个遮罩"
+        },
+        "outputs": {
+            "Mask": "遮罩",
+            "Image": "图像"
+        },
+        "widgets": {
+            "threshold": "阈值",
+            "binary_mask": "二值遮罩",
+            "combine_mask": "合并遮罩",
+            "use_cuda": "使用CUDA",
+            "blur_sigma": "模糊Sigma",
+            "image_bg_level": "图像背景级别",
+            "invert": "反转"
+        }
+    },
+    "DownloadAndLoadCLIPSeg": {
+        "title": "加载CLIPSeg",
+        "description": "使用 huggingface_hub 下载 CLIPSeg 模型到 Comfy/models/clip_seg",
+        "outputs": {
+            "clipseg_model": "CLIP分割模型"
+        },
+        "widgets": {
+            "model": "模型"
+        }
+    },
+    "CreateTextMask": {
+        "title": "文本遮罩",
+        "description": "Creates a text image and mask.  \nLooks for fonts from this folder:  \nComfyUI/custom_nodes/ComfyUI-KJNodes/fonts\n  \nIf start_rotation and/or end_rotation are different values,  \ncreates animation between them.",
+        "outputs": {
+            "IMAGE": "图像",
+            "MASK": "遮罩"
+        },
+        "widgets": {
+            "invert": "反转",
+            "frames": "分帧",
+            "text_x": "位置_X",
+            "text_y": "位置_Y",
+            "font_size": "字体大小",
+            "font_color": "字体颜色",
+            "text": "文本",
+            "font": "字体",
+            "width": "宽度",
+            "height": "高度",
+            "start_rotation": "起始旋转",
+            "end_rotation": "最终旋转"
+        }
+    },
+    "ColorToMask": {
+        "title": "图像颜色到遮罩",
+        "description": "将选定的RGB值转换为掩码。对于批处理输入，**per_batch**控制一次处理的图像数量。",
+        "inputs": {
+            "images": "图片"
+        },
+        "outputs": {
+            "MASK": "遮罩"
+        },
+        "widgets": {
+            "invert": "反转",
+            "red": "红色",
+            "green": "绿色",
+            "blue": "蓝色",
+            "threshold": "阈值",
+            "per_batch": "每批"
+        }
+    },
+    "CreateFluidMask": {
+        "title": "流体遮罩",
+        "outputs": {
+            "IMAGE": "图像",
+            "MASK": "遮罩"
+        },
+        "widgets": {
+            "invert": "反转",
+            "frames": "分帧",
+            "width": "宽度",
+            "height": "高度",
+            "inflow_count": "流入数量",
+            "inflow_velocity": "流入速度",
+            "inflow_radius": "流入半径",
+            "inflow_padding": "流入填充",
+            "inflow_duration": "流入时间"
+        }
+    },
+    "CreateAudioMask": {
+        "title": "音频遮罩",
+        "outputs": {
+            "IMAGE": "图像"
+        },
+        "widgets": {
+            "invert": "反转",
+            "frames": "分帧",
+            "scale": "缩放",
+            "audio_path": "音频路径",
+            "width": "宽度",
+            "height": "高度"
+        }
+    },
+    "CreateGradientMask": {
+        "title": "渐变遮罩",
+        "outputs": {
+            "MASK": "遮罩"
+        },
+        "widgets": {
+            "invert": "反转",
+            "frames": "分帧",
+            "width": "宽度",
+            "height": "高度"
+        }
+    },
+    "CreateFadeMask": {
+        "title": "渐隐遮罩",
+        "outputs": {
+            "MASK": "遮罩"
+        },
+        "widgets": {
+            "invert": "反转",
+            "frames": "分帧",
+            "width": "宽度",
+            "height": "高度",
+            "interpolation": "插值",
+            "start_level": "起始色值",
+            "midpoint_level": "中点色值",
+            "end_level": "最终色值",
+            "midpoint_frame": "中点帧编号"
+        }
+    },
+    "CreateFadeMaskAdvanced": {
+        "title": "渐隐遮罩(高级)",
+        "description": "Create a batch of masks interpolated between given frames and values. \nUses same syntax as Fizz' BatchValueSchedule.\nFirst value is the frame index (not that this starts from 0, not 1) \nand the second value inside the brackets is the float value of the mask in range 0.0 - 1.0  \n\nFor example the default values:  \n0:(0.0)  \n7:(1.0)  \n15:(0.0)  \n  \nWould create a mask batch fo 16 frames, starting from black, \ninterpolating with the chosen curve to fully white at the 8th frame, \nand interpolating from that to fully black at the 16th frame.",
+        "outputs": {
+            "MASK": "遮罩"
+        },
+        "widgets": {
+            "points_string": "色值点",
+            "invert": "反转",
+            "frames": "分帧",
+            "width": "宽度",
+            "height": "高度",
+            "interpolation": "插值"
+        }
+    },
+    "CreateMagicMask": {
+        "title": "迷幻遮罩",
+        "outputs": {
+            "mask": "遮罩图像",
+            "mask_inverted": "反转遮罩"
+        },
+        "widgets": {
+            "frames": "分帧",
+            "depth": "深度",
+            "distortion": "畸变",
+            "seed": "随机种子",
+            "transitions": "过渡",
+            "frame_width": "帧宽度",
+            "frame_height": "帧高度"
+        }
+    },
+    "CreateShapeMask": {
+        "title": "形状遮罩",
+        "description": "创建具有指定形状的遮罩或一组遮罩。位置是中心位置。生长值是在每个帧上生长形状的量，创建动画遮罩。",
+        "outputs": {
+            "mask": "遮罩图像",
+            "mask_inverted": "反转遮罩"
+        },
+        "widgets": {
+            "shape": "形状",
+            "frames": "分帧",
+            "location_x": "位置_X",
+            "location_y": "位置_Y",
+            "grow": "生长",
+            "frame_width": "帧宽度",
+            "frame_height": "帧高度",
+            "shape_width": "形状的宽度",
+            "shape_height": "形状的高度"
+        }
+    },
+    "CreateVoronoiMask": {
+        "title": "沃洛诺伊遮罩",
+        "outputs": {
+            "mask": "遮罩图像",
+            "mask_inverted": "反转遮罩"
+        },
+        "widgets": {
+            "frames": "分帧",
+            "num_points": "点数",
+            "line_width": "线宽",
+            "speed": "速度",
+            "frame_width": "帧宽度",
+            "frame_height": "帧高度"
+        }
+    },
+    "GetMaskSizeAndCount": {
+        "title": "获取遮罩尺寸数量",
+        "description": "输出遮罩的宽度、高度、批次大小",
+        "inputs": {
+            "mask": "遮罩图像"
+        },
+        "outputs": {
+            "mask": "遮罩图像",
+            "width": "宽度",
+            "height": "高度",
+            "count": "检测数量"
+        }
+    },
+    "GrowMaskWithBlur": {
+        "title": "遮罩模糊生长",
+        "description": "# 遮罩模糊生长- 遮罩: 输入遮罩或批量遮罩- 扩展:以设置的数值，扩展或收缩遮罩或批量遮罩- 扩展增量:每帧增加设置数值的扩展率- 倒角:使用锥形角- 反转输入:翻转输入遮罩- 模糊半径:值大于0将模糊遮罩- 线性透明:帧之间的插值alpha值- 衰减系数: 帧之间插值的衰减值- 填补: 填充遮罩中的孔(慢)",
+        "inputs": {
+            "mask": "遮罩图像"
+        },
+        "outputs": {
+            "mask": "遮罩图像",
+            "mask_inverted": "反转遮罩"
+        },
+        "widgets": {
+            "expand": "扩展",
+            "incremental_expandrate": "扩展增量",
+            "tapered_corners": "圆角",
+            "flip_input": "反转输入",
+            "blur_radius": "模糊半径",
+            "lerp_alpha": "线性透明",
+            "decay_factor": "衰减因子",
+            "fill_holes": "填补"
+        }
+    },
+    "MaskBatchMulti": {
+        "title": "遮罩组合批次（多重）",
+        "description": "合并多个遮罩为遮罩批次。可以通过\"输入数量\"设置输入接口数量，点击更新刷新接口。",
+        "inputs": {
+            "mask_1": "遮罩1",
+            "mask_2": "遮罩2"
+        },
+        "outputs": {
+            "masks": "遮罩"
+        },
+        "widgets": {
+            "inputcount": "输入数量"
+        }
+    },
+    "OffsetMask": {
+        "title": "偏移遮罩",
+        "description": "# 将遮罩伸缩指定的量- 遮罩: 输入遮罩或批量遮罩- x：水平伸缩量- y：垂直伸缩量- 重复次数：批量复制遮罩的次数- 使用滚动：卷边包装",
+        "inputs": {
+            "mask": "遮罩图像"
+        },
+        "outputs": {
+            "mask": "遮罩图像"
+        },
+        "widgets": {
+            "x": "X",
+            "y": "Y",
+            "angle": "角度",
+            "duplication_factor": "重复次数",
+            "roll": "使用滚动",
+            "incremental": "增量式",
+            "padding_mode": "填充模式"
+        }
+    },
+    "RoundMask": {
+        "title": "舍入遮罩",
+        "description": "Rounds the mask or batch of masks to a binary mask.  \n<img src=\"https://github.com/kijai/ComfyUI-KJNodes/assets/40791699/52c85202-f74e-4b96-9dac-c8bda5ddcc40\" width=\"300\" height=\"250\" alt=\"RoundMask example\">",
+        "inputs": {
+            "mask": "遮罩图像"
+        },
+        "outputs": {
+            "MASK": "遮罩"
+        }
+    },
+    "ResizeMask": {
+        "title": "缩放遮罩",
+        "description": "将遮罩或批量遮罩调整为指定的宽度和高度。",
+        "inputs": {
+            "mask": "遮罩图像"
+        },
+        "outputs": {
+            "mask": "遮罩图像",
+            "width": "宽度",
+            "height": "高度"
+        },
+        "widgets": {
+            "width": "宽度",
+            "height": "高度",
+            "keep_proportions": "固定宽高比",
+            "upscale_method": "高级插值",
+            "crop": "裁剪"
+        }
+    },
+    "RemapMaskRange": {
+        "title": "重映射遮罩范围",
+        "description": "为遮罩设置新的最小值和最大值。",
+        "inputs": {
+            "mask": "遮罩图像"
+        },
+        "outputs": {
+            "mask": "遮罩图像"
+        },
+        "widgets": {
+            "min": "最小值",
+            "max": "最大值"
+        }
+    },
+    "SeparateMasks": {
+        "title": "分离遮罩",
+        "description": "Separates a mask into multiple masks based on the size of the connected components.",
+        "inputs": {
+            "mask": "遮罩图像"
+        },
+        "outputs": {
+            "mask": "遮罩图像"
+        },
+        "widgets": {
+            "size_threshold_width": "宽度尺寸阈值",
+            "size_threshold_height": "高度尺寸阈值",
+            "mode": "模式",
+            "max_poly_points": "最大多边形点数"
+        }
+    },
+    "PathchSageAttentionKJ": {
+        "title": "修补 Sage Attention KJ",
+        "description": "用于修补注意力模式的实验性节点。此节点不使用模型修补系统，因此如果不使用“禁用”选项再次运行该节点，则无法禁用。",
+        "inputs": {
+            "model": "模型"
+        },
+        "outputs": {
+            "MODEL": "模型"
+        },
+        "widgets": {
+            "sage_attention": "SAGE注意力",
+            "Patch the attention of the model passing through this node to use sageattn. To revert, run this node again with the disabled option. Requires the sageattention library to be installed.": "修补通过此节点的模型的注意力以使用 sageattn。要恢复，请使用禁用选项再次运行此节点。需要安装 sageattention 库。",
+            "Allow the use of torch.compile for the sage attention function, requires latest sageattn 2.2.0 or higher.": "允许对 sage 注意力函数使用 torch.compile，需要最新的 sageattn 2.2.0 或更高版本。"
+        }
+    },
+    "CheckpointLoaderKJ": {
+        "title": "CheckpointLoaderKJ",
+        "description": "用于将 torch.nn.Linear 修补为 CublasLinear 的实验性节点。",
+        "outputs": {
+            "MODEL": "模型",
+            "CLIP": "CLIP模型"
+        },
+        "widgets": {
+            "ckpt_name": "模型名称",
+            "The name of the checkpoint (model) to load.": "要加载的检查点（模型）的名称。",
+            "weight_dtype": "权重数据类型",
+            "compute_dtype": "计算数据类型",
+            "The compute dtype to use for the model.": "用于模型的计算数据类型。",
+            "patch_cublaslinear": "CUBlas线性补丁",
+            "Enable or disable the cublas_ops arg": "启用或禁用 cublas_ops 参数",
+            "sage_attention": "SAGE注意力",
+            "Patch comfy attention to use sageattn.": "修补 comfy 注意力以使用 sageattn。",
+            "enable_fp16_accumulation": "启用FP16累加",
+            "Enable torch.backends.cuda.matmul.allow_fp16_accumulation, required minimum pytorch version 2.7.1": "启用 torch.backends.cuda.matmul.allow_fp16_accumulation，需要最低 pytorch 版本 2.7.1"
+        }
+    },
+    "DiffusionModelLoaderKJ": {
+        "title": "扩散模型加载器 KJ",
+        "description": "用于使用 CublasLinear 修补 torch.nn.Linear 的节点。",
+        "inputs": {
+            "extra_state_dict": "额外的状态字典",
+            "The full path to an additional state dict to load, this will be merged with the main state dict. Useful for example to add VACE module to a WanVideoModel. You can use DiffusionModelSelector to easily get the path.": "要加载的附加状态字典的完整路径，它将与主状态字典合并。例如，可用于向 WanVideoModel 添加 VACE 模块。您可以使用 DiffusionModelSelector 轻松获取路径。"
+        },
+        "outputs": {
+            "MODEL": "模型"
+        },
+        "widgets": {
+            "model_name": "模型名称",
+            "The name of the checkpoint (model) to load.": "要加载的检查点（模型）的名称。",
+            "weight_dtype": "权重数据类型",
+            "compute_dtype": "计算数据类型",
+            "The compute dtype to use for the model.": "用于模型的计算数据类型。",
+            "patch_cublaslinear": "CUBlas线性补丁",
+            "Enable or disable the cublas_ops arg": "启用或禁用 cublas_ops 参数",
+            "sage_attention": "SAGE注意力",
+            "Patch comfy attention to use sageattn.": "修补 comfy 注意力以使用 sageattn。",
+            "enable_fp16_accumulation": "启用FP16累加",
+            "Enable torch.backends.cuda.matmul.allow_fp16_accumulation, requires pytorch 2.7.0 nightly.": "启用 torch.backends.cuda.matmul.allow_fp16_accumulation，需要 pytorch 2.7.0 夜间版。"
+        }
+    },
+    "PatchModelPatcherOrder": {
+        "title": "修补模型补丁顺序",
+        "description": "不再必要或不再起作用，保留节点以保持向后兼容性。使用 TorchCompileModelAdvanced 来配合 torch.compile 使用 LoRA。",
+        "inputs": {
+            "model": "模型"
+        },
+        "outputs": {
+            "MODEL": "模型"
+        },
+        "widgets": {
+            "patch_order": "补丁顺序",
+            "Patch the comfy patch_model function to load weight patches (LoRAs) before compiling the model": "修补 comfy 的 patch_model 函数，以便在编译模型之前加载权重补丁（LoRA）",
+            "full_load": "完全加载",
+            "Disabling may help with memory issues when loading large models, when changing this you should probably force model reload to avoid issues!": "禁用可能有助于解决加载大型模型时的内存问题，更改此设置时，您可能应该强制重新加载模型以避免问题！"
+        }
+    },
+    "TorchCompileModelFluxAdvanced": {
+        "title": "Flux模型Torch编译(高级)",
+        "description": "This node has been replaced with TorchCompileModelAdvanced node, please use that instead.",
+        "inputs": {
+            "model": "模型"
+        },
+        "outputs": {
+            "*": "输出"
+        }
+    },
+    "TorchCompileModelFluxAdvancedV2": {
+        "title": "TorchCompileModelFluxAdvancedV2",
+        "description": "已弃用，请改用 TorchCompileModelAdvanced。",
+        "inputs": {
+            "model": "模型"
+        },
+        "outputs": {
+            "MODEL": "模型"
+        },
+        "widgets": {
+            "backend": "后端",
+            "fullgraph": "全图模式",
+            "Enable full graph mode": "启用全图模式",
+            "mode": "模式",
+            "double_blocks": "双区块",
+            "Compile double blocks": "编译双块",
+            "single_blocks": "单区块",
+            "Compile single blocks": "编译单块",
+            "dynamic": "动态",
+            "Enable dynamic mode": "启用动态模式",
+            "dynamo_cache_size_limit": "dynamo缓存大小限制",
+            "force_parameter_static_shapes": "强制参数静态形状"
+        }
+    },
+    "TorchCompileModelHyVideo": {
+        "title": "Torch编译混合视频模型",
+        "description": "This node has been replaced with TorchCompileModelAdvanced node, please use that instead.",
+        "inputs": {
+            "model": "模型"
+        },
+        "outputs": {
+            "*": "输出"
+        }
+    },
+    "TorchCompileModelWanVideo": {
+        "title": "Torch编译Wan视频模型",
+        "description": "This node has been replaced with TorchCompileModelAdvanced node, please use that instead.",
+        "inputs": {
+            "model": "模型"
+        },
+        "outputs": {
+            "*": "输出"
+        }
+    },
+    "TorchCompileModelWanVideoV2": {
+        "title": "TorchCompileModelWanVideoV2",
+        "description": "已弃用，请改用 TorchCompileModelAdvanced。",
+        "inputs": {
+            "model": "模型"
+        },
+        "outputs": {
+            "MODEL": "模型"
+        },
+        "widgets": {
+            "backend": "后端",
+            "fullgraph": "全图模式",
+            "Enable full graph mode": "启用全图模式",
+            "mode": "模式",
+            "dynamic": "动态",
+            "Enable dynamic mode": "启用动态模式",
+            "compile_transformer_blocks_only": "仅编译Transformer块",
+            "Compile only transformer blocks, faster compile and less error prone": "仅编译 transformer 块，编译更快且更不易出错",
+            "dynamo_cache_size_limit": "dynamo缓存大小限制",
+            "force_parameter_static_shapes": "强制参数静态形状"
+        }
+    },
+    "TorchCompileVAE": {
+        "title": "TorchCompileVAE",
+        "inputs": {
+            "vae": "Vae"
+        },
+        "widgets": {
+            "backend": "后端",
+            "fullgraph": "全图模式",
+            "Enable full graph mode": "启用全图模式",
+            "mode": "模式",
+            "compile_encoder": "编译编码器",
+            "Compile encoder": "编译编码器",
+            "compile_decoder": "编译解码器",
+            "Compile decoder": "编译解码器"
+        }
+    },
+    "TorchCompileControlNet": {
+        "title": "TorchCompileControlNet",
+        "inputs": {
+            "controlnet": "ControlNet"
+        },
+        "outputs": {
+            "CONTROL_NET": "ControlNet"
+        },
+        "widgets": {
+            "backend": "后端",
+            "fullgraph": "全图模式",
+            "Enable full graph mode": "启用全图模式",
+            "mode": "模式"
+        }
+    },
+    "TorchCompileLTXModel": {
+        "title": "Torch编译LTX模型",
+        "description": "This node has been replaced with TorchCompileModelAdvanced node, please use that instead.",
+        "inputs": {
+            "model": "模型"
+        },
+        "outputs": {
+            "*": "输出"
+        }
+    },
+    "TorchCompileCosmosModel": {
+        "title": "Torch编译Cosmos模型",
+        "description": "This node has been replaced with TorchCompileModelAdvanced node, please use that instead.",
+        "inputs": {
+            "model": "模型"
+        },
+        "outputs": {
+            "*": "输出"
+        }
+    },
+    "WanVideoTeaCacheKJ": {
+        "title": "WanVideo Tea Cache（原生）",
+        "description": "DEPRECATED, use the native EasyCache or alternative custom node that's up to date instead of this.",
+        "inputs": {
+            "model": "模型"
+        },
+        "outputs": {
+            "model": "模型"
+        },
+        "widgets": {
+            "rel_l1_thresh": "相对L1阈值",
+            "Threshold for to determine when to apply the cache, compromise between speed and accuracy. When using coefficients a good value range is something between 0.2-0.4 for all but 1.3B model, which should be about 10 times smaller, same as when not using coefficients.": "用于确定何时应用缓存的阈值，在速度和精度之间进行权衡。使用系数时，除 1.3B 模型外，合适的值范围约为 0.2-0.4，1.3B 模型应约小 10 倍，与不使用系数时相同。",
+            "start_percent": "起始百分比",
+            "The start percentage of the steps to use with TeaCache.": "使用 TeaCache 的步数起始百分比。",
+            "end_percent": "结束百分比",
+            "The end percentage of the steps to use with TeaCache.": "使用 TeaCache 的步数结束百分比。",
+            "cache_device": "缓存设备",
+            "Device to cache to": "缓存设备",
+            "coefficients": "系数",
+            "Coefficients for rescaling the relative l1 distance, if disabled the threshold value should be about 10 times smaller than the value used with coefficients.": "用于重新缩放相对 l1 距离的系数，如果禁用，阈值应比使用系数时的值约小 10 倍。"
+        }
+    },
+    "WanVideoEnhanceAVideoKJ": {
+        "title": "WanVideo 增强视频（原生）",
+        "description": "https://github.com/NUS-HPC-AI-Lab/Enhance-A-Video",
+        "inputs": {
+            "model": "模型",
+            "latent": "隐空间",
+            "Only used to get the latent count": "仅用于获取隐空间数量"
+        },
+        "outputs": {
+            "model": "模型"
+        },
+        "widgets": {
+            "weight": "权重",
+            "Strength of the enhance effect": "增强效果的强度"
+        }
+    },
+    "WanVideoNAG": {
+        "title": "WanVideo NAG",
+        "description": "https://github.com/ChenDarYen/Normalized-Attention-Guidance",
+        "inputs": {
+            "model": "模型",
+            "conditioning": "条件"
+        },
+        "outputs": {
+            "model": "模型"
+        },
+        "widgets": {
+            "nag_scale": "NAG缩放",
+            "Strength of negative guidance effect": "反向引导效果的强度",
+            "nag_alpha": "网络_alpha",
+            "Mixing coefficient in that controls the balance between the normalized guided representation and the original positive representation.": "控制归一化引导表示与原始正向表示之间平衡的混合系数。",
+            "nag_tau": "网络_tau",
+            "Clipping threshold that controls how much the guided attention can deviate from the positive attention.": "控制引导注意力与正向注意力偏差程度的裁剪阈值。",
+            "input_type": "输入类型",
+            "Type of the model input": "模型输入类型",
+            "inplace": "原地操作",
+            "If true, modifies tensors in place to save memory. Leads to different numerical results which may change the output slightly.": "如果为 true，则原地修改张量以节省内存。会导致不同的数值结果，可能略微改变输出。"
+        }
+    },
+    "SkipLayerGuidanceWanVideo": {
+        "title": "Wan视频层跳过引导",
+        "description": "Simplified skip layer guidance that only skips the uncond on selected blocks",
+        "inputs": {
+            "model": "模型"
+        },
+        "outputs": {
+            "MODEL": "模型"
+        },
+        "widgets": {
+            "blocks": "模块",
+            "start_percent": "起始百分比",
+            "end_percent": "结束百分比"
+        }
+    },
+    "CFGZeroStarAndInit": {
+        "title": "CFG 零点/初始化",
+        "description": "https://github.com/WeichenFan/CFG-Zero-star",
+        "inputs": {
+            "model": "模型"
+        },
+        "outputs": {
+            "MODEL": "模型"
+        },
+        "widgets": {
+            "use_zero_init": "使用零初始化",
+            "zero_init_steps": "零初始化步数",
+            "for zero init, starts from 0 so first step is always zeroed out if use_zero_init enabled": "对于零初始化，从 0 开始，因此如果启用了 use_zero_init，第一步总是被置零"
+        }
+    },
+    "SetNode": {
+        "title": "设置点",
+        "inputs": {
+            "*": "输入"
+        },
+        "widgets": {
+            "Constant": "常量"
+        },
+        "outputs": {
+            "*": "输出"
+        }
+    },
+    "GetNode": {
+        "title": "获取点",
+        "inputs": {
+            "*": "输入"
+        },
+        "widgets": {
+            "Constant": "常量"
+        },
+        "outputs": {
+            "*": "输出"
+        }
+    },
+    "BOOLConstant": {
+        "title": "布尔值常量",
+        "outputs": {
+            "value": "值"
+        },
+        "widgets": {
+            "value": "值"
+        }
+    },
+    "INTConstant": {
+        "title": "整数常量",
+        "outputs": {
+            "value": "值"
+        },
+        "widgets": {
+            "value": "值"
+        }
+    },
+    "FloatConstant": {
+        "title": "浮点常量",
+        "outputs": {
+            "value": "值"
+        },
+        "widgets": {
+            "value": "值"
+        }
+    },
+    "StringConstant": {
+        "title": "字符串常量",
+        "outputs": {
+            "STRING": "字符串"
+        },
+        "widgets": {
+            "string": "字符串"
+        }
+    },
+    "StringConstantMultiline": {
+        "title": "字符串常量(文本框)",
+        "outputs": {
+            "STRING": "字符串"
+        },
+        "widgets": {
+            "string": "字符串",
+            "strip_newlines": "带换行符"
+        }
+    },
+    "ScaleBatchPromptSchedule": {
+        "title": "缩放提示词批次调度",
+        "description": "将 Fizz 节点的 BatchPromptSchedule 生成的批次调度缩放到不同的帧数。",
+        "inputs": {
+            "input_str": "字符串",
+            "old_frame_count": "旧帧数",
+            "new_frame_count": "新帧数"
+        },
+        "outputs": {
+            "STRING": "字符串"
+        }
+    },
+    "GetLatentsFromBatchIndexed": {
+        "title": "按索引获取Latent",
+        "description": "选择并返回指定索引处的隐空间，作为隐空间批次。",
+        "inputs": {
+            "latents": "Latents"
+        },
+        "outputs": {
+            "LATENT": "Latent"
+        },
+        "widgets": {
+            "indexes": "索引",
+            "latent_format": "latent格式"
+        }
+    },
+    "ConditioningMultiCombine": {
+        "title": "条件合并(多重)",
+        "description": "将多个条件节点合并为一个",
+        "inputs": {
+            "conditioning_1": "条件_1",
+            "conditioning_2": "条件_2"
+        },
+        "outputs": {
+            "combined": "条件",
+            "inputcount": "输入数量"
+        },
+        "widgets": {
+            "inputcount": "输入数量",
+            "operation": "操作"
+        }
+    },
+    "AppendStringsToList": {
+        "title": "追加字符串到列表",
+        "inputs": {
+            "string1": "字符串1",
+            "string2": "字符串2"
+        },
+        "outputs": {
+            "STRING": "字符串"
+        }
+    },
+    "JoinStrings": {
+        "title": "合并字符串",
+        "inputs": {
+            "string1": "字符串1",
+            "string2": "字符串2"
+        },
+        "outputs": {
+            "STRING": "字符串"
+        },
+        "widgets": {
+            "delimiter": "分隔符"
+        }
+    },
+    "JoinStringMulti": {
+        "title": "合并字符串（多重）",
+        "description": "合并多个字符串为字符串批次或字符串列表。可以通过\"输入数量\"设置输入接口数量，点击更新刷新接口。",
+        "inputs": {
+            "string_1": "字符串_1",
+            "string_2": "字符串_2"
+        },
+        "outputs": {
+            "string": "字符串"
+        },
+        "widgets": {
+            "inputcount": "输入数量",
+            "delimiter": "分隔符",
+            "return_list": "返回列表"
+        }
+    },
+    "CondPassThrough": {
+        "title": "条件传递",
+        "description": "Simply passes through the positive and negative conditioning,\n    workaround for Set node not allowing bypassed inputs.",
+        "inputs": {
+            "positive": "积极情感",
+            "negative": "消极情感"
+        },
+        "outputs": {
+            "positive": "积极情感",
+            "negative": "消极情感"
+        }
+    },
+    "ModelPassThrough": {
+        "title": "模型桥接",
+        "description": "将模型传递到下一个节点",
+        "inputs": {
+            "model": "模型"
+        },
+        "outputs": {
+            "model": "模型"
+        }
+    },
+    "ConditioningSetMaskAndCombine": {
+        "title": "条件设置遮罩(合并2)",
+        "description": "捆绑多个调理掩码并将节点组合成一个，功能是与ComfyUI本地节点相同",
+        "inputs": {
+            "positive_1": "正面条件1",
+            "negative_1": "负面条件_1",
+            "positive_2": "正面条件2",
+            "negative_2": "负面条件_2",
+            "mask_1": "遮罩1",
+            "mask_2": "遮罩2"
+        },
+        "outputs": {
+            "combined_positive": "合并正面条件",
+            "combined_negative": "合并负面条件"
+        },
+        "widgets": {
+            "mask_1_strength": "遮罩_1_强度",
+            "mask_2_strength": "遮罩_2_强度",
+            "set_cond_area": "设置条件区域"
+        }
+    },
+    "ConditioningSetMaskAndCombine3": {
+        "title": "条件设置遮罩(合并3)",
+        "description": "捆绑多个调理掩码并将节点组合成一个，功能是与ComfyUI本地节点相同",
+        "inputs": {
+            "positive_1": "正面条件1",
+            "negative_1": "负面条件_1",
+            "positive_2": "正面条件2",
+            "negative_2": "负面条件_2",
+            "positive_3": "正面条件3",
+            "negative_3": "负面条件_3",
+            "mask_1": "遮罩1",
+            "mask_2": "遮罩2",
+            "mask_3": "遮罩3"
+        },
+        "outputs": {
+            "combined_positive": "合并正面条件",
+            "combined_negative": "合并负面条件"
+        },
+        "widgets": {
+            "mask_1_strength": "遮罩_1_强度",
+            "mask_2_strength": "遮罩_2_强度",
+            "mask_3_strength": "遮罩_3_强度",
+            "set_cond_area": "设置条件区域"
+        }
+    },
+    "ConditioningSetMaskAndCombine4": {
+        "title": "条件设置遮罩(合并4)",
+        "description": "捆绑多个调理掩码并将节点组合成一个，功能是与ComfyUI本地节点相同",
+        "inputs": {
+            "positive_1": "正面条件1",
+            "negative_1": "负面条件_1",
+            "positive_2": "正面条件2",
+            "negative_2": "负面条件_2",
+            "positive_3": "正面条件3",
+            "negative_3": "负面条件_3",
+            "positive_4": "正面条件4",
+            "negative_4": "负面条件_4",
+            "mask_1": "遮罩1",
+            "mask_2": "遮罩2",
+            "mask_3": "遮罩3",
+            "mask_4": "遮罩_4"
+        },
+        "outputs": {
+            "combined_positive": "合并正面条件",
+            "combined_negative": "合并负面条件"
+        },
+        "widgets": {
+            "mask_1_strength": "遮罩_1_强度",
+            "mask_2_strength": "遮罩_2_强度",
+            "mask_3_strength": "遮罩_3_强度",
+            "mask_4_strength": "遮罩_4_强度",
+            "set_cond_area": "设置条件区域"
+        }
+    },
+    "ConditioningSetMaskAndCombine5": {
+        "title": "条件设置遮罩(合并5)",
+        "description": "捆绑多个调理掩码并将节点组合成一个，功能是与ComfyUI本地节点相同",
+        "inputs": {
+            "positive_1": "正面条件1",
+            "negative_1": "负面条件_1",
+            "positive_2": "正面条件2",
+            "negative_2": "负面条件_2",
+            "positive_3": "正面条件3",
+            "negative_3": "负面条件_3",
+            "positive_4": "正面条件4",
+            "negative_4": "负面条件_4",
+            "positive_5": "正面条件5",
+            "negative_5": "负面条件_5",
+            "mask_1": "遮罩1",
+            "mask_2": "遮罩2",
+            "mask_3": "遮罩3",
+            "mask_4": "遮罩_4",
+            "mask_5": "遮罩_5"
+        },
+        "outputs": {
+            "combined_positive": "合并正面条件",
+            "combined_negative": "合并负面条件"
+        },
+        "widgets": {
+            "mask_1_strength": "遮罩_1_强度",
+            "mask_2_strength": "遮罩_2_强度",
+            "mask_3_strength": "遮罩_3_强度",
+            "mask_4_strength": "遮罩_4_强度",
+            "mask_5_strength": "遮罩_5_强度",
+            "set_cond_area": "设置条件区域"
+        }
+    },
+    "VRAM_Debug": {
+        "title": "VRAM清理",
+        "description": "原样返回输入数据（仅作为触发信号使用），同时执行 Comfy 模型管理功能及垃圾回收，并在操作前后报告显存（VRAM）剩余情况。",
+        "inputs": {
+            "any_input": "任意输入",
+            "image_pass": "图像",
+            "model_pass": "模型通过"
+        },
+        "outputs": {
+            "any_output": "任意输出",
+            "image_pass": "图像",
+            "model_pass": "模型通过",
+            "freemem_before": "清理前剩余内存",
+            "freemem_after": "清理后剩余内存"
+        },
+        "widgets": {
+            "empty_cache": "清空缓存",
+            "gc_collect": "垃圾回收",
+            "unload_all_models": "卸载所有模型"
+        }
+    },
+    "SomethingToString": {
+        "title": "任意到字符串",
+        "description": "将任何类型转换为字符串。",
+        "inputs": {
+            "input": "输入"
+        },
+        "outputs": {
+            "STRING": "字符串"
+        },
+        "widgets": {
+            "prefix": "前缀",
+            "suffix": "后缀"
+        }
+    },
+    "Sleep": {
+        "title": "休眠",
+        "description": "将执行延迟输入的时间量。",
+        "inputs": {
+            "input": "输入"
+        },
+        "outputs": {
+            "*": "输出"
+        },
+        "widgets": {
+            "minutes": "分钟",
+            "seconds": "时长"
+        }
+    },
+    "EmptyLatentImagePresets": {
+        "title": "空Latent图像预设",
+        "outputs": {
+            "Latent": "Latent潜空间",
+            "Width": "宽度",
+            "Height": "高度"
+        },
+        "widgets": {
+            "dimensions": "尺寸",
+            "invert": "反转",
+            "batch_size": "批次大小"
+        }
+    },
+    "EmptyLatentImageCustomPresets": {
+        "title": "自定义Latent图像预设",
+        "description": "根据指定的尺寸生成一个空白的隐式图像.  这些选项是从“节点文件夹”中的“'custom_dimensions. json”文件中加载的。",
+        "outputs": {
+            "Latent": "Latent潜空间",
+            "Width": "宽度",
+            "Height": "高度"
+        },
+        "widgets": {
+            "dimensions": "尺寸",
+            "invert": "反转",
+            "batch_size": "批次大小"
+        }
+    },
+    "WidgetToString": {
+        "title": "小部件转字符串",
+        "description": "选择一个节点及其指定的小部件，并将值输出为字符串。\n如果未提供节点 ID 或标题，它将使用“any_input”链接并使用该节点。\n要查看节点 ID，请在主设置中启用“节点 ID 徽章模式”。\n或者，您可以使用节点标题进行搜索。节点标题仅在手动编辑时才存在！\n“widget_name”可以是逗号分隔的列表。\n“any_input”用于确保您想要获取值的节点存在于工作流中。",
+        "inputs": {
+            "widget_name": "组件名称",
+            "any_input": "任意输入",
+            "node_title": "节点标题"
+        },
+        "outputs": {
+            "STRING": "字符串"
+        },
+        "widgets": {
+            "id": "印尼语",
+            "return_all": "返回全部",
+            "allowed_float_decimals": "允许浮点小数",
+            "Number of decimal places to display for float values": "浮点值显示的小数位数"
+        }
+    },
+    "Dummy Out": {
+        "title": "虚拟Latent输出",
+        "inputs": {
+            "any_input": "任何输入"
+        },
+        "outputs": {
+            "*": "输出"
+        }
+    },
+    "DummyOut": {
+        "title": "虚拟Latent输出",
+        "description": "不执行任何操作，用于触发通用工作流输出。\n一种在 UI 中获取预览而无需将任何内容保存到磁盘的方法。",
+        "inputs": {
+            "any_input": "任意输入"
+        },
+        "outputs": {
+            "*": "输出"
+        }
+    },
+    "FlipSigmasAdjusted": {
+        "title": "调整反转Sigmas",
+        "inputs": {
+            "sigmas": "噪声调度"
+        },
+        "outputs": {
+            "SIGMAS": "Sigmas",
+            "sigmas_string": "Sigmas字符串"
+        },
+        "widgets": {
+            "divide_by_last_sigma": "除以最后一个Sigma",
+            "divide_by": "除以",
+            "offset_by": "偏移量"
+        }
+    },
+    "CustomSigmas": {
+        "title": "自定义Sigmas",
+        "description": "从逗号分隔的值字符串创建 sigmas 张量。\n示例：\n\nNvidia 为 SD 1.5 优化的 AYS 10 步调度：\n14.615, 6.475, 3.861, 2.697, 1.886, 1.396, 0.963, 0.652, 0.399, 0.152, 0.029\nSDXL：\n14.615, 6.315, 3.771, 2.181, 1.342, 0.862, 0.555, 0.380, 0.234, 0.113, 0.029\nSVD：\n700.00, 54.5, 15.886, 7.977, 4.248, 1.789, 0.981, 0.403, 0.173, 0.034, 0.002",
+        "outputs": {
+            "SIGMAS": "Sigmas"
+        },
+        "widgets": {
+            "sigmas_string": "Sigmas字符串",
+            "interpolate_to_steps": "插值步数"
+        }
+    },
+    "StringToFloatList": {
+        "title": "字符串到浮点列表",
+        "outputs": {
+            "FLOAT": "浮点"
+        },
+        "widgets": {
+            "string": "字符串"
+        }
+    },
+    "InjectNoiseToLatent": {
+        "title": "注入噪声到Latent",
+        "inputs": {
+            "latents": "Latents",
+            "noise": "噪声",
+            "mask": "遮罩图像"
+        },
+        "outputs": {
+            "LATENT": "Latent"
+        },
+        "widgets": {
+            "strength": "强度",
+            "normalize": "规格化",
+            "average": "平均",
+            "mix_randn_amount": "随机噪声混合强度",
+            "seed": "随机种子"
+        }
+    },
+    "SoundReactive": {
+        "title": "音频反应",
+        "description": "反馈输入音频的音量。使用浏览器音频输入。用于实时采样。",
+        "outputs": {
+            "sound_level": "音量级别",
+            "sound_level_int": "音量级别整数"
+        },
+        "widgets": {
+            "sound_level": "音量级别",
+            "start_range_hz": "起始Hz范围",
+            "end_range_hz": "结束Hz范围",
+            "multiplier": "倍数",
+            "smoothing_factor": "速度平滑因子",
+            "normalize": "规格化"
+        }
+    },
+    "GenerateNoise": {
+        "title": "生成噪声",
+        "description": "在注入时产生噪声，或在添加噪声关闭时用作采样器上的空电位",
+        "inputs": {
+            "model": "模型",
+            "sigmas": "噪声调度"
+        },
+        "outputs": {
+            "LATENT": "Latent"
+        },
+        "widgets": {
+            "width": "宽度",
+            "height": "高度",
+            "batch_size": "批次大小",
+            "seed": "随机种子",
+            "multiplier": "倍数",
+            "constant_batch_noise": "恒定批次噪声",
+            "normalize": "规格化",
+            "latent_channels": "latent渠道",
+            "shape": "形状"
+        }
+    },
+    "StableZero123_BatchSchedule": {
+        "title": "StableZero123 多视角批量生成",
+        "inputs": {
+            "clip_vision": "CLIP视觉",
+            "init_image": "参考图像(可选)",
+            "vae": "Vae"
+        },
+        "outputs": {
+            "positive": "积极情感",
+            "negative": "消极情感",
+            "latent": "隐空间"
+        },
+        "widgets": {
+            "width": "宽度",
+            "height": "高度",
+            "batch_size": "批次大小",
+            "interpolation": "插值",
+            "azimuth_points_string": "方位角点",
+            "elevation_points_string": "仰角点"
+        }
+    },
+    "SV3D_BatchSchedule": {
+        "title": "SV3D批次调度",
+        "description": "使用插值调度安排 SV3D 的方位角和仰角数值。注意 SV3D 是视频模型，所以调度值必须递进。https://huggingface.co/stabilityai/sv3d",
+        "inputs": {
+            "clip_vision": "CLIP视觉",
+            "init_image": "参考图像(可选)",
+            "vae": "Vae"
+        },
+        "outputs": {
+            "positive": "积极情感",
+            "negative": "消极情感",
+            "latent": "隐空间"
+        },
+        "widgets": {
+            "width": "宽度",
+            "height": "高度",
+            "batch_size": "批次大小",
+            "interpolation": "插值",
+            "azimuth_points_string": "方位角点",
+            "elevation_points_string": "仰角点"
+        }
+    },
+    "LoadResAdapterNormalization": {
+        "title": "加载ResAdapter规格化",
+        "inputs": {
+            "model": "模型"
+        },
+        "widgets": {
+            "resadapter_path": "ResAdapter路径"
+        },
+        "outputs": {
+            "MODEL": "模型"
+        }
+    },
+    "Superprompt": {
+        "title": "超级提示",
+        "description": "对超级提示数据集进行微调的T5模型。向上采样文本提示更详细的描述。用于文本到图像的生成前步骤从更详细的提示中受益的模型。 https://huggingface.co/roborovski/superprompt-v1",
+        "inputs": {
+            "prompt": "提示词"
+        },
+        "outputs": {
+            "STRING": "字符串"
+        },
+        "widgets": {
+            "instruction_prompt": "指令提示",
+            "max_new_tokens": "最大新令牌数"
+        }
+    },
+    "CameraPoseVisualizer": {
+        "title": "相机姿态可视化",
+        "description": "可视化相机位姿（来自 Animatediff Evolved 的 Camera Ctrl Pose 模块，或通过包含 RealEstate 数据集相机内参及坐标的 .txt 文件，在 3D 图中呈现）",
+        "inputs": {
+            "cameractrl_poses": "相机控制姿态"
+        },
+        "outputs": {
+            "IMAGE": "图像"
+        },
+        "widgets": {
+            "pose_file_path": "姿态文件路径",
+            "base_xval": "基础X值",
+            "zval": "Z值",
+            "scale": "缩放",
+            "use_exact_fx": "使用精确特效",
+            "relative_c2w": "相对相机到世界坐标",
+            "use_viewer": "使用查看器"
+        }
+    },
+    "StabilityAPI_SD3": {
+        "title": "稳定性API SD3",
+        "description": "# 调用 Stability API尽量使用同一个key调用API，无论账号有多少个key。在 https://platform.stability.ai/account/keys 获取key，推荐创建包含key的 config.json 文件然后放到插件目录下。# 警告：即使开启了 disable_metadata（禁用元数据），如果工作流程中包含与此节点不同的保存节点，API 密钥也可能被保存到元数据中。SD3 每次生成需要 6.5 点数SD3-Turbo 每次生成需要 4 点数如果不连接图像输入，则使用 文生图 模式",
+        "inputs": {
+            "image": "图像"
+        },
+        "widgets": {
+            "prompt": "提示",
+            "n_prompt": "负面提示",
+            "seed": "随机种子",
+            "control_before_generate": "生成前控制",
+            "model": "模型",
+            "aspect_ratio": "宽高比",
+            "output_format": "输出格式",
+            "api_key": "API密钥",
+            "img2img_strength": "图生图强度",
+            "disable_metadata": "禁用元数据"
+        },
+        "outputs": {
+            "IMAGE": "图像"
+        }
+    },
+    "CheckpointPerturbWeights": {
+        "title": "检查点扰动权重",
+        "inputs": {
+            "model": "模型"
+        },
+        "outputs": {
+            "MODEL": "模型"
+        },
+        "widgets": {
+            "joint_blocks": "联合块",
+            "final_layer": "最终层",
+            "rest_of_the_blocks": "其余块",
+            "seed": "随机种子"
+        }
+    },
+    "DifferentialDiffusionAdvanced": {
+        "title": "差异扩散(高级)",
+        "inputs": {
+            "model": "模型",
+            "samples": "Latent",
+            "mask": "遮罩图像"
+        },
+        "outputs": {
+            "MODEL": "模型",
+            "LATENT": "Latent"
+        },
+        "widgets": {
+            "multiplier": "倍数"
+        }
+    },
+    "FluxBlockLoraSelect": {
+        "title": "Flux 块 Lora 选择",
+        "description": "选择单个块的 alpha 值，值为 0 时完全移除该块",
+        "outputs": {
+            "blocks": "模块",
+            "The modified diffusion model.": "修改后的扩散模型。"
+        }
+    },
+    "HunyuanVideoBlockLoraSelect": {
+        "title": "Hunyuan 视频块 Lora 选择",
+        "description": "选择单个块的 alpha 值，值为 0 时完全移除该块",
+        "outputs": {
+            "blocks": "模块",
+            "The modified diffusion model.": "修改后的扩散模型。"
+        }
+    },
+    "FluxBlockLoraLoader": {
+        "title": "Flux块LoRA加载器",
+        "inputs": {
+            "model": "模型",
+            "blocks": "块",
+            "opt_lora_path": "LoRA路径(可选)"
+        },
+        "widgets": {
+            "strength_model": "模型强度",
+            "lora_name": "LoRA名称"
+        },
+        "outputs": {
+            "model": "模型",
+            "rank": "等级"
+        }
+    },
+    "CustomControlNetWeightsFluxFromList": {
+        "title": "自定义ControlNet权重Flux从列表",
+        "description": "将浮点数列表转为 ControlNet 权重（用于 Advanced-ControlNet）",
+        "inputs": {
+            "list_of_floats": "浮点列表",
+            "cn_extras": "ControlNet额外",
+            "autosize": "自动大小"
+        },
+        "outputs": {
+            "CN_WEIGHTS": "ControlNet权重",
+            "TK_SHORTCUT": "TK快捷方式"
+        },
+        "widgets": {
+            "uncond_multiplier": "无条件乘数"
+        }
+    },
+    "SetShakkerLabsUnionControlNetType": {
+        "title": "设置ShakkerLabs联合ControlNet类型",
+        "inputs": {
+            "control_net": "ControlNet"
+        },
+        "outputs": {
+            "CONTROL_NET": "ControlNet"
+        },
+        "widgets": {
+            "type": "模型类型"
+        }
+    },
+    "ModelSaveKJ": {
+        "title": "保存模型KJ",
+        "inputs": {
+            "model": "模型"
+        },
+        "widgets": {
+            "filename_prefix": "文件名前缀",
+            "model_key_prefix": "模型键前缀"
+        }
+    },
+    "StyleModelApplyAdvanced": {
+        "title": "高级风格模型应用",
+        "description": "StyleModelApply，但带有强度参数",
+        "inputs": {
+            "conditioning": "条件",
+            "style_model": "样式模型",
+            "clip_vision_output": "clip 视觉输出"
+        },
+        "outputs": {
+            "CONDITIONING": "条件"
+        },
+        "widgets": {
+            "strength": "强度"
+        }
+    },
+    "AudioConcatenate": {
+        "title": "音频拼接",
+        "description": "按指定方向将音频1连接到音频2。",
+        "inputs": {
+            "audio1": "音频_1",
+            "audio2": "音频_2"
+        },
+        "outputs": {
+            "AUDIO": "音频"
+        },
+        "widgets": {
+            "direction": "方向"
+        }
+    },
+    "Leapfusion Hunyuan I2V Patcher": {
+        "title": "Leapfusion混元图像到视频",
+        "inputs": {
+            "model": "模型"
+        },
+        "widgets": {
+            "index": "索引",
+            "start_percent": "起始百分比",
+            "end_percent": "结束百分比",
+            "strength": "强度"
+        },
+        "outputs": {
+            "MODEL": "模型"
+        }
+    },
+    "ImageNoiseAugmentation": {
+        "title": "图像噪声增强",
+        "description": "向图像添加噪声。",
+        "inputs": {
+            "image": "图像"
+        },
+        "outputs": {
+            "IMAGE": "图像"
+        },
+        "widgets": {
+            "noise_aug_strength": "噪声增强强度",
+            "seed": "随机种子"
+        }
+    },
+    "VAELoaderKJ": {
+        "title": "VAE 加载器 KJ",
+        "widgets": {
+            "vae_name": "VAE",
+            "device": "设备",
+            "weight_dtype": "权重数据类型"
+        }
+    },
+    "ScheduledCFGGuidance": {
+        "title": "调度式CFG引导",
+        "inputs": {
+            "model": "模型",
+            "positive": "积极情感",
+            "negative": "消极情感"
+        },
+        "outputs": {
+            "GUIDER": "引导"
+        },
+        "widgets": {
+            "cfg": "CFG",
+            "start_percent": "起始百分比",
+            "end_percent": "结束百分比"
+        }
+    },
+    "ApplyRifleXRoPE_WanVideo": {
+        "title": "应用 RifleXRoPE WanVideo",
+        "description": "Extends the potential frame count of HunyuanVideo using this method: https://github.com/thu-ml/RIFLEx",
+        "inputs": {
+            "model": "模型",
+            "latent": "隐空间",
+            "Only used to get the latent count": "仅用于获取隐空间数量"
+        },
+        "outputs": {
+            "MODEL": "模型"
+        },
+        "widgets": {
+            "k": "k值",
+            "Index of intrinsic frequency": "固有频率索引"
+        }
+    },
+    "ApplyRifleXRoPE_HunuyanVideo": {
+        "title": "应用 RifleXRoPE HunuyanVideo",
+        "description": "Extends the potential frame count of HunyuanVideo using this method: https://github.com/thu-ml/RIFLEx",
+        "inputs": {
+            "model": "模型",
+            "latent": "隐空间",
+            "Only used to get the latent count": "仅用于获取隐空间数量"
+        },
+        "outputs": {
+            "MODEL": "模型"
+        },
+        "widgets": {
+            "k": "k值",
+            "Index of intrinsic frequency": "固有频率索引"
+        }
+    },
+    "TimerNodeKJ": {
+        "title": "计时器KJ",
+        "inputs": {
+            "any_input": "任意输入",
+            "timer": "计时器"
+        },
+        "outputs": {
+            "any_output": "任意输出",
+            "timer": "计时器",
+            "time": "时间"
+        },
+        "widgets": {
+            "mode": "模式",
+            "name": "名称"
+        }
+    },
+    "ImageBatchFilter": {
+        "title": "图像批处理滤波器",
+        "description": "从批处理中删除空白图像",
+        "inputs": {
+            "images": "图片",
+            "replacement_image": "更换图片"
+        },
+        "outputs": {
+            "images": "图片",
+            "removed_indices": "删除索引"
+        },
+        "widgets": {
+            "empty_color": "空白区域颜色设置",
+            "empty_threshold": "判定区域是否为空白区域强度临界值"
+        }
+    },
+    "ImageResizeKJv2": {
+        "title": "调整图像大小 v2",
+        "description": "将图像调整为指定的宽度和高度。\n尺寸可以从输入中获取。\n\n保持比例将保持图像的宽高比，按最大尺寸计算。",
+        "inputs": {
+            "image": "图像",
+            "mask": "遮罩图像"
+        },
+        "outputs": {
+            "IMAGE": "图像",
+            "width": "宽度",
+            "height": "高度",
+            "mask": "遮罩图像"
+        },
+        "widgets": {
+            "width": "宽度",
+            "height": "高度",
+            "upscale_method": "高级插值",
+            "keep_proportion": "固定比例",
+            "pad_color": "填充颜色",
+            "Color to use for padding.": "用于填充的颜色。",
+            "crop_position": "裁剪位置",
+            "divisible_by": "可被整除",
+            "device": "设备"
+        }
+    },
+    "InsertLatentToIndexed": {
+        "title": "插入Latent索引",
+        "description": "将指定索引处的Latent插入到原始Latent批中。",
+        "inputs": {
+            "source": "复合图像",
+            "destination": "目标遮罩"
+        },
+        "outputs": {
+            "LATENT": "Latent"
+        },
+        "widgets": {
+            "index": "索引"
+        }
+    },
+    "DiTBlockLoraLoader": {
+        "title": "DiT 块 LoRA 加载器",
+        "inputs": {
+            "model": "模型",
+            "The diffusion model the LoRA will be applied to.": "将应用 LoRA 的扩散模型。",
+            "opt_lora_path": "选择Lora路径",
+            "Absolute path of the LoRA.": "LoRA 的绝对路径。",
+            "blocks": "模块"
+        },
+        "outputs": {
+            "model": "模型",
+            "rank": "Rank",
+            "The modified diffusion model.": "修改后的扩散模型。",
+            "possible rank of the LoRA.": "LoRA 的可能秩。"
+        },
+        "widgets": {
+            "strength_model": "强度",
+            "How strongly to modify the diffusion model. This value can be negative.": "修改扩散模型的强度。此值可以为负。",
+            "lora_name": "LoRA名称",
+            "The name of the LoRA.": "LoRA 的名称。"
+        }
+    },
+    "LeapfusionHunyuanI2VPatcher": {
+        "title": "Leapfusion Hunyuan I2V 修补器",
+        "inputs": {
+            "model": "模型",
+            "latent": "隐空间"
+        },
+        "outputs": {
+            "MODEL": "模型"
+        },
+        "widgets": {
+            "index": "索引",
+            "The index of the latent to be replaced. 0 for first frame and -1 for last": "要替换的隐空间索引。0 表示第一帧，-1 表示最后一帧",
+            "start_percent": "起始百分比",
+            "The start percentage of steps to apply": "应用步数的起始百分比",
+            "end_percent": "结束百分比",
+            "The end percentage of steps to apply": "应用步数的结束百分比",
+            "strength": "强度"
+        }
+    },
+    "ModelPatchTorchSettings": {
+        "title": "模型补丁 Torch 设置",
+        "description": "Adds callbacks to model to set torch settings before and after running the model.",
+        "inputs": {
+            "model": "模型"
+        },
+        "outputs": {
+            "MODEL": "模型"
+        },
+        "widgets": {
+            "enable_fp16_accumulation": "启用FP16累加",
+            "Enable torch.backends.cuda.matmul.allow_fp16_accumulation, requires pytorch 2.7.0 nightly.": "启用 torch.backends.cuda.matmul.allow_fp16_accumulation，需要 pytorch 2.7.0 夜间版。"
+        }
+    },
+    "LoraExtractKJ": {
+        "title": "LoRA提取KJ",
+        "inputs": {
+            "finetuned": "微调模型",
+            "The finetuned model or clip to extract LoRA from.": "要从中提取 LoRA 的微调模型或 CLIP。",
+            "original": "原始",
+            "The original base model or clip to diff against.": "用于对比的原始基础模型或 CLIP。",
+            "lora_type": "Lora类型",
+            "algorithm": "算法",
+            "SVD algorithm to use, svd_lowrank is faster but less accurate.": "要使用的 SVD 算法，svd_lowrank 速度更快但精度较低。",
+            "output_dtype": "输出数据类型"
+        },
+        "widgets": {
+            "filename_prefix": "文件名前缀",
+            "rank": "Rank",
+            "The rank to use for standard LoRA, or maximum rank limit for adaptive methods.": "标准 LoRA 使用的秩，或自适应方法的最大秩限制。",
+            "lowrank_iters": "低秩迭代次数",
+            "The number of subspace iterations for lowrank SVD algorithm.": "低秩 SVD 算法的子空间迭代次数。",
+            "bias_diff": "偏差差值",
+            "adaptive_param": "自适应参数",
+            "For ratio mode, this is the ratio of the maximum singular value. For quantile mode, this is the quantile of the singular values. For fro mode, this is the Frobenius norm retention ratio.": "对于比率模式，这是最大奇异值的比率。对于分位数模式，这是奇异值的分位数。对于 fro 模式，这是 Frobenius 范数保留比率。",
+            "clamp_quantile": "裁剪分位数（默认0.99）"
+        }
+    },
+    "Wan21BlockLoraSelect": {
+        "title": "Wan21 块 Lora 选择",
+        "description": "选择单个块的 alpha 值，值为 0 时完全移除该块",
+        "outputs": {
+            "blocks": "模块",
+            "The modified diffusion model.": "修改后的扩散模型。"
+        }
+    },
+    "LoadVideosFromFolder": {
+        "title": "从文件夹加载视频",
+        "outputs": {
+            "IMAGE": "图像"
+        },
+        "widgets": {
+            "video": "视频",
+            "force_rate": "强制率",
+            "custom_width": "自定义宽度",
+            "custom_height": "自定义高度",
+            "frame_load_cap": "帧加载上限",
+            "skip_first_frames": "跳过前几帧",
+            "select_every_nth": "每隔第 n 帧选择",
+            "output_type": "输出类型",
+            "grid_max_columns": "网格最大列数",
+            "add_label": "添加标签"
+        }
+    },
+    "TorchCompileModelQwenImage": {
+        "title": "千问图像 Torch 编译模型",
+        "description": "This node has been replaced with TorchCompileModelAdvanced node, please use that instead.",
+        "inputs": {
+            "model": "模型"
+        },
+        "outputs": {
+            "*": "输出"
+        }
+    },
+    "LazySwitchKJ": {
+        "title": "轻松开关 KJ",
+        "description": "根据布尔开关控制执行流程。",
+        "inputs": {
+            "on_false": "否",
+            "on_true": "是"
+        },
+        "outputs": {
+            "*": "输出"
+        },
+        "widgets": {
+            "switch": "切换"
+        }
+    },
+    "GetLatentSizeAndCount": {
+        "title": "获取Latent大小及数量",
+        "description": "Returns latent tensor dimensions,  \nand passes the latent through unchanged.",
+        "inputs": {
+            "latent": "隐空间"
+        },
+        "outputs": {
+            "latent": "隐空间",
+            "batch_size": "批次大小",
+            "channels": "通道",
+            "frames": "分帧",
+            "height": "高度",
+            "width": "宽度"
+        }
+    },
+    "DiffusionModelSelector": {
+        "title": "扩散模型选择器",
+        "description": "将模型路径作为字符串返回。",
+        "outputs": {
+            "model_path": "模型路径"
+        },
+        "widgets": {
+            "model_name": "模型名称",
+            "The name of the checkpoint (model) to load.": "要加载的检查点（模型）的名称。"
+        }
+    },
+    "LoraReduceRankKJ": {
+        "title": "LoRA 降秩",
+        "description": "通过降低秩来调整 LoRA 模型大小。基于 kohya 的 sd-scripts：https://github.com/kohya-ss/sd-scripts/blob/main/networks/resize_lora.py",
+        "inputs": {
+            "lora_name": "LoRA名称",
+            "The name of the LoRA.": "LoRA 的名称。",
+            "dynamic_method": "动态方法",
+            "Method to use for dynamically determining new alphas and dims. sv_knee finds the elbow point in the singular value curve.": "用于动态确定新 alpha 和维数的方法。sv_knee 在奇异值曲线中找到拐点。",
+            "output_dtype": "输出数据类型",
+            "Data type to save the LoRA as.": "保存 LoRA 的数据类型。"
+        },
+        "widgets": {
+            "new_rank": "新等级",
+            "The new rank to resize the LoRA. Acts as max rank when using dynamic_method.": "调整 LoRA 大小的新秩。使用 dynamic_method 时作为最大秩。",
+            "dynamic_param": "动态参数",
+            "Parameter for dynamic methods. For sv_knee: sensitivity (1.0=standard knee, <1.0=more aggressive/lower rank, >1.0=more conservative).": "动态方法的参数。对于 sv_knee：灵敏度（1.0=标准拐点，<1.0=更激进/更低秩，>1.0=更保守）。",
+            "verbose": "详细日志"
+        }
+    },
+    "HunyuanVideoEncodeKeyframesToCond": {
+        "title": "混元视频 关键帧编码为条件",
+        "inputs": {
+            "model": "模型",
+            "positive": "积极情感",
+            "vae": "Vae",
+            "start_frame": "起始帧",
+            "end_frame": "结束帧",
+            "negative": "消极情感"
+        },
+        "outputs": {
+            "model": "模型",
+            "positive": "积极情感",
+            "negative": "消极情感",
+            "latent": "隐空间"
+        },
+        "widgets": {
+            "num_frames": "帧数",
+            "tile_size": "分块大小",
+            "overlap": "重叠",
+            "temporal_size": "时间维度大小",
+            "Only used for video VAEs: Amount of frames to encode at a time.": "仅用于视频 VAE：每次编码的帧数。",
+            "temporal_overlap": "时间重叠",
+            "Only used for video VAEs: Amount of frames to overlap.": "仅用于视频 VAE：重叠的帧数。"
+        }
+    },
+    "DrawMaskOnImage": {
+        "title": "在图像上绘制蒙版",
+        "description": "将提供的蒙版应用到输入图像，支持 Alpha 混合。",
+        "inputs": {
+            "image": "图像",
+            "mask": "遮罩图像"
+        },
+        "outputs": {
+            "images": "图片"
+        },
+        "widgets": {
+            "color": "颜色",
+            "Color as RGB/RGBA values in range 0-255 or 0.0-1.0, separated by commas. Ex: 255, 0, 0, 128": "颜色为 RGB/RGBA 值，范围 0-255 或 0.0-1.0，用逗号分隔。例如：255, 0, 0, 128",
+            "device": "设备",
+            "Device to use for processing": "用于处理的设备"
+        }
+    },
+    "Krea2PromptWeight": {
+        "title": "Krea2 提示词权重",
+        "description": "通过注意力值缩放实现 Krea2 (K2) 的逐词提示词加权。使用 (word:-1) 移除概念，(word:1.5) 强调概念——通过 Qwen3-VL 编码器实现，而常规加权无效。输出修补后的模型 + 条件；将采样器 CFG 设置为 1.0。",
+        "inputs": {
+            "clip": "CLIP",
+            "model": "模型"
+        },
+        "outputs": {
+            "model": "模型",
+            "conditioning": "条件"
+        },
+        "widgets": {
+            "text": "文本",
+            "Prompt with per-token weights in parentheses, e.g. (word:-1) removes/represses a concept, (word:2) emphasizes it, plain text = 1.0. Works on Krea2 where ComfyUI's normal (word:weight) does nothing (the Qwen3-VL LLM encoder ignores it). weight<1 scales the token's attention VALUE (subtracts/removes at <0); weight>1 boosts how much the image ATTENDS to the token (adds more of it). Set sampler CFG to 1.0.": "带括号的逐词权重提示词，例如 (word:-1) 移除/抑制概念，(word:2) 强调概念，纯文本 = 1.0。适用于 Krea2，其中 ComfyUI 常规的 (word:weight) 无效（Qwen3-VL 大语言模型编码器会忽略它）。权重小于1 会缩放词元的注意力值（小于0 时减去/移除）；权重大于1 会增强图像对该词元的关注度（添加更多）。将采样器 CFG 设置为 1.0。",
+            "strength": "强度",
+            "Global multiplier on the weighting effect. Effect compounds over all 28 blocks; lower if results break up, raise for a stronger effect. Removal (weight<0) is the reliable direction; emphasis (weight>1) works but is looser.": "权重效果的全局乘数。效果在所有 28 个块中累积；如果结果破裂则降低，如需更强效果则提高。移除（权重<0）是可靠方向；强调（权重>1）有效但较松散。"
+        }
+    },
+    "VAEMergeKJ": {
+        "title": "VAE 合并 KJ",
+        "description": "Merge two VAEs by weighted-averaging their weights. ratio is the weight toward vae_2 (0.0 = pure vae_1, 1.0 = pure vae_2). Both VAEs must share the same architecture (matching state dict keys and shapes).",
+        "inputs": {
+            "vae_1": "VAE1",
+            "vae_2": "VAE2"
+        },
+        "outputs": {
+            "vae": "Vae"
+        },
+        "widgets": {
+            "ratio": "宽高比"
+        }
+    },
+    "LTXVEnhanceAVideoKJ": {
+        "title": "LTXV 增强视频 KJ",
+        "description": "https://github.com/NUS-HPC-AI-Lab/Enhance-A-Video",
+        "inputs": {
+            "model": "模型",
+            "latent": "隐空间",
+            "Only used to get the latent count": "仅用于获取隐空间数量"
+        },
+        "outputs": {
+            "model": "模型"
+        },
+        "widgets": {
+            "weight": "权重",
+            "Strength of the enhance effect": "增强效果的强度"
+        }
+    },
+    "ImageBatchExtendWithOverlap": {
+        "title": "图像批次重叠扩展",
+        "description": "视频生成扩展的辅助节点\n首先输入源图像和重叠量以获取扩展的起始帧。\n然后在另一个节点副本上提供新生成的帧，并选择如何重叠它们。",
+        "inputs": {
+            "source_images": "源图像",
+            "The source images to extend": "需要扩展的源图像",
+            "new_images": "新图像",
+            "The new images to extend with": "用于扩展的新图像"
+        },
+        "outputs": {
+            "source_images": "源图像",
+            "start_images": "起始图像",
+            "extended_images": "扩展图像",
+            "The original source images (passthrough)": "原始源图像（直通输出）",
+            "The input images used as the starting point for extension": "用作扩展起点的输入图像",
+            "The extended images with overlap, if no new images are provided this will be empty": "带重叠效果的扩展图像，若未提供新图像则此输出为空"
+        },
+        "widgets": {
+            "overlap": "重叠",
+            "Number of overlapping frames between source and new images": "源图像与新图像之间的重叠帧数",
+            "overlap_side": "重叠侧",
+            "Which side to overlap on": "选择在哪一侧进行重叠",
+            "overlap_mode": "重叠模式",
+            "Method to use for overlapping frames": "用于重叠帧的处理方式"
+        }
+    },
+    "EndRecordCUDAMemoryHistory": {
+        "title": "停止记录 CUDA 显存历史",
+        "description": "Records CUDA memory allocation history between start and end, saves to a file that can be analyzed here: https://docs.pytorch.org/memory_viz or with VisualizeCUDAMemoryHistory node",
+        "inputs": {
+            "input": "输入"
+        },
+        "outputs": {
+            "input": "输入",
+            "output_path": "输出路径"
+        },
+        "widgets": {
+            "output_path": "输出路径"
+        }
+    },
+    "Ideogram4OptimizationsKJ": {
+        "title": "Ideogram4 优化 KJ",
+        "description": "实验性功能，可能会改变模型输出！！降低 Ideogram4 前向传播的峰值显存。chunk_ffn 在词元维度上拆分 SwiGLU 激活；bf16_rope 以模型数据类型应用 RoPE，而非上转换为 fp32。两者都针对块中两个最大的瞬态张量。",
+        "inputs": {
+            "model": "模型"
+        },
+        "outputs": {
+            "model": "模型"
+        },
+        "widgets": {
+            "chunk_ffn": "分块前馈",
+            "Chunk the feedforward activations over the sequence dim to cap the (B, L, hidden) intermediate.": "在序列维度上对前馈激活进行分块，以限制 (B, L, hidden) 中间张量的大小。",
+            "ffn_chunks": "前馈分块数",
+            "Number of chunks to split the feedforward sequence into. More chunks = lower peak, slightly more overhead.": "将前馈序列拆分的块数。更多块 = 更低峰值，略多开销。",
+            "ffn_seq_threshold": "前馈序列阈值",
+            "Only chunk when the token sequence length exceeds this (skips chunking for tiny sequences).": "仅当词元序列长度超过此值时进行分块（跳过微小序列的分块）。",
+            "bf16_rope": "bf16 旋转位置编码",
+            "Apply RoPE in the input dtype instead of fp32. ~Halves RoPE activation memory; matches the HF reference dtype.": "以输入数据类型应用 RoPE，而非 fp32。约将 RoPE 激活内存减半；与 HF 参考数据类型匹配。"
+        }
+    },
+    "LTX2_NAG": {
+        "title": "LTX2 NAG",
+        "description": "https://github.com/ChenDarYen/Normalized-Attention-Guidance",
+        "inputs": {
+            "model": "模型",
+            "nag_cond_video": "NAG 视频条件",
+            "nag_cond_audio": "NAG 音频条件"
+        },
+        "outputs": {
+            "model": "模型"
+        },
+        "widgets": {
+            "nag_scale": "NAG缩放",
+            "Strength of negative guidance effect": "反向引导效果的强度",
+            "nag_alpha": "网络_alpha",
+            "Mixing coefficient in that controls the balance between the normalized guided representation and the original positive representation.": "控制归一化引导表示与原始正向表示之间平衡的混合系数。",
+            "nag_tau": "网络_tau",
+            "Clipping threshold that controls how much the guided attention can deviate from the positive attention.": "控制引导注意力与正向注意力偏差程度的裁剪阈值。",
+            "inplace": "原地操作",
+            "If true, modifies tensors in place to save memory. Leads to different numerical results which may change the output slightly.": "如果为 true，则原地修改张量以节省内存。会导致不同的数值结果，可能略微改变输出。"
+        }
+    },
+    "PiDColorBiasCorrection": {
+        "title": "PiD 颜色偏差校正",
+        "description": "PiD 4步解码器颜色/亮度漂移校正器。在第一步采样时，使用针对模型系统性漂移（模型倾向于提亮暗场景并添加蓝色调）校准的小型线性模型，从 x0_pred 中减去每个通道的偏差。",
+        "inputs": {
+            "model": "模型"
+        },
+        "outputs": {
+            "MODEL": "模型"
+        },
+        "widgets": {
+            "strength": "强度",
+            "Correction strength. 1.0 = full predicted bias subtracted. <1 = milder, >1 = stronger, 0 = disabled.": "校正强度。1.0 = 减去全部预测偏差。小于1 = 更温和，大于1 = 更强，0 = 禁用。",
+            "backbone": "框架",
+            "Calibrated PiD backbone (currently only flux2 — others use the same model but coefficients differ).": "已校准的 PiD 主干（目前仅支持 flux2 — 其他模型使用相同模型但系数不同）。"
+        }
+    },
+    "MiniMaxChunkFeedForward": {
+        "title": "MiniMax H3 分块前馈",
+        "description": "将 MiniMax H3 前馈（SwiGLU）在打包的令牌维度上进行分块，以降低峰值显存使用。每个分块在模型量化时仍会通过 ComfyUI 的融合 INT8 内核，并且由于激活按令牌量化，输出与未分块模型一致。",
+        "inputs": {
+            "model": "模型"
+        },
+        "outputs": {
+            "model": "模型"
+        },
+        "widgets": {
+            "chunks": "分块数",
+            "Number of chunks to split the feedforward tokens into. More chunks = lower peak VRAM, slightly more overhead.": "将前馈令牌分成的块数。块数越多 = 峰值显存越低，但开销略有增加。",
+            "seq_threshold": "序列阈值",
+            "Only chunk when the packed token count exceeds this (skips tiny sequences).": "仅当打包的令牌数超过此值时进行分块（跳过极短序列）。"
+        }
+    },
+    "EncodeVideoComponents": {
+        "title": "编码视频组件",
+        "description": "提取视频帧，调整大小，并直接使用VAE编码，避免存储完整的图像张量。",
+        "inputs": {
+            "video": "视频",
+            "The video to extract and encode.": "要提取和编码的视频。",
+            "vae": "Vae",
+            "The VAE model to use for encoding.": "用于编码的VAE模型。",
+            "upscale_method": "高级插值",
+            "Interpolation method for resizing.": "调整大小使用的插值方法。"
+        },
+        "outputs": {
+            "latent": "隐空间",
+            "audio": "音频",
+            "fps": "帧率",
+            "frame_count": "帧数",
+            "Number pixel space frames after any possible cropping": "任何可能裁剪后的像素空间帧数"
+        },
+        "widgets": {
+            "width": "宽度",
+            "Target width for the frames before encoding. 0 = original width.": "编码前帧的目标宽度。0 = 原始宽度。",
+            "height": "高度",
+            "Target height for the frames before encoding. 0 = original height.": "编码前帧的目标高度。0 = 原始高度。",
+            "max_frames": "最大帧数",
+            "Maximum number of frames. 0 = no limit.": "最大帧数。0 = 无限制。",
+            "keep_proportion": "固定比例",
+            "How to handle aspect ratio mismatch when resizing.": "调整大小时如何处理宽高比不匹配。",
+            "crop_position": "裁剪位置",
+            "Position to crop from.": "裁剪位置。",
+            "pad_color": "填充颜色",
+            "Color to use for padding.": "用于填充的颜色。",
+            "pad_position": "填充位置",
+            "Position to align the image within the padded area.": "图像在填充区域内的对齐位置。"
+        }
+    },
+    "VAEDecodeLoopKJ": {
+        "title": "VAE 解码循环 KJ",
+        "description": "Video latent VAE decoding to fix artifacts on loop seams.",
+        "inputs": {
+            "samples": "Latent",
+            "The latent to be decoded.": "要解码的隐空间。",
+            "vae": "Vae",
+            "The VAE model used for decoding the latent.": "用于解码隐空间的 VAE 模型。"
+        },
+        "outputs": {
+            "IMAGE": "图像",
+            "The decoded images.": "解码后的图像。"
+        },
+        "widgets": {
+            "overlap_latent_frames": "重叠隐空间帧数",
+            "Number of frames to blend for seamless loop, for Wan 2 works and HunyuanVideo 1.5 should use 4": "用于无缝循环混合的帧数，对于 Wan 2 有效，HunyuanVideo 1.5 应使用 4"
+        }
+    },
+    "GetPreviewOverrideFramesKJ": {
+        "title": "获取预览覆盖帧 KJ",
+        "description": "返回“模型预览覆盖”在最近一次采样期间捕获的帧。将“模型预览覆盖”的“模型”输出（与馈送到采样器的相同）连接到“采样后”的输入（LATENT/IMAGE），以强制正确的执行顺序。",
+        "inputs": {
+            "model": "模型",
+            "The model output by Model Preview Override (used to locate the captured frames).": "由“模型预览覆盖”输出的模型（用于定位捕获的帧）。",
+            "after_sample": "采样后",
+            "Anything from after the sampler (LATENT or IMAGE). The value is ignored — it just forces this node to run after sampling.": "来自采样器之后的任何内容（LATENT 或 IMAGE）。该值被忽略 — 它只是强制此节点在采样后运行。"
+        },
+        "outputs": {
+            "frames": "分帧"
+        }
+    },
+    "GetTrackRange": {
+        "title": "获取轨道范围",
+        "inputs": {
+            "tracks": "跟踪"
+        },
+        "outputs": {
+            "TRACKS": "轨道"
+        },
+        "widgets": {
+            "start_index": "开始索引",
+            "num_frames": "帧数"
+        }
+    },
+    "HDRPreviewKJ": {
+        "title": "HDR 预览 KJ",
+        "description": "HDR 压缩图像的实时曝光预览。\n\n输入：LogC3 压缩的 [0,1] 图像/视频批次（例如 HDR IC-LoRA 工作流中 VAE 解码后的输出，在 HDR 解压缩之前）。\n\n解压缩 + 曝光 + 饱和度 + Reinhard 色调映射 + sRGB 在浏览器的 WebGL 片段着色器中运行，以提供实时滑块反馈，并且相同的数学运算在服务器端运行以生成烘焙的 sRGB IMAGE 输出。滑块更改会立即更新预览；IMAGE 输出仅在工作流重新排队时更新。",
+        "inputs": {
+            "image": "图像",
+            "LogC3-compressed HDR image/video in [0,1], or linear HDR if 'input_space' is 'linear'.": "LogC3 压缩的 HDR 图像/视频，范围 [0,1]；如果“输入色彩空间”为“linear”，则为线性 HDR。",
+            "input_space": "输入色彩空间",
+            "Color space of input. 'logc3' = ARRI LogC3 compressed HDR; 'linear' = linear HDR directly; 'srgb' = already-graded sRGB image (skips Reinhard tonemap).": "输入色彩空间。'logc3' = ARRI LogC3 压缩 HDR；'linear' = 直接线性 HDR；'srgb' = 已调色的 sRGB 图像（跳过 Reinhard 色调映射）。"
+        },
+        "outputs": {
+            "image": "图像",
+            "Tonemapped sRGB image, ready for preview/save.": "色调映射后的 sRGB 图像，可用于预览/保存。"
+        },
+        "widgets": {
+            "exposure": "曝光",
+            "Exposure in EV stops. 0 = no change, +1 = 2x brighter.": "曝光（EV 档）。0 = 无变化，+1 = 亮度加倍。",
+            "saturation": "饱和度",
+            "Saturation multiplier. 0 = grayscale, 1 = unchanged, 2 = 2x.": "饱和度倍率。0 = 灰度，1 = 不变，2 = 2 倍。",
+            "fps": "帧率",
+            "Playback frame rate for video (batch) inputs.": "视频（批次）输入的播放帧率。"
+        }
+    },
+    "LTXVAddGuidesFromBatch": {
+        "title": "LTXV 从批次添加引导",
+        "description": "从批次中向隐空间添加多个引导图像，并对应帧索引。批次中的非黑色图像用作引导。",
+        "inputs": {
+            "positive": "积极情感",
+            "negative": "消极情感",
+            "vae": "Vae",
+            "latent": "隐空间",
+            "images": "图片",
+            "Batch of images - non-black images will be used as guides": "图像批次 - 非黑色图像将用作引导"
+        },
+        "outputs": {
+            "positive": "积极情感",
+            "negative": "消极情感",
+            "latent": "隐空间"
+        },
+        "widgets": {
+            "strength": "强度",
+            "Strength for all guides.": "所有引导的强度。"
+        }
+    },
+    "PreviewImageOrMask": {
+        "title": "预览图像或蒙版",
+        "description": "预览输入的图像或蒙版。",
+        "inputs": {
+            "input": "输入",
+            "The image or mask to preview.": "要预览的图像或蒙版。"
+        }
+    },
+    "WanChunkFeedForward": {
+        "title": "Wan 分块前馈",
+        "description": "实验性功能，可能会改变模型输出！！将前馈激活分块以降低峰值显存使用。",
+        "inputs": {
+            "model": "模型"
+        },
+        "outputs": {
+            "model": "模型"
+        },
+        "widgets": {
+            "chunks": "分块数",
+            "Number of chunks to split the feedforward activations into to reduce peak VRAM usage.": "将前馈激活拆分的块数，以减少峰值显存使用。",
+            "dim_threshold": "维度阈值",
+            "Dimension threshold above which to apply chunking.": "应用分块的维度阈值。"
+        }
+    },
+    "VisualizeSigmasKJ": {
+        "title": "可视化 Sigmas KJ",
+        "inputs": {
+            "sigmas": "噪声调度"
+        },
+        "outputs": {
+            "image": "图像"
+        },
+        "widgets": {
+            "start_step": "开始应用 EasyCache 的步骤",
+            "Step index to mark as the start of a range (inclusive). Set to -1 to disable.": "将步进索引标记为范围的起始（包含）。设置为 -1 以禁用。",
+            "end_step": "结束应用 EasyCache 的步骤",
+            "Step index to mark as the end of a range (inclusive). Set to - 1 to disable.": "将步进索引标记为范围的结束（包含）。设置为 -1 以禁用。"
+        }
+    },
+    "LatentInpaintTTM": {
+        "title": "隐空间修复 TTM",
+        "description": "https://github.com/time-to-move/TTM",
+        "inputs": {
+            "model": "模型",
+            "mask": "遮罩图像",
+            "Latent mask where white (1.0) is the area to inpaint and black (0.0) is the area to keep unchanged.": "隐空间蒙版，其中白色 (1.0) 为要修复的区域，黑色 (0.0) 为保持不变的区域。"
+        },
+        "outputs": {
+            "MODEL": "模型"
+        },
+        "widgets": {
+            "steps": "步进",
+            "Number of steps to apply TTM inpainting for.": "应用 TTM 修复的步数。"
+        }
+    },
+    "LTX2SamplingPreviewOverride": {
+        "title": "LTX2 采样预览覆盖",
+        "description": "覆盖 LTX2 的采样预览功能，在预览功能进入 comfy 核心之前的临时措施。",
+        "inputs": {
+            "model": "模型",
+            "The model to add preview override to.": "要添加预览覆盖的模型。",
+            "preview_rate": "预览帧率",
+            "Preview frame rate.": "预览帧率。",
+            "latent_upscale_model": "隐空间放大模型",
+            "Optional upscale model to use for higher resolution previews.": "可选，用于更高分辨率预览的放大模型。",
+            "vae": "Vae",
+            "VAE model to use normalizing the latents for the upscale model.": "用于为放大模型归一化隐空间的 VAE 模型。"
+        },
+        "outputs": {
+            "MODEL": "模型",
+            "The model with Sampling Preview Override.": "带有采样预览覆盖的模型。"
+        }
+    },
+    "PatchTritonVAE": {
+        "title": "补丁 Triton VAE",
+        "description": "通过融合的 Triton 归一化+SiLU 内核和通道最后的卷积布局，加速 VAE 解码/编码。支持的 VAE（自动检测）：Wan 2.1/2.2 视频 VAE，包括 Qwen-Image（RMSNorm，约 1.4x/1.15x），KL 图像 VAE，如 Flux/Flux2、SDXL 和 SD1.5（GroupNorm，2048px 时约 1.6-1.8x），以及 LTXV/LTX2 视频 VAE（PixelNorm；时间步条件解码器块仅获得归一化融合）。不支持其他架构。作为对象补丁应用于克隆的修补器，因此仅在此 VAE 加载时存在。",
+        "inputs": {
+            "vae": "Vae"
+        },
+        "outputs": {
+            "vae": "Vae"
+        },
+        "widgets": {
+            "fuse_norm_silu": "融合 norm+SiLU",
+            "Replace norm+SiLU chains (RMSNorm for Wan, GroupNorm for KL VAEs) with fused Triton kernels (single pass, fp32 accumulation). Requires triton.": "用融合的 Triton 内核（单次传递，fp32 累加）替换 norm+SiLU 链（Wan 使用 RMSNorm，KL VAE 使用 GroupNorm）。需要 triton。",
+            "channels_last": "通道最后",
+            "Convert conv weights to channels_last memory format, removing cuDNN layout transposes around every conv. Required for the fused GroupNorm kernel to engage on KL VAEs.": "将卷积权重转换为 channels_last 内存格式，移除每个卷积周围的 cuDNN 布局转置。这是融合 GroupNorm 内核在 KL VAE 上运行所必需的。",
+            "int8_conv": "int8 卷积",
+            "EXPERIMENTAL: run the VAE decoder's 3x3 convolutions on int8 tensor cores (4x the bf16 rate on Ada+). Weights quantized per-out-channel, activations dynamically per-tensor; ~45-48 dB vs the bf16 decode, minor quality loss possible. Wan 2.1/2.2 and KL image VAEs (Flux2/SDXL/SD1.5), ignored for others.": "实验性：在 int8 张量核心上运行 VAE 解码器的 3x3 卷积（在 Ada+ 上为 bf16 速率的 4 倍）。权重按输出通道量化，激活按张量动态量化；与 bf16 解码相比约 45-48 dB，可能存在轻微质量损失。适用于 Wan 2.1/2.2 和 KL 图像 VAE（Flux2/SDXL/SD1.5），其他模型忽略。",
+            "autotune": "自动调优",
+            "Benchmark several kernel block-size configs on first use of each tensor shape and cache the fastest. Brief stutter per new resolution, usually a few percent faster after warmup.": "在首次使用每种张量形状时对多种内核块大小配置进行基准测试，并缓存最快的配置。每个新分辨率会有短暂卡顿，预热后通常快几个百分点。"
+        }
+    },
+    "LTX2AttentionTunerPatch": {
+        "title": "LTX2 注意力调谐器补丁",
+        "description": "实验性功能！自定义 LTX2 前向传播，按模态设置注意力缩放因子，同时降低峰值显存使用。",
+        "inputs": {
+            "model": "模型"
+        },
+        "outputs": {
+            "model": "模型"
+        },
+        "widgets": {
+            "blocks": "模块",
+            "Comma separated list of transformer block indices to apply the patch to. Leave empty to apply to all blocks.": "要应用补丁的 Transformer 块索引列表，以逗号分隔。留空则应用于所有块。",
+            "video_scale": "视频缩放",
+            "Scaling factor for video attention.": "视频注意力的缩放因子。",
+            "audio_scale": "音频嵌入缩放",
+            "Scaling factor for audio attention.": "音频注意力的缩放因子。",
+            "audio_to_video_scale": "音频到视频缩放",
+            "video_to_audio_scale": "视频到音频缩放",
+            "triton_kernels": "Triton 内核",
+            "Use Triton fused kernels for norm+scale+shift and rope application operations, can be very slightly faster.": "使用 Triton 融合内核进行归一化+缩放+平移和 RoPE 应用操作，速度可能略有提升。"
+        }
+    },
+    "ModelMemoryUsageFactorOverride": {
+        "title": "重写模型显存占用系数",
+        "description": "在采样期间覆盖模型的内存使用系数。",
+        "inputs": {
+            "model": "模型"
+        },
+        "outputs": {
+            "MODEL": "模型"
+        },
+        "widgets": {
+            "memory_usage_factor": "内存使用系数"
+        }
+    },
+    "SimpleCalculatorKJ": {
+        "title": "简单计算器 KJ",
+        "description": "计算节点，使用输入 a 和 b 计算数学表达式。\n支持的操作：+, -, *, /, //, %, **, <<, >>, 一元 +/- \n支持的比较：==, !=, <, <=, >, >= \n支持的逻辑：and, or, not \n支持的函数：abs(), round(), min(), max(), pow(), sqrt(), sin(), cos(), tan(), log(), log10(), exp(), floor(), ceil() \n支持的常量：pi, euler, True, False",
+        "inputs": {
+            "variables": "变量"
+        },
+        "outputs": {
+            "FLOAT": "浮点",
+            "INT": "整数",
+            "BOOLEAN": "布尔"
+        },
+        "widgets": {
+            "expression": "表达式"
+        }
+    },
+    "PlaySoundKJ": {
+        "title": "播放声音 KJ",
+        "description": "在浏览器中播放输入的音频。模式：'always' 每次执行时播放，'on_empty_queue' 仅在队列完成时播放，'on_change' 仅在音频内容更改时播放。时长限制播放长度（0 = 完整音频）。",
+        "inputs": {
+            "mode": "模式",
+            "any_input": "任意输入",
+            "audio": "音频"
+        },
+        "outputs": {
+            "any_output": "任意输出"
+        },
+        "widgets": {
+            "audio_path": "音频路径",
+            "Path to an audio file. Used when audio input is not connected.": "音频文件的路径。当音频输入未连接时使用。",
+            "volume": "音量",
+            "duration": "持续时间",
+            "Duration in seconds to play. 0 = play full audio.": "播放时长（秒）。0 = 播放完整音频。"
+        }
+    },
+    "MiniMaxH3MemoryEfficientSageAttentionPatch": {
+        "title": "MiniMax H3 内存高效 Sage 注意力补丁",
+        "description": "EXPERIMENTAL! Activates custom sageattention on the MiniMax H3 self-attention to reduce peak VRAM usage, overrides the attention mode. Requires latest sageattention version.",
+        "inputs": {
+            "model": "模型"
+        },
+        "outputs": {
+            "model": "模型"
+        }
+    },
+    "PatchFlashAttentionKJ": {
+        "title": "修补 Flash Attention KJ",
+        "description": "用于将注意力修补为使用 flash attention 的实验性节点，没有 ComfyUI 默认的静默 SDPA 回退。修补通过此节点的模型的注意力；要禁用，请绕过或断开此节点。需要安装 flash_attn 库。",
+        "inputs": {
+            "model": "模型"
+        },
+        "outputs": {
+            "MODEL": "模型"
+        },
+        "widgets": {
+            "Allow torch.compile to trace into the flash attention function. If disabled (default), the function is wrapped with torch.compiler.disable() for compatibility, matching the sage attention node.": "允许 torch.compile 跟踪 flash attention 函数。如果禁用（默认），该函数会被 torch.compiler.disable() 包装以保持兼容性，与 sage attention 节点一致。"
+        }
+    },
+    "TorchCompileModelAdvanced": {
+        "title": "TorchCompileModelAdvanced",
+        "description": "用于扩散模型的高级 torch.compile 修补。",
+        "inputs": {
+            "model": "模型"
+        },
+        "outputs": {
+            "MODEL": "模型"
+        },
+        "widgets": {
+            "backend": "后端",
+            "fullgraph": "全图模式",
+            "Enable full graph mode": "启用全图模式",
+            "mode": "模式",
+            "dynamic": "动态",
+            "Use dynamic shape tracing.": "使用动态形状追踪。",
+            "compile_transformer_blocks_only": "仅编译Transformer块",
+            "Compile only transformer blocks, faster compile and less error prone": "仅编译 transformer 块，编译更快且更不易出错",
+            "dynamo_cache_size_limit": "dynamo缓存大小限制",
+            "debug_compile_keys": "调试编译键",
+            "Print the compile keys used for torch.compile": "打印用于 torch.compile 的编译键",
+            "disable_dynamic_vram": "禁用动态显存",
+            "Disable dynamic VRAM feature as it can cause issues with compile": "禁用动态显存功能，因为它可能导致编译问题"
+        }
+    },
+    "ImageTransformKJ": {
+        "title": "图像变换 KJ",
+        "description": "交互式图像变换节点：裁剪、调整大小、填充和旋转。\n连接图像输入——预览将自动出现。\n\n裁剪：\n点击并拖动以绘制裁剪区域。\n在内部拖动以移动，拖动边缘/角落以调整大小。\n右键单击删除区域。\n按住Ctrl吸附到网格。\n按住Shift调整大小以约束宽高比。\n按住Alt调整大小以对称调整。\n\n填充：\n按住Shift并拖动以调整填充位置。\n\n旋转按钮启用旋转十字（拖动旋转，右键单击重置）。\n设置target_width/height以调整输出大小（0 = 保持原始）。\n使用keep_proportion控制图像如何适应目标。\n使用extra_padding添加颜色或边缘填充（clamp/repeat/mirror）。",
+        "inputs": {
+            "image": "图像",
+            "The image or mask to transform.": "要变换的图像或蒙版。",
+            "upscale_method": "高级插值",
+            "Interpolation method for resizing.": "调整大小使用的插值方法。",
+            "mask": "遮罩图像",
+            "Optional mask to transform alongside the image.": "可选的要与图像一起变换的蒙版。"
+        },
+        "outputs": {
+            "output": "输出",
+            "output_mask": "输出蒙版",
+            "bbox": "BBox",
+            "bbox_mask": "BBox遮罩",
+            "width": "宽度",
+            "height": "高度",
+            "Width of the output image.": "输出图像的宽度。",
+            "Height of the output image.": "输出图像的高度。"
+        },
+        "widgets": {
+            "target_width": "目标宽度",
+            "Target output width. 0 = keep original dimensions.": "目标输出宽度。0 = 保持原始尺寸。",
+            "target_height": "目标高度",
+            "Target output height. 0 = keep original dimensions.": "目标输出高度。0 = 保持原始尺寸。",
+            "keep_proportion": "固定比例",
+            "pad_x": "填充X",
+            "Horizontal position of content within padding (0=left, 0.5=center, 1=right). Shift+drag content in preview to adjust.": "内容在填充区域内的水平位置（0=左，0.5=居中，1=右）。在预览中按住Shift并拖动内容以调整。",
+            "pad_y": "填充Y",
+            "Vertical position of content within padding (0=top, 0.5=center, 1=bottom). Shift+drag content in preview to adjust.": "内容在填充区域内的垂直位置（0=顶部，0.5=居中，1=底部）。在预览中按住Shift并拖动内容以调整。",
+            "edge_mode": "边缘模式",
+            "clamp: extend edge pixels. repeat: tile the image. mirror: tile with mirroring.": "clamp：扩展边缘像素。repeat：平铺图像。mirror：镜像平铺。",
+            "width_mult": "宽度倍数",
+            "Multiply the crop width by this factor.": "将裁剪宽度乘以该系数。",
+            "height_mult": "高度倍数",
+            "Multiply the crop height by this factor.": "将裁剪高度乘以该系数。",
+            "divisible_by": "可被整除",
+            "extra_padding": "额外填充",
+            "pad_top": "顶部填充",
+            "Padding pixels on top.": "顶部填充像素。",
+            "pad_bottom": "底部填充",
+            "Padding pixels on bottom.": "底部填充像素。",
+            "pad_left": "左填充",
+            "Padding pixels on left.": "左侧填充像素。",
+            "pad_right": "右填充",
+            "Padding pixels on right.": "右侧填充像素。",
+            "invert_crop": "反转裁剪",
+            "bboxes": "Bboxes"
+        }
+    },
+    "StartRecordCUDAMemoryHistory": {
+        "title": "开始记录 CUDA 显存历史",
+        "description": "此节点始终运行。开始记录 CUDA 内存分配历史，可使用 EndRecordCUDAMemoryHistory 结束并保存。",
+        "inputs": {
+            "input": "输入"
+        },
+        "outputs": {
+            "input": "输入"
+        },
+        "widgets": {
+            "enabled": "启用",
+            "None: disable, 'state': keep info for allocated memory, 'all': keep history of all alloc/free calls": "None：禁用，'state'：保留已分配内存的信息，'all'：保留所有分配/释放调用的历史记录",
+            "context": "上下文",
+            "None: no tracebacks, 'state': tracebacks for allocated memory, 'alloc': for alloc calls, 'all': for free calls": "None：无回溯，'state'：已分配内存的回溯，'alloc'：分配调用的回溯，'all'：释放调用的回溯",
+            "stacks": "堆栈",
+            "'python': Python/TorchScript/inductor frames, 'all': also C++ frames": "'python'：Python/TorchScript/inductor 帧，'all'：还包括 C++ 帧",
+            "max_entries": "最大条目数",
+            "Maximum number of entries to record": "要记录的最大条目数"
+        }
+    },
+    "WanVideoMemoryEfficientSageAttentionPatch": {
+        "title": "WanVideo 内存高效 Sage 注意力补丁",
+        "description": "EXPERIMENTAL! Activates custom sageattention on the WanVideo self-attention to reduce peak VRAM usage, overrides the attention mode. Requires latest sageattention version.",
+        "inputs": {
+            "model": "模型"
+        },
+        "outputs": {
+            "model": "模型"
+        }
+    },
+    "ScreencapStream": {
+        "title": "屏幕捕获流",
+        "description": "从浏览器屏幕/窗口共享流中捕获一帧。\n点击“开始捕获”选择要共享的屏幕或窗口。\n节点中显示实时预览。适用于自动队列。\n\n裁剪控制：\n- 在预览上拖动以绘制裁剪框\n- 在框内拖动以移动它\n- 拖动边缘或角以调整大小\n- Shift+拖动以锁定宽高比\n- 右键单击或双击以清除裁剪",
+        "outputs": {
+            "image": "图像"
+        },
+        "widgets": {
+            "frame_data": "帧数据",
+            "crop_width": "裁剪宽度",
+            "crop_height": "裁剪高度"
+        }
+    },
+    "VisualizeCUDAMemoryHistory": {
+        "title": "可视化 CUDA 显存历史",
+        "description": "可视化 CUDA 内存分配历史文件，在浏览器中打开",
+        "inputs": {
+            "snapshot_path": "快照路径"
+        },
+        "outputs": {
+            "output_path": "输出路径"
+        }
+    },
+    "NABLA_AttentionKJ": {
+        "title": "NABLA 注意力 KJ",
+        "description": "实验性节点，用于将注意力模式修补为视频模型使用 NABLA 稀疏注意力，目前仅适用于 Kadinsky5",
+        "inputs": {
+            "model": "模型",
+            "latent": "隐空间",
+            "Only used to get the latent shape": "仅用于获取隐空间形状"
+        },
+        "outputs": {
+            "MODEL": "模型"
+        },
+        "widgets": {
+            "window_time": "时间窗口",
+            "Temporal attention window size": "时间注意力窗口大小",
+            "window_width": "宽度窗口",
+            "Spatial attention window size": "空间注意力窗口大小",
+            "window_height": "高度窗口",
+            "sparsity": "稀疏度",
+            "torch_compile": "Torch编译",
+            "Most likely required for reasonable memory usage": "很可能需要以保证合理的内存使用"
+        }
+    },
+    "LTXVImgToVideoInplaceKJ": {
+        "title": "LTXV 图像转视频（原地）KJ",
+        "description": "用编码后的输入图像替换视频隐空间帧，使用 DynamicCombo，需要 ComfyUI 0.8.1 和前端 1.33.4 或更高版本。",
+        "inputs": {
+            "vae": "Vae",
+            "Video VAE used to encode the images": "用于编码图像的视频 VAE",
+            "latent": "隐空间",
+            "Video latent to insert images into": "要插入图像的视频隐空间"
+        },
+        "outputs": {
+            "latent": "隐空间",
+            "The video latent with the images inserted and latent noise mask updated.": "已插入图像并更新了隐空间噪声蒙版的视频隐空间。"
+        },
+        "widgets": {
+            "num_images": "生成图像数量",
+            "Select how many images to insert": "选择要插入的图像数量",
+            "strength_1": "强度_1",
+            "Strength for image 1.": "图像 1 的强度。",
+            "image_1": "图像1",
+            "Image 1 to insert into the video latent.": "要插入视频隐空间的图像 1。",
+            "index_1": "索引 1",
+            "Frame index for image 1 (in pixel space).": "图像 1 的帧索引（像素空间）。",
+            "strength_2": "强度_2",
+            "Strength for image 2.": "图像 2 的强度。",
+            "image_2": "图像2",
+            "Image 2 to insert into the video latent.": "要插入视频隐空间的图像 2。",
+            "index_2": "索引 2",
+            "Frame index for image 2 (in pixel space).": "图像 2 的帧索引（像素空间）。",
+            "strength_3": "强度_3",
+            "Strength for image 3.": "图像 3 的强度。",
+            "image_3": "图像_3",
+            "Image 3 to insert into the video latent.": "要插入视频隐空间的图像 3。",
+            "index_3": "索引 3",
+            "Frame index for image 3 (in pixel space).": "图像 3 的帧索引（像素空间）。",
+            "strength_4": "强度_4",
+            "Strength for image 4.": "图像 4 的强度。",
+            "image_4": "图像_4",
+            "Image 4 to insert into the video latent.": "要插入视频隐空间的图像 4。",
+            "index_4": "索引 4",
+            "Frame index for image 4 (in pixel space).": "图像 4 的帧索引（像素空间）。",
+            "strength_5": "强度 5",
+            "Strength for image 5.": "图像 5 的强度。",
+            "image_5": "图像_5",
+            "Image 5 to insert into the video latent.": "要插入视频隐空间的图像 5。",
+            "index_5": "索引 5",
+            "Frame index for image 5 (in pixel space).": "图像 5 的帧索引（像素空间）。",
+            "strength_6": "强度 6",
+            "Strength for image 6.": "图像 6 的强度。",
+            "image_6": "图像_6",
+            "Image 6 to insert into the video latent.": "要插入视频隐空间的图像 6。",
+            "index_6": "索引 6",
+            "Frame index for image 6 (in pixel space).": "图像 6 的帧索引（像素空间）。",
+            "strength_7": "强度 7",
+            "Strength for image 7.": "图像 7 的强度。",
+            "image_7": "图像_7",
+            "Image 7 to insert into the video latent.": "要插入视频隐空间的图像 7。",
+            "index_7": "索引 7",
+            "Frame index for image 7 (in pixel space).": "图像 7 的帧索引（像素空间）。",
+            "strength_8": "强度 8",
+            "Strength for image 8.": "图像 8 的强度。",
+            "image_8": "图像_8",
+            "Image 8 to insert into the video latent.": "要插入视频隐空间的图像 8。",
+            "index_8": "索引 8",
+            "Frame index for image 8 (in pixel space).": "图像 8 的帧索引（像素空间）。",
+            "strength_9": "强度 9",
+            "Strength for image 9.": "图像 9 的强度。",
+            "image_9": "图像_9",
+            "Image 9 to insert into the video latent.": "要插入视频隐空间的图像 9。",
+            "index_9": "索引 9",
+            "Frame index for image 9 (in pixel space).": "图像 9 的帧索引（像素空间）。",
+            "strength_10": "强度 10",
+            "Strength for image 10.": "图像 10 的强度。",
+            "image_10": "图像_10",
+            "Image 10 to insert into the video latent.": "要插入视频隐空间的图像 10。",
+            "index_10": "索引 10",
+            "Frame index for image 10 (in pixel space).": "图像 10 的帧索引（像素空间）。",
+            "strength_11": "强度 11",
+            "Strength for image 11.": "图像 11 的强度。",
+            "image_11": "图像 11",
+            "Image 11 to insert into the video latent.": "要插入视频隐空间的图像 11。",
+            "index_11": "索引 11",
+            "Frame index for image 11 (in pixel space).": "图像 11 的帧索引（像素空间）。",
+            "strength_12": "强度 12",
+            "Strength for image 12.": "图像 12 的强度。",
+            "image_12": "图像 12",
+            "Image 12 to insert into the video latent.": "要插入视频隐空间的图像 12。",
+            "index_12": "索引 12",
+            "Frame index for image 12 (in pixel space).": "图像 12 的帧索引（像素空间）。",
+            "strength_13": "强度 13",
+            "Strength for image 13.": "图像 13 的强度。",
+            "image_13": "图像 13",
+            "Image 13 to insert into the video latent.": "要插入视频隐空间的图像 13。",
+            "index_13": "索引 13",
+            "Frame index for image 13 (in pixel space).": "图像 13 的帧索引（像素空间）。",
+            "strength_14": "强度 14",
+            "Strength for image 14.": "图像 14 的强度。",
+            "image_14": "图像 14",
+            "Image 14 to insert into the video latent.": "要插入视频隐空间的图像 14。",
+            "index_14": "索引 14",
+            "Frame index for image 14 (in pixel space).": "图像 14 的帧索引（像素空间）。",
+            "strength_15": "强度 15",
+            "Strength for image 15.": "图像 15 的强度。",
+            "image_15": "图像 15",
+            "Image 15 to insert into the video latent.": "要插入视频隐空间的图像 15。",
+            "index_15": "索引 15",
+            "Frame index for image 15 (in pixel space).": "图像 15 的帧索引（像素空间）。",
+            "strength_16": "强度 16",
+            "Strength for image 16.": "图像 16 的强度。",
+            "image_16": "图像 16",
+            "Image 16 to insert into the video latent.": "要插入视频隐空间的图像 16。",
+            "index_16": "索引 16",
+            "Frame index for image 16 (in pixel space).": "图像 16 的帧索引（像素空间）。",
+            "strength_17": "强度 17",
+            "Strength for image 17.": "图像 17 的强度。",
+            "image_17": "图像 17",
+            "Image 17 to insert into the video latent.": "要插入视频隐空间的图像 17。",
+            "index_17": "索引 17",
+            "Frame index for image 17 (in pixel space).": "图像 17 的帧索引（像素空间）。",
+            "strength_18": "强度 18",
+            "Strength for image 18.": "图像 18 的强度。",
+            "image_18": "图像 18",
+            "Image 18 to insert into the video latent.": "要插入视频隐空间的图像 18。",
+            "index_18": "索引 18",
+            "Frame index for image 18 (in pixel space).": "图像 18 的帧索引（像素空间）。",
+            "strength_19": "强度 19",
+            "Strength for image 19.": "图像 19 的强度。",
+            "image_19": "图像 19",
+            "Image 19 to insert into the video latent.": "要插入视频隐空间的图像 19。",
+            "index_19": "索引 19",
+            "Frame index for image 19 (in pixel space).": "图像 19 的帧索引（像素空间）。",
+            "strength_20": "强度 20",
+            "Strength for image 20.": "图像 20 的强度。",
+            "image_20": "图像 20",
+            "Image 20 to insert into the video latent.": "要插入视频隐空间的图像 20。",
+            "index_20": "索引 20",
+            "Frame index for image 20 (in pixel space).": "图像 20 的帧索引（像素空间）。"
+        }
+    },
+    "ImageSharpenKJ": {
+        "title": "图像锐化 KJ",
+        "description": "GPU 加速的图像锐化，支持多种方法。\n\n**RCAS** — AMD 的鲁棒对比度自适应锐化（来自 FSR）。\n单个 5 抽头交叉滤波器，自适应局部对比度。\n伪影最少，适合一般用途，几乎无需调整。\n\n**自适应 USM** — 带局部方差调制的反锐化蒙版。\n对细节丰富的区域锐化更多，对平坦/噪点区域锐化更少。\n通过半径和阈值参数比 RCAS 更可控。\n\n**高通** — 提取高频细节并将其混合回去。\n产生“清晰度”增强的感觉。使用半径控制细节尺度。\n\n**反卷积** — Richardson-Lucy 迭代反卷积。\n可以从模糊中恢复实际丢失的细节，而不仅仅是增强边缘。\n使用半径作为估计的模糊核，并使用迭代次数控制收敛。",
+        "inputs": {
+            "image": "图像"
+        },
+        "outputs": {
+            "output": "输出"
+        },
+        "widgets": {
+            "method": "方法",
+            "strength": "强度",
+            "0 = no sharpening, 1 = full RCAS sharpening.": "0 = 无锐化，1 = 完全 RCAS 锐化。",
+            "Sharpening multiplier. Values above 1.0 give aggressive sharpening.": "锐化倍率。高于 1.0 的值会提供强烈的锐化效果。",
+            "radius": "半径",
+            "Gaussian blur sigma for the unsharp mask. Larger = enhances coarser detail.": "反锐化蒙版的高斯模糊 sigma。越大 = 增强更粗糙的细节。",
+            "threshold": "阈值",
+            "Noise gate. Higher = only sharpen areas with more texture/detail. 0 = sharpen everything.": "噪点门限。越高 = 仅锐化具有更多纹理/细节的区域。0 = 锐化所有区域。",
+            "Blend factor for high-frequency detail. Values above 1.0 give a punchier effect.": "高频细节的混合因子。高于 1.0 的值会产生更强烈的效果。",
+            "Gaussian blur sigma defining the frequency cutoff. Larger = enhances coarser detail.": "定义频率截止的高斯模糊 sigma。越大 = 增强更粗糙的细节。",
+            "Blend between original (0) and fully deconvolved (1).": "在原始图像 (0) 和完全反卷积 (1) 之间混合。",
+            "Sigma of the assumed Gaussian blur to reverse.": "要反转的假设高斯模糊的 sigma。",
+            "iterations": "迭代次数",
+            "Richardson-Lucy iterations. More = sharper but slower, diminishing returns past ~20.": "Richardson-Lucy 迭代次数。越多 = 越清晰但越慢，超过约 20 次后收益递减。"
+        }
+    },
+    "LTX2AudioLatentNormalizingSampling": {
+        "title": "LTX2 音频隐空间归一化采样",
+        "description": "通过在指定的采样步骤归一化音频隐空间来提高 LTX2 生成的音频质量。",
+        "inputs": {
+            "model": "模型",
+            "The model to add preview override to.": "要添加预览覆盖的模型。"
+        },
+        "outputs": {
+            "MODEL": "模型",
+            "The model with Audio Latent Normalizing Sampling.": "带有音频隐空间归一化采样的模型。"
+        },
+        "widgets": {
+            "audio_normalization_factors": "音频归一化因子",
+            "Comma-separated list of audio normalization factors to apply at each sampling step. For example, '1,1,0.25,1,1,0.25,1,1' will apply a factor of 0.25 at the 3rd and 6th steps.": "在每个采样步骤应用的音频归一化因子列表，以逗号分隔。例如，'1,1,0.25,1,1,0.25,1,1' 将在第 3 步和第 6 步应用 0.25 的因子。"
+        }
+    },
+    "ModelMemoryUseReportPatch": {
+        "title": "模型显存占用报告补丁",
+        "description": "Adds callbacks to model to report memory usage during after sampling",
+        "inputs": {
+            "model": "模型"
+        },
+        "outputs": {
+            "MODEL": "模型"
+        }
+    },
+    "ContextWindowsVisualizerKJ": {
+        "title": "上下文窗口可视化器 (KJ)",
+        "description": "ComfyUI 上下文窗口的交互式可视化：窗口位置、重叠、融合权重和逐帧混合，实时更新。可选地将设置应用于模型，类似于核心的“上下文窗口（手动）”节点。",
+        "inputs": {
+            "frame_units": "帧单位",
+            "Units for the frame counts below. 'pixel' converts to latent via ((n - 1) // temporal_downscale) + 1.": "以下帧计数的单位。'pixel' 通过 ((n - 1) // temporal_downscale) + 1 转换为隐空间。",
+            "context_schedule": "上下文调度",
+            "Window placement. standard_static_balanced: static with windows spread evenly (uniform seams, any frame count). batched_shifted: zero-overlap windows whose seams roll each step (~1.0x compute, pairs with freenoise). Uniform schedules also shift per step.": "窗口放置方式。standard_static_balanced：静态，窗口均匀分布（均匀接缝，任意帧数）。batched_shifted：零重叠窗口，其接缝每步滚动（约 1.0 倍计算量，与 freenoise 搭配）。均匀调度也会每步移动。",
+            "fuse_method": "融合方法",
+            "How overlapping windows are blended.": "重叠窗口的混合方式。",
+            "model": "模型",
+            "Optional model to apply the context windows to during sampling.": "可选模型，在采样期间将上下文窗口应用于该模型。"
+        },
+        "outputs": {
+            "model": "模型",
+            "Model with context windows applied; only valid when a model is connected.": "应用了上下文窗口的模型；仅在连接模型时有效。"
+        },
+        "widgets": {
+            "dim": "维度",
+            "Latent temporal dimension: 2 for WAN-like, 0 for AnimateDiff-style. Model path only.": "隐空间时间维度：WAN 类为 2，AnimateDiff 风格为 0。仅模型路径。",
+            "temporal_downscale": "时间下采样",
+            "VAE temporal compression for pixel->latent. WAN/Hunyuan/CogVideoX=4, Mochi=6, LTXV=8.": "像素到隐空间的 VAE 时间压缩。WAN/Hunyuan/CogVideoX=4，Mochi=6，LTXV=8。",
+            "num_frames": "帧数",
+            "Total frames to visualize. Ignored on the model path (the real latent length is used).": "要可视化的总帧数。在模型路径上忽略（使用实际的隐空间长度）。",
+            "context_length": "上下文长度",
+            "Window length.": "窗口长度。",
+            "context_overlap": "上下文重叠",
+            "Overlap between windows.": "窗口之间的重叠。",
+            "context_stride": "上下文步幅",
+            "Max stride power for uniform schedules (adds dilated windows: 1, 2, 4...).": "均匀调度的最大步幅幂（添加扩张窗口：1、2、4...）。",
+            "closed_loop": "闭环",
+            "Wrap looped-schedule windows around the end back to frame 0.": "将循环调度窗口从末尾环绕回第 0 帧。",
+            "causal_window_fix": "因果窗口修复",
+            "Prepend an anchor frame to non-0 windows, stripped after the model call.": "在非 0 窗口前添加锚定帧，模型调用后移除。",
+            "freenoise": "自由噪声",
+            "FreeNoise noise shuffling for smoother blending. Model path only.": "FreeNoise 噪声洗牌以实现更平滑的混合。仅模型路径。",
+            "cond_retain_index_list": "条件保留索引列表",
+            "Comma-separated window-relative indices that keep their original conditioning, e.g. '0' reuses the start frame's cond per window. No viz effect; model path only.": "逗号分隔的窗口相对索引，保留其原始条件，例如 '0' 在每个窗口中重用起始帧的条件。无可视化效果；仅模型路径。"
+        }
+    },
+    "LTXVAudioVideoMask": {
+        "title": "LTXV 音频视频蒙版",
+        "description": "根据指定的时间范围为视频和音频隐空间创建噪声蒙版。新内容将在这些蒙版区域内生成。",
+        "inputs": {
+            "max_length": "最大长度",
+            "'truncate': cut latent to end_time length. 'pad': extend latent to end_time. 'partial': mask range within existing latent.": "'truncate'：将隐空间裁剪到 end_time 长度。'pad'：将隐空间扩展到 end_time。'partial'：在现有隐空间内遮罩范围。",
+            "video_latent": "视频隐空间",
+            "audio_latent": "音频隐空间",
+            "existing_mask_mode": "现有蒙版模式",
+            "How to combine with existing noise masks if present. 'add' will take the max of existing and new mask, 'overwrite' will replace with new mask. 'subtract' will set the masked region to 0 instead of 1, effectively unmasking it.": "如果存在现有噪声蒙版，如何与之组合。'add' 将取现有蒙版和新蒙版的最大值，'overwrite' 将用新蒙版替换，'subtract' 将遮罩区域设置为 0 而不是 1，从而有效地取消遮罩。"
+        },
+        "outputs": {
+            "video_latent": "视频隐空间",
+            "audio_latent": "音频隐空间"
+        },
+        "widgets": {
+            "video_fps": "视频帧率",
+            "video_start_time": "视频起始时间（MM:SS）",
+            "Start time in seconds for the video mask.": "视频蒙版的开始时间（秒）。",
+            "video_end_time": "视频结束时间（MM:SS）",
+            "End time in seconds for the video mask.": "视频蒙版的结束时间（秒）。",
+            "audio_start_time": "音频开始时间",
+            "Start time in seconds for the audio mask.": "音频蒙版的开始时间（秒）。",
+            "audio_end_time": "音频结束时间",
+            "End time in seconds for the audio mask.": "音频蒙版的结束时间（秒）。"
+        }
+    },
+    "Ideogram4PromptBuilderKJ": {
+        "title": "Ideogram 4 提示词构建器 KJ",
+        "description": "用于 Ideogram 4 结构化 JSON 描述格式的可视化提示词构建器。\n\n在画布上拖拽以绘制区域；选择区域以设置其类型（obj/text）、描述、文本和调色板。将背景和可选样式字段设置为小部件。输出组装好的描述 JSON 字符串。\n\nbbox 归一化为 0-1000 网格，格式为 [ymin, xmin, ymax, xmax]；宽度/高度设置画布宽高比。\n\n画布控制：\n- 拖拽：绘制新区域\n- Ctrl/Cmd-拖拽：即使在现有区域之上也强制绘制新区域\n- 单击：选择区域 · Alt-单击：循环选择重叠区域\n- 双击：内联编辑描述\n- 右键单击：区域列表（选择 / 删除 / 复制 / 重新排序，顶部 = 最前）\n- Del / Backspace：删除所选区域\n- Ctrl/Cmd + C / V / D：复制 / 粘贴 / 复制所选区域\n- obj/text 旁边的 bbox 字段（px / out）可编辑\n\n颜色样本：\n- 单击：编辑 · 拖拽：重新排序 · 右键单击：移除\n- 悬停 + Ctrl/Cmd + C / V：复制 / 粘贴十六进制颜色\n- \"+\"：添加颜色（如果剪贴板中有颜色，则使用该颜色）\n\n工具栏：\n- Live：使用实时采样预览作为背景（并获取最终结果）\n- Grab BG / Clear BG：使用最后生成的图像作为背景\n- 亮度滑块、token 估算以及复制 / 粘贴 / 全部清除",
+        "inputs": {
+            "import_mode": "导入模式",
+            "How a wired import_json is used: 'when empty' only seeds the editor while it has no regions (then the editor wins, so you can edit); 'always' makes the wired JSON authoritative so its changes always propagate to the output.": "已连接 import_json 的使用方式：'when empty' 仅在编辑器没有区域时作为初始数据（之后以编辑器为准，可自由编辑）；'always' 使已连接的 JSON 成为权威数据，其更改始终同步到输出。",
+            "image": "图像",
+            "Optional reference image shown as the editor background (and behind the preview).": "可选的参考图像，显示为编辑器背景（并位于预览之后）。",
+            "import_json": "导入 JSON",
+            "Optional: a full caption JSON. When connected, it loads into the editor and drives the output per 'import_mode'.": "可选：完整的描述 JSON。连接后，它会加载到编辑器中，并根据“导入模式”驱动输出。",
+            "bboxes": "Bboxes",
+            "Optional pixel-space boxes ({x, y, width, height}) used to seed the editor's regions when it has none. Ignored once regions exist.": "可选的像素空间框（{x, y, width, height}），用于在编辑器没有区域时初始化区域。一旦存在区域，此参数将被忽略。"
+        },
+        "outputs": {
+            "prompt": "提示词",
+            "preview": "预览图象",
+            "bboxes": "Bboxes",
+            "width": "宽度",
+            "height": "高度"
+        },
+        "widgets": {
+            "width": "宽度",
+            "Canvas aspect width (also the pixel grid the bbox is measured in). Ideogram 4 needs multiples of 16.": "画布宽高比的宽度（也是 bbox 测量的像素网格）。Ideogram 4 需要 16 的倍数。",
+            "height": "高度",
+            "Canvas aspect height (also the pixel grid the bbox is measured in). Ideogram 4 needs multiples of 16.": "画布宽高比的高度（也是 bbox 测量的像素网格）。Ideogram 4 需要 16 的倍数。",
+            "high_level_description": "高级描述",
+            "Optional one-line overview of the whole image (blank = omitted).": "可选的整张图像的单行概述（留空 = 省略）。",
+            "background": "背景",
+            "Required scene background description.": "必需的场景背景描述。",
+            "style": "样式",
+            "photo": "照片",
+            "art_style": "艺术风格",
+            "aesthetics": "美学",
+            "Style descriptor (blank = omitted).": "风格描述符（留空 = 省略）。",
+            "lighting": "照明系统",
+            "medium": "中等",
+            "style_palette_data": "风格调色板数据",
+            "Serialized style color palette from the editor (managed by the node UI).": "来自编辑器的序列化风格调色板（由节点 UI 管理）。",
+            "elements_data": "元素数据",
+            "Serialized regions from the editor (managed by the node UI).": "来自编辑器的序列化区域（由节点 UI 管理）。",
+            "bg_brightness": "背景亮度",
+            "Background image brightness % (managed by the node UI slider).": "背景图像亮度百分比（由节点 UI 滑块管理）。",
+            "output_format": "输出形式",
+            "Output JSON formatting (set via the editor toolbar): 'compact' (default, what Ideogram 4 expects) or 'pretty' (indented, for readability).": "输出 JSON 格式（通过编辑器工具栏设置）：'compact'（默认，Ideogram 4 所期望的）或 'pretty'（缩进，便于阅读）。",
+            "coord_mode": "坐标模式",
+            "bbox coordinate space (set via the editor toolbar): 'normalized' (default, the 0-1000 grid Ideogram 4 expects) or 'absolute' (pixels, scaled by width/height — NON-STANDARD for Ideogram, for other tools that want pixel coords).": "bbox 坐标空间（通过编辑器工具栏设置）：'normalized'（默认，Ideogram 4 期望的 0-1000 网格）或 'absolute'（像素，按宽度/高度缩放 — 对 Ideogram 非标准，适用于需要像素坐标的其他工具）。",
+            "bbox_order": "bbox 轴顺序",
+            "bbox axis order (set via the editor toolbar): 'yx' (default, Ideogram's [ymin,xmin,ymax,xmax]) or 'xy' ([xmin,ymin,xmax,ymax], the standard x1,y1,x2,y2 that Qwen-VL and most detectors use).": "bbox 轴顺序（通过编辑器工具栏设置）：'yx'（默认，Ideogram 的 [ymin,xmin,ymax,xmax]）或 'xy'（[xmin,ymin,xmax,ymax]，Qwen-VL 和大多数检测器使用的标准 x1,y1,x2,y2）。"
+        }
+    },
+    "LTX2LoraLoaderAdvanced": {
+        "title": "LTX2 LoRA 加载器（高级）",
+        "description": "Advanced LoRA loader with per-block strength control for LTX2 models",
+        "inputs": {
+            "lora_name": "LoRA名称",
+            "The name of the LoRA.": "LoRA 的名称。",
+            "model": "模型",
+            "The diffusion model the LoRA will be applied to.": "将应用 LoRA 的扩散模型。",
+            "opt_lora_path": "选择Lora路径",
+            "Absolute path of the LoRA.": "LoRA 的绝对路径。",
+            "blocks": "模块",
+            "Selected DiT blocks configuration": "选定的 DiT 块配置"
+        },
+        "outputs": {
+            "model": "模型",
+            "rank": "Rank",
+            "loaded_keys_info": "已加载键信息",
+            "The modified diffusion model.": "修改后的扩散模型。",
+            "Possible rank of the LoRA.": "LoRA 可能的秩。",
+            "List of loaded keys and their alpha values.": "已加载键及其 alpha 值的列表。"
+        },
+        "widgets": {
+            "strength_model": "强度",
+            "How strongly to modify the diffusion model. This value can be negative.": "修改扩散模型的强度。此值可以为负。",
+            "video": "视频",
+            "Strength for video attention layers.": "视频注意力层的强度。",
+            "video_to_audio": "视频到音频",
+            "Strength for video to audio cross-attention layers.": "视频到音频交叉注意力层的强度。",
+            "audio": "音频",
+            "Strength for audio attention layers.": "音频注意力层的强度。",
+            "audio_to_video": "音频到视频",
+            "Strength for audio to video cross-attention layers.": "音频到视频交叉注意力层的强度。",
+            "other": "其他",
+            "Strength for layers not caught by other layer filters.": "未被其他层过滤器捕获的层的强度。"
+        }
+    },
+    "ModelPreviewOverrideKJ": {
+        "title": "模型预览覆盖 KJ",
+        "description": "在此节点上添加一个专用的实时预览框，并支持覆盖最大分辨率。默认的 ComfyUI 预览上限为 512 像素；此节点将其自身的预览直接发送到节点上的 DOM 组件，以便像素空间模型（Chroma Radiance、ZImage、HiDream-O1 等）可以在完整的采样器分辨率下进行预览。",
+        "inputs": {
+            "model": "模型",
+            "Model to attach the preview override to.": "要附加预览覆盖的模型。",
+            "vae": "Vae",
+            "Optional LTX VAE for true-RGB previews. TAEHV-LTX = fast tiny decode (VAE pinned to GPU). Any other LTX VAE = full-quality decode via vae.decode() — MUCH slower per step.": "可选的LTX VAE，用于真RGB预览。TAEHV-LTX = 快速微型解码（VAE固定在GPU上）。任何其他LTX VAE = 通过vae.decode()进行全质量解码——每一步要慢得多。",
+            "tiny_vae": "微型 VAE",
+            "Tiny VAE decoder from models/vae_approx for true-RGB previews. Overrides Latent2RGB and the 'vae' input.": "来自models/vae_approx的微型VAE解码器，用于真RGB预览。覆盖Latent2RGB和'vae'输入。"
+        },
+        "outputs": {
+            "MODEL": "模型",
+            "Model with preview override attached.": "附加了预览覆盖的模型。"
+        },
+        "widgets": {
+            "max_resolution": "最大分辨率",
+            "Max preview side in pixels for the live widget. 0 = full sampler resolution (no downscale).": "实时控件预览的最大边长（像素）。0 = 采样器全分辨率（不缩小）。",
+            "jpeg_quality": "JPEG 质量",
+            "JPEG quality for the live preview transport.": "实时预览传输的JPEG质量。",
+            "suppress_default_preview": "抑制默认预览",
+            "Suppress the standard sampler-node preview overlay while sampling, so only this node's frame updates. Progress bar still advances normally.": "采样时抑制标准采样器节点的预览覆盖，仅更新此节点的帧。进度条仍正常前进。",
+            "preview_frames": "预览帧数",
+            "Frames to sample from each video step's latent for animated preview. 1 = single frame (current behavior, fastest). >1 = animated WebP playing back at preview_fps. Only applies to video models (5D latents); ignored for image models.": "每个视频步骤的隐空间采样的帧数，用于动画预览。1 = 单帧（当前行为，最快）。>1 = 以preview_fps播放的动画WebP。仅适用于视频模型（5D隐空间）；图像模型忽略。",
+            "preview_fps": "预览帧率",
+            "Playback FPS for the animated WebP preview. Ignored when preview_frames=1.": "动画WebP预览的播放帧率。当preview_frames=1时忽略。"
+        }
+    },
+    "RandomImageFromBatch": {
+        "title": "从批次中随机选取图像",
+        "description": "从图像或蒙版批次中，在选定的索引范围内选取一系列帧。当随机性为 0 时，选取在范围内均匀分布；当随机性为 1 时，无放回均匀随机；介于两者之间的值线性混合。输出始终按批次索引排序。负索引从末尾计数（-1 = 最后一个）。",
+        "inputs": {
+            "input": "输入",
+            "Image or mask batch to sample from.": "要从中采样的图像或蒙版批次。"
+        },
+        "outputs": {
+            "output": "输出"
+        },
+        "widgets": {
+            "start_index": "开始索引",
+            "Inclusive start of the sampling range. Negative values count from the end.": "采样范围的包含起始点。负值从末尾计数。",
+            "end_index": "结束索引",
+            "Inclusive end of the sampling range. -1 means the last frame.": "采样范围的包含结束点。 -1 表示最后一帧。",
+            "num_frames": "帧数",
+            "How many frames to pick from the range.": "从范围中选取多少帧。",
+            "randomness": "随机度",
+            "0 = evenly spaced across the range, 1 = uniformly random without replacement, in-between = linear blend (jittered even spacing).": "0 = 在范围内均匀分布，1 = 无放回均匀随机，介于两者之间 = 线性混合（抖动均匀分布）。",
+            "min_distance": "最小间距",
+            "Minimum gap (in frames) between consecutive picks. 0 = no minimum. Picks are pushed forward to satisfy this; later picks may clamp to the range end.": "连续选取之间的最小间隔（帧数）。0 = 无最小间隔。选取将向前推进以满足此要求；后续选取可能会限制在范围末尾。",
+            "max_distance": "最大的距离",
+            "Maximum gap (in frames) between consecutive picks. 0 = no maximum. Picks are pulled in to satisfy this, which may compress the sequence toward the start.": "连续选取之间的最大间隔（帧数）。0 = 无最大间隔。选取将向内收缩以满足此要求，这可能会将序列压缩到开头。",
+            "seed": "随机种子",
+            "Random seed for reproducible sampling. Ignored when randomness is 0.": "用于可重现采样的随机种子。当随机性为 0 时忽略。"
+        }
+    },
+    "AddNoiseToTrackPath": {
+        "title": "向轨道添加噪声",
+        "inputs": {
+            "tracks": "跟踪"
+        },
+        "outputs": {
+            "TRACKS": "轨道"
+        },
+        "widgets": {
+            "strength": "强度",
+            "seed": "随机种子",
+            "noise_x_ratio": "水平噪声比率",
+            "Multiplier for horizontal noise component": "水平噪声分量的乘数",
+            "noise_y_ratio": "垂直噪声比率",
+            "Multiplier for vertical noise component": "垂直噪声分量的乘数",
+            "noise_temporal_ratio": "时间噪声比率",
+            "Multiplier for temporal (frame-to-frame) noise": "时间（帧间）噪声的乘数"
+        }
+    },
+    "BBOXToBoundingBoxKJ": {
+        "title": "BBOX 转边界框 KJ",
+        "description": "将KJNodes BBOX转换为核心节点（如裁剪图像）使用的原生BOUNDING_BOX字典。",
+        "inputs": {
+            "bbox": "BBox",
+            "BBOX from any KJNodes node. Single boxes and lists of boxes are both accepted.": "来自任何KJNodes节点的BBOX。接受单个框和框列表。",
+            "bbox_format": "BBox格式",
+            "Layout of the incoming values.": "传入值的布局。"
+        },
+        "outputs": {
+            "bounding_box": "边界框"
+        },
+        "widgets": {
+            "index": "索引",
+            "When the input holds multiple boxes, pick which one to output. Clamped to the last box.": "当输入包含多个框时，选择要输出的框。限制到最后一个框。"
+        }
+    },
+    "LTX2BlockLoraSelect": {
+        "title": "LTX2 块 Lora 选择",
+        "description": "选择单个块的 alpha 值，值为 0 时完全移除该块",
+        "outputs": {
+            "blocks": "模块",
+            "The modified diffusion model.": "修改后的扩散模型。"
+        }
+    },
+    "ColorMatchV2": {
+        "title": "颜色匹配 V2",
+        "description": "color-matcher enables color transfer across images which comes in handy for automatic  \ncolor-grading of photographs, paintings and film sequences as well as light-field  \nand stopmotion corrections.  \n\nThe methods behind the mappings are based on the approach from Reinhard et al.,  \nthe Monge-Kantorovich Linearization (MKL) as proposed by Pitie et al. and our analytical solution  \nto a Multi-Variate Gaussian Distribution (MVGD) transfer in conjunction with classical histogram   \nmatching. As shown below our HM-MVGD-HM compound outperforms existing methods.   \nhttps://github.com/hahnec/color-matcher/   \n\n'reinhard_lab_gpu' method uses Kornia for GPU-accelerated color transfer in Lab color space.",
+        "inputs": {
+            "image_target": "目标图像",
+            "image_ref": "参考图像",
+            "method": "方法"
+        },
+        "outputs": {
+            "image": "图像"
+        },
+        "widgets": {
+            "strength": "强度",
+            "multithread": "多线程"
+        }
+    },
+    "WanImageToVideoSVIPro": {
+        "title": "Wan 图像转视频 SVIPro",
+        "inputs": {
+            "positive": "积极情感",
+            "negative": "消极情感",
+            "anchor_samples": "锚定样本",
+            "prev_samples": "先前样本"
+        },
+        "outputs": {
+            "positive": "积极情感",
+            "negative": "消极情感",
+            "latent": "隐空间"
+        },
+        "widgets": {
+            "length": "长度",
+            "motion_latent_count": "运动隐空间数量"
+        }
+    },
+    "DecodeAndSaveVideo": {
+        "title": "解码并保存视频",
+        "description": "从隐空间表示解码视频帧和音频，组合它们并保存为视频文件，而无需在内存中保留中间图像。",
+        "inputs": {
+            "video_latent": "视频隐空间",
+            "The latent representation of the video frames.": "视频帧的隐空间表示。",
+            "format": "格式转换",
+            "The format to save the video as.": "保存视频的格式。",
+            "codec": "编码格式",
+            "The codec to use for the video.": "用于视频的编解码器。",
+            "video_vae": "视频VAE",
+            "The VAE model to use for encoding.": "用于编码的VAE模型。",
+            "audio_latent": "音频隐空间",
+            "The latent representation of the audio frames.": "音频帧的隐空间表示。",
+            "audio_vae": "音频VAE",
+            "The VAE model to use for decoding audio.": "用于解码音频的VAE模型。"
+        },
+        "widgets": {
+            "fps": "帧率",
+            "Frame rate for the output video.": "输出视频的帧率。",
+            "filename_prefix": "文件名前缀",
+            "The prefix for the file to save. This may include formatting information such as %date:yyyy-MM-dd% or %Empty Latent Image.width% to include values from nodes.": "保存文件的前缀。可包含格式化信息，如%date:yyyy-MM-dd%或%Empty Latent Image.width%以包含来自节点的值。",
+            "tiling": "分块",
+            "tile_size": "分块大小",
+            "Size of the tiles to decode. Smaller tiles use less memory but take more time.": "解码的块大小。较小的块使用更少内存，但耗时更长。",
+            "overlap": "重叠",
+            "Amount of overlap between tiles. Higher overlap can improve quality at the edges of tiles but uses more memory and takes more time.": "块之间的重叠量。更高的重叠可以提高块边缘的质量，但会使用更多内存并耗时更长。",
+            "temporal_size": "时间维度大小",
+            "Only used for video VAEs: Amount of frames to decode at a time. Higher value than number of frames = disabled": "仅用于视频VAE：一次解码的帧数。值大于总帧数 = 禁用",
+            "temporal_overlap": "时间重叠",
+            "Only used for video VAEs: Amount of frames to overlap. Higher overlap can improve quality at the edges of temporal tiles but uses more memory and takes more time.": "仅用于视频VAE：重叠的帧数。更高的重叠可以提高时间块边缘的质量，但会使用更多内存并耗时更长。"
+        }
+    },
+    "ConsolidateMasksKJ": {
+        "title": "合并蒙版",
+        "description": "Consolidates a batch of separate masks by finding the largest group of masks that fit inside a tile of the given width and height (including the padding), and repeating until no more masks can be combined.",
+        "inputs": {
+            "masks": "遮罩"
+        },
+        "outputs": {
+            "MASK": "遮罩"
+        },
+        "widgets": {
+            "width": "宽度",
+            "height": "高度",
+            "padding": "分区"
+        }
+    },
+    "MiniMaxLowVRAMAttention": {
+        "title": "MiniMax H3 低显存注意力",
+        "description": "在不改变数学计算的前提下，降低 MiniMax H3 注意力的峰值显存占用。将注意力调用拆分为多个头组，使内核内部临时数据（int8 q/k 副本、fp32 累加器）随块数减少，同时保持融合的 qkv 缓冲区存活，并在使用后立即释放 qkv 缓冲区和归一化后的块输入。输出与未修补的模型完全一致。",
+        "inputs": {
+            "model": "模型"
+        },
+        "outputs": {
+            "model": "模型"
+        },
+        "widgets": {
+            "head_chunks": "头组数",
+            "Number of head groups to split the attention call into. Kernel-internal transients scale down with this; heads are independent so the result is unchanged.": "将注意力调用拆分为的头组数量。内核内部临时数据随此值按比例减少；头之间相互独立，因此结果不变。"
+        }
+    },
+    "PreviewLatentNoiseMask": {
+        "title": "预览隐空间噪声蒙版",
+        "description": "Previews the latent noise mask",
+        "inputs": {
+            "latent": "隐空间"
+        },
+        "outputs": {
+            "mask": "遮罩图像"
+        }
+    },
+    "LTXVAddGuideMulti": {
+        "title": "LTXV 添加多个引导",
+        "description": "在指定的帧索引处添加多个引导图像并设置强度，使用 DynamicCombo，需要 ComfyUI 0.8.1 和前端 1.33.4 或更高版本。",
+        "inputs": {
+            "positive": "积极情感",
+            "Positive conditioning to which guide keyframe info will be added": "将添加引导关键帧信息的正向条件",
+            "negative": "消极情感",
+            "Negative conditioning to which guide keyframe info will be added": "将添加引导关键帧信息的反向条件",
+            "vae": "Vae",
+            "Video VAE used to encode the guide images": "用于编码引导图像的视频 VAE",
+            "latent": "隐空间",
+            "Video latent, guides are added to the end of this latent": "视频隐空间，引导将添加到该隐空间的末尾"
+        },
+        "outputs": {
+            "positive": "积极情感",
+            "negative": "消极情感",
+            "latent": "隐空间",
+            "Video latent with added guides": "添加了引导的视频隐空间"
+        },
+        "widgets": {
+            "num_guides": "引导数量",
+            "Select how many guide images to use": "选择要使用的引导图像数量",
+            "image_1": "图像1",
+            "frame_idx_1": "帧索引 1",
+            "Frame index for guide 1.": "引导 1 的帧索引。",
+            "strength_1": "强度_1",
+            "Strength for guide 1.": "引导 1 的强度。",
+            "image_2": "图像2",
+            "frame_idx_2": "帧索引 2",
+            "Frame index for guide 2.": "引导 2 的帧索引。",
+            "strength_2": "强度_2",
+            "Strength for guide 2.": "引导 2 的强度。",
+            "image_3": "图像_3",
+            "frame_idx_3": "帧索引 3",
+            "Frame index for guide 3.": "引导 3 的帧索引。",
+            "strength_3": "强度_3",
+            "Strength for guide 3.": "引导 3 的强度。",
+            "image_4": "图像_4",
+            "frame_idx_4": "帧索引 4",
+            "Frame index for guide 4.": "引导 4 的帧索引。",
+            "strength_4": "强度_4",
+            "Strength for guide 4.": "引导 4 的强度。",
+            "image_5": "图像_5",
+            "frame_idx_5": "帧索引 5",
+            "Frame index for guide 5.": "引导 5 的帧索引。",
+            "strength_5": "强度 5",
+            "Strength for guide 5.": "引导 5 的强度。",
+            "image_6": "图像_6",
+            "frame_idx_6": "帧索引 6",
+            "Frame index for guide 6.": "引导 6 的帧索引。",
+            "strength_6": "强度 6",
+            "Strength for guide 6.": "引导 6 的强度。",
+            "image_7": "图像_7",
+            "frame_idx_7": "帧索引 7",
+            "Frame index for guide 7.": "引导 7 的帧索引。",
+            "strength_7": "强度 7",
+            "Strength for guide 7.": "引导 7 的强度。",
+            "image_8": "图像_8",
+            "frame_idx_8": "帧索引 8",
+            "Frame index for guide 8.": "引导 8 的帧索引。",
+            "strength_8": "强度 8",
+            "Strength for guide 8.": "引导 8 的强度。",
+            "image_9": "图像_9",
+            "frame_idx_9": "帧索引 9",
+            "Frame index for guide 9.": "引导 9 的帧索引。",
+            "strength_9": "强度 9",
+            "Strength for guide 9.": "引导 9 的强度。",
+            "image_10": "图像_10",
+            "frame_idx_10": "帧索引 10",
+            "Frame index for guide 10.": "引导 10 的帧索引。",
+            "strength_10": "强度 10",
+            "Strength for guide 10.": "引导 10 的强度。",
+            "image_11": "图像 11",
+            "frame_idx_11": "帧索引 11",
+            "Frame index for guide 11.": "引导 11 的帧索引。",
+            "strength_11": "强度 11",
+            "Strength for guide 11.": "引导 11 的强度。",
+            "image_12": "图像 12",
+            "frame_idx_12": "帧索引 12",
+            "Frame index for guide 12.": "引导 12 的帧索引。",
+            "strength_12": "强度 12",
+            "Strength for guide 12.": "引导 12 的强度。",
+            "image_13": "图像 13",
+            "frame_idx_13": "帧索引 13",
+            "Frame index for guide 13.": "引导 13 的帧索引。",
+            "strength_13": "强度 13",
+            "Strength for guide 13.": "引导 13 的强度。",
+            "image_14": "图像 14",
+            "frame_idx_14": "帧索引 14",
+            "Frame index for guide 14.": "引导 14 的帧索引。",
+            "strength_14": "强度 14",
+            "Strength for guide 14.": "引导 14 的强度。",
+            "image_15": "图像 15",
+            "frame_idx_15": "帧索引 15",
+            "Frame index for guide 15.": "引导 15 的帧索引。",
+            "strength_15": "强度 15",
+            "Strength for guide 15.": "引导 15 的强度。",
+            "image_16": "图像 16",
+            "frame_idx_16": "帧索引 16",
+            "Frame index for guide 16.": "引导 16 的帧索引。",
+            "strength_16": "强度 16",
+            "Strength for guide 16.": "引导 16 的强度。",
+            "image_17": "图像 17",
+            "frame_idx_17": "帧索引 17",
+            "Frame index for guide 17.": "引导 17 的帧索引。",
+            "strength_17": "强度 17",
+            "Strength for guide 17.": "引导 17 的强度。",
+            "image_18": "图像 18",
+            "frame_idx_18": "帧索引 18",
+            "Frame index for guide 18.": "引导 18 的帧索引。",
+            "strength_18": "强度 18",
+            "Strength for guide 18.": "引导 18 的强度。",
+            "image_19": "图像 19",
+            "frame_idx_19": "帧索引 19",
+            "Frame index for guide 19.": "引导 19 的帧索引。",
+            "strength_19": "强度 19",
+            "Strength for guide 19.": "引导 19 的强度。",
+            "image_20": "图像 20",
+            "frame_idx_20": "帧索引 20",
+            "Frame index for guide 20.": "引导 20 的帧索引。",
+            "strength_20": "强度 20",
+            "Strength for guide 20.": "引导 20 的强度。"
+        }
+    },
+    "SamplerSelfRefineVideo": {
+        "title": "采样器 自细化视频",
+        "description": "尝试实现 https://github.com/agwmon/self-refine-video，仅供测试，可能无法按预期工作。",
+        "inputs": {
+            "latent": "隐空间",
+            "Optional latent input to get input shape for LTX2 audio/video separation": "可选的隐空间输入，用于获取 LTX2 音频/视频分离的输入形状"
+        },
+        "outputs": {
+            "SAMPLER": "采样器"
+        },
+        "widgets": {
+            "input_mode": "输入模式",
+            "How to configure the step plan": "如何配置步进计划",
+            "start_step1": "范围1起始步",
+            "Start step for range 1": "范围1的起始步",
+            "end_step1": "范围1结束步",
+            "End step for range 1": "范围1的结束步",
+            "steps_1": "范围1步数",
+            "Number of P&P steps for range 1": "范围1的 P&P 步数",
+            "start_step2": "范围2起始步",
+            "Start step for range 2": "范围2的起始步",
+            "end_step2": "范围2结束步",
+            "End step for range 2": "范围2的结束步",
+            "steps_2": "范围2步数",
+            "Number of P&P steps for range 2": "范围2的 P&P 步数",
+            "stochastic_plan": "随机计划",
+            "Format: 'start-end:steps,start-end:steps' e.g. '2-5:3,6-14:1'": "格式：'起始-结束:步数,起始-结束:步数'，例如 '2-5:3,6-14:1'",
+            "certain_percentage": "确定像素百分比",
+            "Percentage of certain pixels to consider the frame as certain and skip further refinement": "将帧视为确定并跳过进一步细化的确定像素百分比",
+            "uncertainty_threshold": "不确定性阈值",
+            "Threshold of uncertainty to consider a pixel uncertain": "将像素视为不确定的不确定性阈值",
+            "verbose": "详细日志",
+            "Enable verbose logging during sampling": "在采样期间启用详细日志记录",
+            "seed": "随机种子",
+            "Seed for stochastic sampling": "随机采样的种子"
+        }
+    },
+    "LTX2MemoryEfficientSageAttentionPatch": {
+        "title": "LTX2 内存高效 Sage Attention 补丁",
+        "description": "实验性功能！激活自定义 sageattention 以降低峰值显存使用，覆盖注意力模式。需要最新的 sageattention 版本。",
+        "inputs": {
+            "model": "模型"
+        },
+        "outputs": {
+            "model": "模型"
+        },
+        "widgets": {
+            "triton_kernels": "Triton 内核",
+            "Use Triton fused RoPE kernel on the self-attention Q/K. Requires Triton.": "在自注意力 Q/K 上使用 Triton 融合 RoPE 内核。需要 Triton。"
+        }
+    },
+    "GGUFLoaderKJ": {
+        "title": "GGUF 加载器 KJ",
+        "description": "加载具有高级选项的 GGUF 模型，需要安装 [ComfyUI-GGUF](https://github.com/city96/ComfyUI-GGUF)。",
+        "inputs": {
+            "model_name": "模型名称",
+            "extra_model_name": "额外模型名称",
+            "An extra gguf model to load and merge into the main model, for example VACE module": "要加载并合并到主模型中的额外 GGUF 模型，例如 VACE 模块",
+            "dequant_dtype": "反量化数据类型",
+            "patch_dtype": "补丁数据类型",
+            "attention_override": "注意力覆盖",
+            "Overrides the used attention implementation, requires the respective library to be installed": "覆盖使用的注意力实现，需要安装相应的库"
+        },
+        "outputs": {
+            "MODEL": "模型"
+        },
+        "widgets": {
+            "patch_on_device": "设备上补丁",
+            "enable_fp16_accumulation": "启用FP16累加",
+            "Enable torch.backends.cuda.matmul.allow_fp16_accumulation, required minimum pytorch version 2.7.1": "启用 torch.backends.cuda.matmul.allow_fp16_accumulation，需要最低 pytorch 版本 2.7.1"
+        }
+    },
+    "BlockifyMask": {
+        "title": "块化蒙版",
+        "description": "通过将每个蒙版的边界框划分为指定大小的块，并填充包含原始蒙版任何部分的块来创建块蒙版。",
+        "inputs": {
+            "masks": "遮罩"
+        },
+        "outputs": {
+            "mask": "遮罩图像"
+        },
+        "widgets": {
+            "block_size": "区块尺寸",
+            "Size of blocks in pixels (smaller = smaller blocks)": "块的大小（像素）（越小 = 块越小）",
+            "device": "设备",
+            "Device to use for processing": "用于处理的设备"
+        }
+    },
+    "LTXVChunkFeedForward": {
+        "title": "LTXV 前馈分块",
+        "description": "实验性功能，可能会改变模型输出！！将前馈激活分块以减少峰值显存使用。",
+        "inputs": {
+            "model": "模型"
+        },
+        "outputs": {
+            "model": "模型"
+        },
+        "widgets": {
+            "chunks": "分块数",
+            "Number of chunks to split the feedforward activations into to reduce peak VRAM usage.": "将前馈激活拆分的块数，以减少峰值显存使用。",
+            "dim_threshold": "维度阈值",
+            "Dimension threshold above which to apply chunking.": "应用分块的维度阈值。"
+        }
+    },
+    "FastPreviewBatch": {
+        "title": "快速预览批次",
+        "description": "将图像批次编码为全I帧H.264 MP4缩略图条，并显示为交互式网格。点击图块可放大并支持上一张/下一张浏览。避免生成大量PNG文件。",
+        "inputs": {
+            "input": "输入",
+            "Image or mask batch to preview.": "要预览的图像或蒙版批次。"
+        },
+        "widgets": {
+            "max_thumb_size": "最大缩略图尺寸",
+            "Detail-view (mp4) thumbnail max side. Strip thumbs for the grid are auto-capped at 256.": "详情视图（mp4）缩略图的最大边长。网格的条状缩略图自动限制为256。",
+            "crf": "CRF动态码率",
+            "H.264 CRF. Lower = higher quality / larger file.": "H.264 CRF。值越低 = 质量越高 / 文件越大。",
+            "max_grid_frames": "最大网格帧数",
+            "If batch exceeds this, frames are stride-sampled evenly.": "如果批次超过此值，帧将按步长均匀采样。"
+        }
+    }
+}

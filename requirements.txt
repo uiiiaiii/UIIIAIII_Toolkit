@@ -1,0 +1,8 @@
+# ComfyUI-Agnes 插件依赖
+#
+# 注意：torch、Pillow(PIL)、numpy、folder_paths、comfy.utils 等核心库
+# 已由 ComfyUI 内置提供，无需在此声明。
+#
+# 以下为插件运行所需的额外依赖：
+
+requests>=2.28.0

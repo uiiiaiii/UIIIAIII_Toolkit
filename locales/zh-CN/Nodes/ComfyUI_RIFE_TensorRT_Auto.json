@@ -1,0 +1,33 @@
+{
+    "AutoRifeTensorrt": {
+        "title": "自动 RIFE TensorRT",
+        "outputs": {},
+        "widgets": {
+            "用于视频帧插值的输入帧": "帧",
+            "TensorRT 模型已构建并加载": "RIFE TensorRT 模型",
+            "处理指定帧数后清除 CUDA 缓存": "处理 N 帧后清除缓存",
+            "帧插值倍数": "倍数",
+            "使用 CUDA 图以获得更好性能": "使用 CUDA 图",
+            "处理完成后保持模型在内存中加载": "保持模型加载"
+        }
+    },
+    "AutoLoadRifeTensorrtModel": {
+        "title": "下载/加载 RIFE TensorRT 模型",
+        "outputs": {},
+        "widgets": {
+            "用于视频帧插值的 RIFE 模型。这些模型已通过 TensorRT 测试。从配置加载。": "模型",
+            "构建 TensorRT 引擎的精度。从配置加载。": "精度",
+            "TensorRT 引擎的分辨率范围。小型：384-1080 像素，中型：672-1312 像素。较小的范围使用更少的显存。": "分辨率配置",
+            "自定义分辨率配置（当配置为'自定义'时使用）": "自定义配置"
+        }
+    },
+    "CustomResolutionConfig": {
+        "title": "RIFE 自定义分辨率配置",
+        "outputs": {},
+        "widgets": {
+            "最小分辨率维度": "最小维度",
+            "最优分辨率维度（最常见）": "最优维度",
+            "最大分辨率维度": "最大维度"
+        }
+    }
+}

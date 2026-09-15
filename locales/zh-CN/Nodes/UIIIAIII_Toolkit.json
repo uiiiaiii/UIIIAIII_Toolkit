@@ -1,0 +1,36 @@
+{
+    "AgnesTextToImage": {
+        "title": "Agnes Text to Image (agnes-image-2.1-flash)",
+        "description": "Generate an image from a text prompt using the Agnes Image 2.1 Flash model"
+    },
+    "AgnesImageToImage": {
+        "title": "Agnes Image to Image (agnes-image-2.1-flash)",
+        "description": "Edit an input image from a text instruction using the Agnes Image 2.1 Flash model"
+    },
+    "AgnesTextToVideo": {
+        "title": "Agnes Text to Video (agnes-video-v2.0)",
+        "description": "Generate a video from a text prompt using the Agnes Video V2.0 model"
+    },
+    "AgnesImageToVideo": {
+        "title": "Agnes Image to Video (agnes-video-v2.0)",
+        "description": "Turn an input image into an animated video using the Agnes Video V2.0 model"
+    },
+    "AgnesKeyframeAnimation": {
+        "title": "Agnes Keyframe Animation (agnes-video-v2.0)",
+        "description": "Generate a smooth transition video between multiple keyframes using the Agnes Video V2.0 model"
+    },
+    "QwenImageEdit": {
+        "title": "Qwen Image Edit (qwen-image-edit-2511)",
+        "description": "Edit input images with the Qwen-Image-Edit-2511 model (ModelScope API-Inference), supporting single/multi image editing"
+    },
+    "TextPreview": {
+        "title": "Text Input/Preview",
+        "description": "二合一文本节点：可编辑输入文本，或接收上游文本自动同步到编辑框后修改输出"
+    },
+    "BackgroundFill": {
+        "title": "Background Fill"
+    },
+    "RandomNoiseSeed": {
+        "title": "Random Noise Seed"
+    }
+}

@@ -1,0 +1,11 @@
+{
+    "ADE": "AnimateDiff",
+    "Show Deprecated": "显示弃用",
+    "🎭🅐🅓 Show deprecated nodes": "🎭🅐🅓显示弃用节点",
+    "Show Experimental": "显示实验性",
+    "🎭🅐🅓 Show experimental nodes": "🎭🅐🅓显示实验节点",
+    "eps": "等概率抽样",
+    "v-prediction": "V预测",
+    "lcm": "LCM",
+    "zsnr": "规格化信噪比"
+}

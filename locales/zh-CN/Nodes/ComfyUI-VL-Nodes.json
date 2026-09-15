@@ -1,0 +1,286 @@
+{
+    "KeyeModelLoader": {
+        "title": "👁️ 加载 Keye-VL 模型",
+        "description": "加载 Keye-VL 模型",
+        "widgets": {
+            "model_name": "模型名称",
+            "quantization": "量化",
+            "precision": "精度",
+            "device": "设备",
+            "auto_download": "自动下载",
+            "min_pixels": "最小像素",
+            "max_pixels": "最大像素",
+            "use_flash_attention_2": "使用FlashAttention2"
+        },
+        "outputs": {
+            "keye_model": "keye模型"
+        }
+    },
+    "KeyeNode": {
+        "title": "👁️ Keye-VL 图片转文本",
+        "inputs": {
+            "keye_model": "keye模型",
+            "image": "图像"
+        },
+        "widgets": {
+            "prompt": "提示词",
+            "special_captioning_token": "特殊token标记",
+            "thinking_mode": "思考模式",
+            "resolution_control": "分辨率控制",
+            "device": "设备",
+            "max_new_tokens": "最大新token数",
+            "temperature": "温度",
+            "do_sample": "进行采样",
+            "seed": "种子",
+            "min_pixels": "最小像素",
+            "max_pixels": "最大像素",
+            "resized_height": "调整后的高度",
+            "resized_width": "调整后的宽度"
+        },
+        "outputs": {
+            "text": "文本",
+            "thinking": "思考",
+            "text_list": "文本列表",
+            "thinking_list": "思考列表"
+        }
+    },
+    "VLNodesFreeMemoryAPI": {
+        "title": "👁️ 释放内存（VL节点）",
+        "inputs": {
+            "anything": "任何"
+        },
+        "widgets": {
+            "add_waiting": "添加等待"
+        },
+        "outputs": {
+            "output": "输出"
+        }
+    },
+    "LoadImagesFromDirBatch_VL": {
+        "title": "👁️ 从目录加载图像（批量）[VL]",
+        "description": "从目录中加载一批图像。灵感来源于 InspirePack，并进行了一些修改",
+        "widgets": {
+            "directory": "目录",
+            "image_load_cap": "图像加载上限",
+            "start_index": "起始索引",
+            "load_always": "始终加载",
+            "sort_method": "排序方式",
+            "filename_text_extension": "文件名文本扩展名",
+            "traverse_subdirs": "遍历子目录"
+        },
+        "outputs": {
+            "IMAGE": "图像",
+            "MASK": "遮罩",
+            "COUNT": "计数",
+            "FILE_NAME": "文件名称"
+        }
+    },
+    "LoadImagesFromDirList_VL": {
+        "title": "👁️ 从目录加载图像（列表）[VL]",
+        "description": "从目录加载一批图像。灵感来自 InspirePack，并进行了一些修改。",
+        "widgets": {
+            "directory": "目录",
+            "image_load_cap": "图像加载上限",
+            "start_index": "起始索引",
+            "load_always": "始终加载",
+            "sort_method": "排序方式",
+            "filename_text_extension": "文件名文本扩展名",
+            "traverse_subdirs": "遍历子目录"
+        },
+        "outputs": {
+            "FILE_NAME": "文件名称"
+        }
+    },
+    "TextSave_VL": {
+        "title": "👁️ 保存文本文件 [VL]",
+        "widgets": {
+            "path": "路径",
+            "filename_prefix": "文件名前缀",
+            "filename_delimiter": "文件名分隔符",
+            "filename_number_padding": "文件名数字填充",
+            "file_extension": "文件扩展名",
+            "encoding": "编码",
+            "filename_suffix": "文件名后缀",
+            "skip_overwrite": "跳过覆盖"
+        }
+    },
+    "GGUF_VLM_ModelLoader": {
+        "title": "👁️ 加载 GGUF VLM 模型",
+        "widgets": {
+            "model_name": "模型名称",
+            "vision_model_name": "视觉模型名称",
+            "chat_handler_type": "聊天处理器类型",
+            "n_gpu_layers": "分配GPU层数",
+            "n_ctx": "上下文长度",
+            "device": "设备",
+            "verbose": "详细程度",
+            "chat_template": "对话模版"
+        },
+        "outputs": {
+            "gguf_model": "gguf模型"
+        }
+    },
+    "GGUF_VLM_ImageToText": {
+        "title": "👁️ GGUF VLM 图片转文本",
+        "inputs": {
+            "gguf_model": "gguf模型",
+            "image": "图像"
+        },
+        "widgets": {
+            "resize_image": "调整图像大小",
+            "enable_thinking": "启用思考",
+            "system_prompt": "系统提示词",
+            "prompt": "提示词",
+            "special_captioning_token": "特殊token标记",
+            "seed": "种子",
+            "temperature": "温度",
+            "max_tokens": "最大token数",
+            "repeat_penalty": "重复惩罚"
+        },
+        "outputs": {
+            "text": "文本",
+            "thinking": "思考",
+            "text_list": "文本列表",
+            "thinking_list": "思考列表"
+        }
+    },
+    "LFM2TransformerModelLoader": {
+        "title": "👁️ 加载LFM2-VL HF模型",
+        "widgets": {
+            "model_id": "模型ID",
+            "quantization": "量化",
+            "precision": "精度",
+            "device": "设备",
+            "auto_download": "自动下载"
+        },
+        "outputs": {
+            "lfm2_hf_model": "lfm2_hf模型"
+        }
+    },
+    "LFM2TransformerImageToText": {
+        "title": "👁️ LFM2-VL HF 图片转文本",
+        "inputs": {
+            "lfm2_hf_model": "lfm2_hf模型",
+            "image": "图像"
+        },
+        "widgets": {
+            "prompt": "提示词",
+            "special_captioning_token": "特殊token标记",
+            "seed": "种子",
+            "max_new_tokens": "最大新token数",
+            "temperature": "温度",
+            "repetition_penalty": "重复惩罚"
+        },
+        "outputs": {
+            "text": "文本",
+            "text_list": "文本列表"
+        }
+    },
+    "OvisU1VLModelLoader": {
+        "title": "👁️ 加载Ovis-U1 VL 模型",
+        "widgets": {
+            "model_name": "模型名称",
+            "quantization": "量化",
+            "precision": "精度",
+            "device": "设备",
+            "auto_download": "自动下载"
+        },
+        "outputs": {
+            "model": "模型"
+        }
+    },
+    "OvisU1ImageCaption": {
+        "title": "👁️ Ovis-U1 图片说明",
+        "inputs": {
+            "model": "模型",
+            "image": "图像"
+        },
+        "widgets": {
+            "resize_image": "调整图像大小",
+            "prompt": "提示词",
+            "special_captioning_token": "特殊token标记",
+            "seed": "种子",
+            "max_new_tokens": "最大新token数",
+            "temperature": "温度",
+            "do_sample": "进行采样"
+        },
+        "outputs": {
+            "text": "文本",
+            "text_list": "文本列表"
+        }
+    },
+    "Ovis25ModelLoader": {
+        "title": "👁️ 加载 Ovis-2.5 模型",
+        "widgets": {
+            "model_name": "模型名称",
+            "precision": "精度",
+            "device": "设备",
+            "auto_download": "自动下载"
+        },
+        "outputs": {
+            "ovis25_model": "ovis25模型"
+        }
+    },
+    "Ovis25ImageToText": {
+        "title": "👁️ Ovis-2.5 图片转文本",
+        "inputs": {
+            "ovis25_model": "ovis25模型",
+            "image": "图像"
+        },
+        "widgets": {
+            "prompt": "提示词",
+            "special_captioning_token": "特殊token标记",
+            "seed": "种子",
+            "resize_image": "调整图像大小",
+            "enable_thinking": "启用思考",
+            "enable_thinking_budget": "启用思考预算",
+            "max_new_tokens": "最大生成token数",
+            "thinking_budget": "思考预算",
+            "temperature": "温度",
+            "do_sample": "进行采样"
+        },
+        "outputs": {
+            "text": "文本",
+            "thinking": "思考",
+            "text_list": "文本列表",
+            "thinking_list": "思考列表"
+        }
+    },
+    "InternVL3_5_ModelLoader": {
+        "title": "👁️ 加载InternVL3.5模型",
+        "widgets": {
+            "model_name": "模型名称",
+            "quantization": "量化",
+            "precision": "精度",
+            "device": "设备",
+            "auto_download": "自动下载",
+            "use_flash_attn": "使用Flash Attn"
+        },
+        "outputs": {
+            "internvl_model": "internvl模型"
+        }
+    },
+    "InternVL3_5_ImageToText": {
+        "title": "👁️ InternVL3.5 图片转文本",
+        "inputs": {
+            "internvl_model": "internvl模型",
+            "image": "图像"
+        },
+        "widgets": {
+            "system_prompt": "系统提示词",
+            "prompt": "提示词",
+            "special_captioning_token": "特殊token标记",
+            "seed": "种子",
+            "max_num_tiles": "最大图块数",
+            "max_new_tokens": "最大新token数",
+            "do_sample": "进行采样",
+            "temperature": "温度"
+        },
+        "outputs": {
+            "text": "文本",
+            "thinking": "思考",
+            "text_list": "文本列表",
+            "thinking_list": "思考列表"
+        }
+    }
+}

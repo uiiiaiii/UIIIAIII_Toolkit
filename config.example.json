@@ -1,0 +1,14 @@
+{
+    "agnes_api_key": "",
+    "modelscope_api_key": "",
+    "translator_base_url": "https://api.openai.com/v1",
+    "translator_api_key": "",
+    "translator_model": "gpt-4o-mini",
+    "translator_use_dict": true,
+    "translator_target_lang": "zh-CN",
+    "translation_enabled": true,
+    "locale": "zh-CN",
+    "button_style": "plain",
+    "disabled_plugins": [],
+    "translate_options": true
+}

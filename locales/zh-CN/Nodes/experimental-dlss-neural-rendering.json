@@ -1,0 +1,187 @@
+{
+    "DLSS5RuntimeSetup": {
+        "title": "DLSS 运行时设置（一键）",
+        "description": "实验性 DLSS 桥接器的一键设置。仅在确认后开始下载；帧生成功能为可选，需单独安装。",
+        "outputs": {},
+        "widgets": {
+            "Check readiness, install the verified bridge, or install optional Frame Generation separately.": "检查就绪状态、安装已验证的桥接器，或单独安装可选的帧生成功能。",
+            "Required before any verified download starts; Check location does not download.": "在任何已验证的下载开始前必须确认；检查位置不会触发下载。"
+        }
+    },
+    "DLSS5EasyPipeline": {
+        "title": "实验性 DLSS — 简易超分与渲染",
+        "description": "实验性单节点 DLSS 路径。场景选择持久或受限的原生处理方式，适用于所有操作；完整的 ComfyUI IMAGE 输入和输出保留在内存中。仅神经渲染时忽略质量和缩放。",
+        "inputs": {
+            "Input image or frame sequence; Auto selects a preset from its frame count.": "输入图像或帧序列；自动模式会根据帧数选择预设。"
+        },
+        "outputs": {},
+        "widgets": {
+            "Long video uses up to 24 frames per native window (16 + 8 overlap); Fast preview uses up to 10 (8 + 2 overlap), for all operations. The complete ComfyUI IMAGE input and output remain in memory.": "长视频每个原生窗口最多使用 24 帧（16 + 8 重叠）；快速预览最多使用 10 帧（8 + 2 重叠），适用于所有操作。完整的 ComfyUI IMAGE 输入和输出保留在内存中。",
+            "Choose SR plus rendering, SR alone, or Neural Rendering alone. Scale and quality are ignored for Neural Rendering only.": "选择超分加渲染、仅超分或仅神经渲染。仅神经渲染时忽略缩放和质量。",
+            "Grows output width and height; ignored for Neural Rendering only.": "增大输出宽度和高度；仅神经渲染时忽略。",
+            "Super Resolution quality preset; ignored for Neural Rendering only.": "超分辨率质量预设；仅神经渲染时忽略。",
+            "Easy Neural Rendering look; this preset sets style and structure controls, and is ignored for Upscale only.": "简易神经渲染外观；此预设设置风格和结构控制，仅超分时忽略。",
+            "Blends the selected Easy look; ignored for Upscale only.": "混合所选的简易外观；仅超分时忽略。"
+        }
+    },
+    "DLSSSuperResolution": {
+        "title": "NVIDIA DLSS 超分辨率（非官方桥接器）",
+        "description": "实验性 NVIDIA DLSS 超分辨率桥接器。深度和运动矢量是成对的引导，必须描述相同的输入帧。",
+        "inputs": {
+            "Input image or frame sequence to upscale.": "要放大的输入图像或帧序列。",
+            "Depth guide paired with motion_vectors for the same input frames.": "与 motion_vectors 配对的深度引导，用于相同的输入帧。",
+            "Current-to-previous motion guide paired with depth; encoded around 0.5 in pixel-relative RGB values.": "与深度配对的当前到先前运动引导；以像素相对 RGB 值编码，中心约为 0.5。"
+        },
+        "outputs": {},
+        "widgets": {
+            "Grows output width and height by this factor, so 2x creates four times as many pixels.": "按此因子增大输出宽度和高度，因此 2 倍会生成四倍像素。",
+            "DLSS quality preset; DLAA selects anti-aliasing, while scale still controls output dimensions.": "DLSS 质量预设；DLAA 选择抗锯齿，而缩放仍控制输出尺寸。"
+        }
+    },
+    "DLSS5FullPipeline": {
+        "title": "DLSS 超分 + 实验性神经渲染（高级）",
+        "description": "高级实验性超分后接神经渲染。使用配对的深度和当前到先前运动引导；持久模式保留原始全序列行为。",
+        "inputs": {
+            "Input image or frame sequence processed by SR and Neural Rendering.": "由超分和神经渲染处理的输入图像或帧序列。",
+            "Depth guide paired with motion_vectors for every input frame.": "与 motion_vectors 配对的深度引导，用于每个输入帧。",
+            "Current-to-previous pixel motion guide paired with depth and encoded around 0.5.": "与深度配对的当前到先前像素运动引导，编码中心约为 0.5。"
+        },
+        "outputs": {},
+        "widgets": {
+            "Grows output width and height by this factor; 2x means four times the pixels.": "按此因子增大输出宽度和高度；2 倍意味着四倍像素。",
+            "DLSS Super Resolution quality preset.": "DLSS 超分辨率质量预设。",
+            "Persistent processes the whole sequence; bounded limits each native window to chunk_size + history_overlap frames. The complete ComfyUI IMAGE input and output remain in memory.": "持久模式处理整个序列；受限模式将每个原生窗口限制为 chunk_size + history_overlap 帧。完整的 ComfyUI IMAGE 输入和输出保留在内存中。",
+            "Base frame count / stride between bounded window starts; each native window includes up to chunk_size + history_overlap frames. Ignored by Persistent full sequence.": "受限窗口起始之间的基本帧数/步长；每个原生窗口最多包含 chunk_size + history_overlap 帧。持久全序列模式忽略此参数。",
+            "Extra frames appended to each bounded window and blended with the next window; ignored by Persistent full sequence.": "附加到每个受限窗口并与下一个窗口混合的额外帧；持久全序列模式忽略此参数。",
+            "Neural Rendering style selection; 0 is neutral.": "神经渲染风格选择；0 为中性。",
+            "Amount of the selected Neural Rendering style.": "所选神经渲染风格的强度。",
+            "Overall Neural Rendering effect intensity.": "整体神经渲染效果强度。",
+            "Preserves local structure during Neural Rendering.": "在神经渲染期间保留局部结构。",
+            "-1 delegates skin structure to the runtime; non-negative values override it.": "-1 将皮肤结构委托给运行时；非负值覆盖它。",
+            "Lets the runtime generate a mask when no explicit effect mask is used.": "当未使用显式效果蒙版时，允许运行时生成蒙版。",
+            "Enable only when the supplied depth guide uses the opposite near/far convention.": "仅当提供的深度引导使用相反的近/远约定时启用。"
+        }
+    },
+    "DLSS5NeuralRendering": {
+        "title": "实验性 DLSS 神经渲染",
+        "description": "实验性 DLSS 神经渲染。将深度和运动矢量同时连接以进行时间引导；皮肤 -1 委托给运行时，首次使用可能下载所需模型。",
+        "inputs": {
+            "Input image or frame sequence for Neural Rendering.": "用于神经渲染的输入图像或帧序列。",
+            "Optional mask that limits Neural Rendering to selected image areas.": "可选蒙版，将神经渲染限制在选定的图像区域。",
+            "Optional depth guide; connect it only together with motion_vectors.": "可选的深度引导；仅与 motion_vectors 一起连接。",
+            "Optional current-to-previous motion guide; connect it only together with depth.": "可选的当前到先前运动引导；仅与深度一起连接。"
+        },
+        "outputs": {},
+        "widgets": {
+            "Neural Rendering style; 0 is the neutral baseline.": "神经渲染风格；0 为中性基线。",
+            "Amount of the selected style.": "所选风格的强度。",
+            "Overall Neural Rendering effect intensity.": "整体神经渲染效果强度。",
+            "Local structure preservation strength.": "局部结构保留强度。",
+            "-1 delegates skin structure to the runtime; non-negative values override it.": "-1 将皮肤结构委托给运行时；非负值覆盖它。",
+            "Requests automatic runtime masking independently of effect_mask; any supplied effect mask limits the final image afterward.": "独立于 effect_mask 请求自动运行时蒙版；任何提供的效果蒙版随后会限制最终图像。",
+            "Enable only if the supplied depth guide is near/far inverted.": "仅当提供的深度引导是近/远反转时启用。"
+        }
+    },
+    "DLSS5RuntimeStatus": {
+        "title": "DLSS 5 运行时状态",
+        "description": "只读的文件、Python、NumPy、VapourSynth 和插件加载诊断。每个隔离探针有 10 秒超时。不测试 GPU 推理。报告包含本地路径。",
+        "outputs": {}
+    },
+    "DLSS5OpticalFlow": {
+        "title": "DLSS 5 光流引导",
+        "description": "用于实验性 DLSS 节点的快速光流引导。它生成当前到先前的像素运动，以 RGB 编码，中心约为 0.5。",
+        "inputs": {
+            "Input frame sequence used to estimate current-to-previous motion.": "用于估计当前到先前运动的输入帧序列。"
+        },
+        "outputs": {},
+        "widgets": {
+            "Image-pyramid downscale for the fast optical-flow estimator.": "快速光流估计器的图像金字塔降采样。",
+            "Number of optical-flow pyramid levels.": "光流金字塔层数。",
+            "Pixel neighborhood used by the optical-flow solver.": "光流求解器使用的像素邻域。"
+        }
+    },
+    "DLSS5RAFTFlow": {
+        "title": "DLSS 5 RAFT 运动引导",
+        "description": "用于实验性 DLSS 节点的更高质量 RAFT 运动引导。首次使用时下载所选 RAFT 权重，并生成中心约为 0.5 的当前到先前像素运动。",
+        "inputs": {
+            "Input frame sequence used to estimate current-to-previous motion.": "用于估计当前到先前运动的输入帧序列。"
+        },
+        "outputs": {},
+        "widgets": {
+            "RAFT weight set; the selected model downloads on first use.": "RAFT 权重集；所选模型在首次使用时下载。",
+            "Number of frame pairs inferred together; reduce it if memory is limited.": "一起推理的帧对数；如果内存有限，请减少。"
+        }
+    },
+    "DLSS5DepthAnythingV2": {
+        "title": "DLSS 5 Depth Anything V2 引导",
+        "description": "用于实验性 DLSS 节点的 Depth Anything V2 引导。所选模型在首次使用时下载；保持时间归一化以获得稳定的序列级深度范围。",
+        "inputs": {
+            "Input image or sequence used for depth estimation.": "用于深度估计的输入图像或序列。"
+        },
+        "outputs": {},
+        "widgets": {
+            "Depth Anything V2 model; its weights download on first use.": "Depth Anything V2 模型；其权重在首次使用时下载。",
+            "Uses one depth range across the sequence to reduce temporal flicker.": "在序列中使用一个深度范围以减少时间闪烁。",
+            "Frames estimated together; reduce it when memory is limited.": "一起估计的帧数；内存有限时减少。"
+        }
+    },
+    "DLSS5VideoDepthAnything": {
+        "title": "DLSS 5 Video Depth Anything（时间）",
+        "description": "Video Depth Anything Small 为实验性 DLSS 工作流创建时间一致的深度引导。VDA-S 模型在首次使用时下载。",
+        "inputs": {
+            "Input frame sequence used for VDA-S depth estimation.": "用于 VDA-S 深度估计的输入帧序列。"
+        },
+        "outputs": {},
+        "widgets": {
+            "VDA-S inference size; larger sizes favor detail while using more memory.": "VDA-S 推理尺寸；较大的尺寸有利于细节，但使用更多内存。",
+            "Inference precision; FP32 is slower and uses more memory.": "推理精度；FP32 较慢且使用更多内存。"
+        }
+    },
+    "DLSS5FlashDepth": {
+        "title": "DLSS 5 FlashDepth（外部，可选）",
+        "description": "通过独立环境提供的可选高分辨率 FlashDepth 引导。它是实验性的，可能在首次使用时下载所选模型。",
+        "inputs": {
+            "Input frame sequence sent to the separate FlashDepth environment.": "发送到独立 FlashDepth 环境的输入帧序列。"
+        },
+        "outputs": {},
+        "widgets": {
+            "FlashDepth model variant; its assets may download on first use.": "FlashDepth 模型变体；其资源可能在首次使用时下载。",
+            "Required path to the isolated FlashDepth environment Python executable; blank values fail validation.": "隔离 FlashDepth 环境 Python 可执行文件的必需路径；空白值将导致验证失败。",
+            "Required path to the FlashDepth checkout containing train.py; blank values fail validation.": "包含 train.py 的 FlashDepth 代码库的必需路径；空白值将导致验证失败。",
+            "Frame rate passed to FlashDepth for temporal processing.": "传递给 FlashDepth 进行时间处理的帧率。"
+        }
+    },
+    "DLSS5TemporalDepthStabilize": {
+        "title": "DLSS 5 时间深度稳定器",
+        "description": "通过使用当前到先前运动进行重投影来稳定深度序列。使用匹配的帧和引导节点使用的相同 0.5 中心运动编码。",
+        "inputs": {
+            "Depth sequence to stabilize temporally.": "要时间稳定的深度序列。",
+            "Matching current-to-previous motion encoded around 0.5 in pixel-relative channels.": "匹配的当前到先前运动，在像素相对通道中编码，中心约为 0.5。"
+        },
+        "outputs": {},
+        "widgets": {
+            "Blend strength for reprojected prior depth.": "重投影先前深度的混合强度。",
+            "Depth difference at which reprojection confidence falls for disocclusions.": "对于去遮挡，重投影置信度下降的深度差异。"
+        }
+    },
+    "DLSSFrameGeneration": {
+        "title": "NVIDIA DLSS 帧生成（外部工作器）",
+        "description": "用于序列的实验性外部 DLSS 帧生成。提供编码中心约为 0.5 的当前到先前运动矢量；使用前安装其可选工作器。",
+        "inputs": {
+            "Input image sequence; Frame Generation requires at least two frames.": "输入图像序列；帧生成至少需要两帧。",
+            "Current-to-previous motion encoded in RGB around 0.5, with horizontal and vertical components scaled to pixels.": "当前到先前运动，以 RGB 编码，中心约为 0.5，水平和垂直分量按像素缩放。"
+        },
+        "outputs": {},
+        "widgets": {
+            "Number of output frames per input interval; higher multipliers need more generated frames.": "每个输入间隔的输出帧数；更高的倍数需要生成更多帧。",
+            "Source frame rate used to report the multiplied output frame rate.": "用于报告倍增输出帧率的源帧率。",
+            "Detects scene changes and avoids interpolation across a cut.": "检测场景变化并避免在剪切处进行插值。",
+            "Choose an explicit fallback if the experimental worker does not return every requested intermediate frame.": "如果实验性工作器未返回每个请求的中间帧，请选择显式回退。"
+        }
+    },
+    "DLSSFrameGenerationStatus": {
+        "title": "DLSS 帧生成运行时状态",
+        "description": "检查可选的实验性帧生成工作器、运行时和 HAGS 要求是否就绪。",
+        "outputs": {}
+    }
+}

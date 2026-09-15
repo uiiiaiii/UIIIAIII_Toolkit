@@ -1,0 +1,23 @@
+{
+    "DLSS5Settings": {
+        "title": "DLSS5 Settings",
+        "description": "Neural-rendering controls for the NVIDIA DLSS 5 worker. Connect to DLSS5 Enhance Images or DLSS5 Enhance Video File.",
+        "inputs": {},
+        "outputs": {},
+        "widgets": {}
+    },
+    "DLSS5EnhanceImages": {
+        "title": "DLSS5 Enhance Images",
+        "description": "Runs every image through NVIDIA DLSS 5 neural rendering (NGX feature 18) on the native worker. Feed video frames in playback order so temporal accumulation works.",
+        "inputs": {},
+        "outputs": {},
+        "widgets": {}
+    },
+    "DLSS5EnhanceVideoFile": {
+        "title": "DLSS5 Enhance Video File",
+        "description": "Decodes a video file, runs every frame through NVIDIA DLSS 5 neural rendering and re-encodes it, keeping the original timestamps, audio, chapters and metadata. Long videos never enter the workflow as a batch.",
+        "inputs": {},
+        "outputs": {},
+        "widgets": {}
+    }
+}

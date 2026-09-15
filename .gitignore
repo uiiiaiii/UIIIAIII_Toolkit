@@ -1,0 +1,19 @@
+# 配置文件：含真实 API 密钥，不入库（分发后用户通过 config.example.json 参考自行填写）
+config.json
+
+# Python 缓存
+__pycache__/
+*.py[cod]
+
+# 运行时生成的翻译输出（用户本地数据，不分发）
+locales/**/selected_nodes.json
+
+# 用户生成/运行时输出
+translations/
+_perm_test.txt
+
+# 系统/编辑器
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

@@ -1,0 +1,222 @@
+{
+    "VFI FloatToInt": {
+        "title": "VFI 浮点转整数",
+        "outputs": {},
+        "widgets": {
+            "float": "浮点数"
+        }
+    },
+    "GMFSS Fortuna VFI": {
+        "title": "GMFSS Fortuna VFI",
+        "inputs": {
+            "frames": "帧",
+            "optional_interpolation_states": "可选插值状态"
+        },
+        "outputs": {},
+        "widgets": {
+            "ckpt_name": "模型文件",
+            "clear_cache_after_n_frames": "每N帧清理缓存",
+            "multiplier": "倍率"
+        }
+    },
+    "IFRNet VFI": {
+        "title": "IFRNet VFI",
+        "inputs": {
+            "frames": "帧",
+            "optional_interpolation_states": "可选插值状态"
+        },
+        "outputs": {},
+        "widgets": {
+            "ckpt_name": "模型文件",
+            "clear_cache_after_n_frames": "每N帧清理缓存",
+            "multiplier": "倍率",
+            "scale_factor": "缩放因子"
+        }
+    },
+    "IFUnet VFI": {
+        "title": "IFUnet VFI",
+        "inputs": {
+            "frames": "帧",
+            "optional_interpolation_states": "可选插值状态"
+        },
+        "outputs": {},
+        "widgets": {
+            "ckpt_name": "模型文件",
+            "clear_cache_after_n_frames": "每N帧清理缓存",
+            "multiplier": "倍率",
+            "scale_factor": "缩放因子",
+            "ensemble": "集成"
+        }
+    },
+    "M2M VFI": {
+        "title": "M2M VFI",
+        "inputs": {
+            "frames": "帧",
+            "optional_interpolation_states": "可选插值状态"
+        },
+        "outputs": {},
+        "widgets": {
+            "ckpt_name": "模型文件",
+            "clear_cache_after_n_frames": "每N帧清理缓存",
+            "multiplier": "倍率"
+        }
+    },
+    "RIFE VFI": {
+        "title": "RIFE VFI（推荐使用 rife47 和 rife49）",
+        "inputs": {
+            "frames": "帧",
+            "optional_interpolation_states": "可选插值状态"
+        },
+        "outputs": {},
+        "widgets": {
+            "ckpt_name": "模型文件",
+            "clear_cache_after_n_frames": "每N帧清理缓存",
+            "multiplier": "倍率",
+            "fast_mode": "快速模式",
+            "ensemble": "集成",
+            "scale_factor": "缩放因子",
+            "dtype": "数据类型",
+            "torch_compile": "启用编译加速",
+            "Compile the model with torch.compile() for 10-30% faster inference after the first (warm-up) run. Requires PyTorch 2.0+.": "使用 torch.compile() 编译模型可在首次（预热）运行后实现10-30%的推理加速。需要 PyTorch 2.0+。",
+            "batch_size": "批处理大小",
+            "Number of interpolation tasks per GPU call. Higher values improve throughput but use more VRAM. Set to 1 for the most conservative behaviour.": "每次GPU调用的插值任务数量。较高值可提升吞吐量但占用更多显存。设为1可获得最保守的行为。"
+        }
+    },
+    "Sepconv VFI": {
+        "title": "Sepconv VFI",
+        "inputs": {
+            "frames": "帧",
+            "optional_interpolation_states": "可选插值状态"
+        },
+        "outputs": {},
+        "widgets": {
+            "ckpt_name": "模型文件",
+            "clear_cache_after_n_frames": "每N帧清理缓存",
+            "multiplier": "倍率"
+        }
+    },
+    "AMT VFI": {
+        "title": "AMT VFI",
+        "inputs": {
+            "frames": "帧",
+            "optional_interpolation_states": "可选插值状态"
+        },
+        "outputs": {},
+        "widgets": {
+            "ckpt_name": "模型文件",
+            "clear_cache_after_n_frames": "每N帧清理缓存",
+            "multiplier": "倍率"
+        }
+    },
+    "FILM VFI": {
+        "title": "FILM VFI",
+        "inputs": {
+            "frames": "帧",
+            "optional_interpolation_states": "可选插值状态"
+        },
+        "outputs": {},
+        "widgets": {
+            "ckpt_name": "模型文件",
+            "clear_cache_after_n_frames": "每N帧清理缓存",
+            "multiplier": "倍率"
+        }
+    },
+    "STMFNet VFI": {
+        "title": "STMFNet VFI",
+        "inputs": {
+            "frames": "帧",
+            "optional_interpolation_states": "可选插值状态"
+        },
+        "outputs": {},
+        "widgets": {
+            "ckpt_name": "模型文件",
+            "clear_cache_after_n_frames": "每N帧清理缓存",
+            "multiplier": "倍率",
+            "duplicate_first_last_frames": "重复首尾帧"
+        }
+    },
+    "FLAVR VFI": {
+        "title": "FLAVR VFI",
+        "inputs": {
+            "frames": "帧",
+            "optional_interpolation_states": "可选插值状态"
+        },
+        "outputs": {},
+        "widgets": {
+            "ckpt_name": "模型文件",
+            "clear_cache_after_n_frames": "每N帧清理缓存",
+            "multiplier": "倍率",
+            "duplicate_first_last_frames": "重复首尾帧"
+        }
+    },
+    "CAIN VFI": {
+        "title": "CAIN VFI",
+        "inputs": {
+            "frames": "帧",
+            "optional_interpolation_states": "可选插值状态"
+        },
+        "outputs": {},
+        "widgets": {
+            "ckpt_name": "模型文件",
+            "clear_cache_after_n_frames": "每N帧清理缓存",
+            "multiplier": "倍率"
+        }
+    },
+    "Make Interpolation State List": {
+        "title": "创建插值状态列表",
+        "outputs": {},
+        "widgets": {
+            "frame_indices": "帧索引",
+            "is_skip_list": "是否为跳过列表"
+        }
+    },
+    "KSampler Gradually Adding More Denoise (efficient)": {
+        "title": "KSampler 渐进式增加降噪（高效版）",
+        "inputs": {
+            "model": "模型",
+            "positive": "正向提示词",
+            "negative": "反向提示词",
+            "latent_image": "隐空间图像",
+            "optional_vae": "可选VAE"
+        },
+        "outputs": {},
+        "widgets": {
+            "seed": "种子",
+            "steps": "步数",
+            "cfg": "引导系数",
+            "sampler_name": "采样器名称",
+            "scheduler": "调度器",
+            "start_denoise": "开始降噪强度",
+            "denoise_increment": "降噪增量",
+            "denoise_increment_steps": "降噪增量步数"
+        }
+    },
+    "ATM VFI": {
+        "title": "ATM VFI（仅支持2倍倍率）",
+        "inputs": {
+            "frames": "帧",
+            "optional_interpolation_states": "可选插值状态"
+        },
+        "outputs": {},
+        "widgets": {
+            "ckpt_name": "模型文件",
+            "clear_cache_after_n_frames": "每N帧清理缓存",
+            "multiplier": "倍率",
+            "global_motion": "全局运动"
+        }
+    },
+    "MOMO VFI": {
+        "title": "MOMO VFI（仅支持2倍倍率）",
+        "inputs": {
+            "frames": "帧",
+            "optional_interpolation_states": "可选插值状态"
+        },
+        "outputs": {},
+        "widgets": {
+            "ckpt_name": "模型文件",
+            "clear_cache_after_n_frames": "每N帧清理缓存",
+            "multiplier": "倍率",
+            "num_inference_steps": "推理步数"
+        }
+    }
+}

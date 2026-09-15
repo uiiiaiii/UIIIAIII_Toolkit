@@ -1,0 +1,142 @@
+{
+    "IF_PromptMkr": {
+        "title": "提示词到提示词💬",
+        "widgets": {
+            "input_prompt": "提示词",
+            "base_ip": "IP",
+            "port": "端口",
+            "engine": "引擎",
+            "selected_model": "模型",
+            "profile": "配置文件",
+            "embellish_prompt": "润色文本",
+            "style_prompt": "风格提示词",
+            "neg_prompt": "负面提示词",
+            "temperature": "温度",
+            "max_tokens": "最大Token",
+            "seed": "随机种",
+            "control_before_generate": "运行前操作",
+            "random": "随机",
+            "keep_alive": "保持模型加载"
+        },
+        "outputs": {
+            "Question": "问题",
+            "Response": "回复",
+            "Negative": "负面文本"
+        }
+    },
+    "IF_ImagePrompt": {
+        "title": "图像到提示词🖼️",
+        "inputs": {
+            "image": "图像"
+        },
+        "widgets": {
+            "input_prompt": "提示词",
+            "base_ip": "IP",
+            "port": "端口",
+            "engine": "引擎",
+            "selected_model": "模型",
+            "profile": "配置文件",
+            "embellish_prompt": "润色文本",
+            "style_prompt": "风格提示词",
+            "neg_prompt": "负面提示词",
+            "temperature": "温度",
+            "max_tokens": "最大Token",
+            "seed": "随机种",
+            "control_before_generate": "运行前操作",
+            "random": "随机",
+            "keep_alive": "保持模型加载"
+        },
+        "outputs": {
+            "Question": "问题文本",
+            "Response": "回复文本",
+            "Negative": "负面文本"
+        }
+    },
+    "IF_ChatPrompt": {
+        "title": "Chat提示词👨‍💻",
+        "inputs": {
+            "image": "图像",
+            "tool_input": "工具"
+        },
+        "widgets": {
+            "input_prompt": "提示词",
+            "base_ip": "IP",
+            "port": "端口",
+            "engine": "引擎",
+            "selected_model": "模型",
+            "model": "模型",
+            "assitant": "助手",
+            "profile": "配置文件",
+            "embellish_prompt": "润色文本",
+            "style_prompt": "风格提示词",
+            "neg_prompt": "负面提示词",
+            "clear_history": "清空历史",
+            "temperature": "温度",
+            "top_k": "候选集长度",
+            "top_p": "动态候选集长度",
+            "repeat_penalty": "重复惩罚",
+            "max_tokens": "最大Token",
+            "seed": "随机种",
+            "control_before_generate": "运行前操作",
+            "random": "随机",
+            "keep_alive": "保持模型加载",
+            "text_cleanup": "精简文本",
+            "mode": "模式",
+            "external_api_key": "API Key",
+            "tool": "工具",
+            "history_steps": "历史步数"
+        },
+        "outputs": {
+            "Question": "问题文本",
+            "Response": "回复文本",
+            "Negative": "负面文本",
+            "Tool_Output": "工具"
+        }
+    },
+    "IF_SaveText": {
+        "title": "保存文本📝",
+        "inputs": {
+            "question_input": "问题文本",
+            "response_input": "回复文本",
+            "negative_input": "负面文本"
+        },
+        "widgets": {
+            "save_file": "保存文件",
+            "file_format": "文件格式",
+            "save_mode": "保存模式"
+        },
+        "outputs": {
+            "Question": "问题文本",
+            "Response": "回复文本",
+            "Negative": "负面文本"
+        }
+    },
+    "IF_DisplayText": {
+        "title": "显示文本📟",
+        "inputs": {
+            "text": "文本"
+        },
+        "outputs": {
+            "STRING": "字符串"
+        }
+    },
+    "IF_DisplayOmni": {
+        "title": "显示Omni🔍",
+        "inputs": {
+            "omni_input": "Omni"
+        },
+        "outputs": {
+            "canvas_conditioning": "画面条件",
+            "text_output": "文本输出"
+        }
+    },
+    "IF_TextTyper": {
+        "title": "打字框✍",
+        "widgets": {
+            "text": "文本"
+        },
+        "outputs": {
+            "STRING": "字符串"
+        }
+    }
+}
