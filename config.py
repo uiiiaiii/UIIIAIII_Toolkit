@@ -251,27 +251,29 @@ def get_translator_config() -> dict:
     }
 
 
-def save_translator_config(base_url: str, api_key: str, model: str, output_mode: str, target_lang: str = "", use_translated_dict: Optional[bool] = None) -> bool:
+def save_translator_config(base_url=None, api_key=None, model=None, target_lang=None, use_translated_dict=None) -> bool:
     """
-    保存翻译 API 配置到 config.json
+    保存翻译 API 配置到 config.json（部分更新：仅覆盖显式传入的字段）
 
     Args:
-        base_url: OpenAI 兼容 API 基础 URL
-        api_key: API Key
-        model: 模型名（如 gpt-4o-mini / deepseek-chat / qwen-plus）
-        output_mode: 兼容参数，已废弃（固定写入 auto）
-        target_lang: 目标语言代码（如 zh-CN / en / ja）
-        use_translated_dict: 是否复用已翻译文件作为字典（None 表示不修改）
+        base_url: OpenAI 兼容 API 基础 URL（None/空串 = 不修改）
+        api_key: API Key（None = 不修改；空串 = 显式清空）
+        model: 模型名（None/空串 = 不修改）
+        target_lang: 目标语言代码，需在支持列表内（None = 不修改）
+        use_translated_dict: 是否复用已翻译文件作为字典（None = 不修改）
 
     Returns:
         是否保存成功
     """
     cfg = load_config()
-    cfg["translator_base_url"] = base_url or DEFAULT_TRANSLATOR_BASE_URL
-    cfg["translator_api_key"] = api_key or ""
-    cfg["translator_model"] = model or DEFAULT_TRANSLATOR_MODEL
-    cfg["translator_output_mode"] = DEFAULT_TRANSLATOR_OUTPUT_MODE
-    cfg["translator_target_lang"] = target_lang if target_lang in SUPPORTED_TARGET_LANGS else DEFAULT_TRANSLATOR_TARGET_LANG
+    if base_url:
+        cfg["translator_base_url"] = base_url
+    if api_key is not None:
+        cfg["translator_api_key"] = api_key
+    if model:
+        cfg["translator_model"] = model
+    if target_lang in SUPPORTED_TARGET_LANGS:
+        cfg["translator_target_lang"] = target_lang
     if use_translated_dict is not None:
         cfg["translator_use_dict"] = bool(use_translated_dict)
     return save_config(cfg)

@@ -30,7 +30,6 @@ const SETTING_MODELSCOPE = `UIIIAIII Toolkit.① Node API.modelscopeApiKey`;
 const SETTING_TRANSLATOR_BASE_URL = `UIIIAIII Toolkit.② Translation API.translatorBaseUrl`;
 const SETTING_TRANSLATOR_API_KEY = `UIIIAIII Toolkit.② Translation API.translatorApiKey`;
 const SETTING_TRANSLATOR_MODEL = `UIIIAIII Toolkit.② Translation API.translatorModel`;
-const SETTING_TRANSLATOR_USE_DICT = `UIIIAIII Toolkit.③ Translation Settings.useTranslatedDict`;
 const SETTING_TRANSLATOR_TARGET_LANG = `UIIIAIII Toolkit.② Translation API.translatorTargetLang`;
 
 // 翻译 API 配置端点
@@ -111,7 +110,7 @@ function registerExtensionWhenReady(tries = 0) {
 
     /**
      * 从后端加载翻译 API 配置
-     * @returns {Promise<{base_url: string, api_key: string, model: string, target_lang: string, use_dict: boolean}>}
+     * @returns {Promise<{base_url: string, api_key: string, model: string, target_lang: string}>}
      */
     async function loadTranslatorConfig() {
         try {
@@ -130,31 +129,25 @@ function registerExtensionWhenReady(tries = 0) {
                     api_key: apiKey,
                     model: data.model || "gpt-4o-mini",
                     target_lang: data.target_lang || "zh-CN",
-                    use_dict: data.use_translated_dict !== false,
                 };
             }
         } catch (e) {
             console.warn(`[${NAMESPACE}] 加载翻译配置失败：`, e);
         }
-        return { base_url: "https://api.openai.com/v1", api_key: "", model: "gpt-4o-mini", target_lang: "zh-CN", use_dict: true };
+        return { base_url: "https://api.openai.com/v1", api_key: "", model: "gpt-4o-mini", target_lang: "zh-CN" };
     }
 
     /**
-     * 保存翻译 API 配置到后端
+     * 保存翻译 API 配置到后端（部分更新：仅覆盖传入的字段）
      * （输出固定写入本插件 locales 目录，立即生效；无输出模式选项）
      */
-    async function saveTranslatorConfig(baseUrl, apiKey, model, targetLang, useDict) {
+    async function saveTranslatorConfig(baseUrl, apiKey, model, targetLang) {
         try {
-            const payload = {
-                base_url: baseUrl || "",
-                api_key: apiKey || "",
-                model: model || "",
-                target_lang: targetLang || "zh-CN",
-            };
-            // 未传 useDict 时不下发，后端保持现值不变
-            if (useDict !== undefined && useDict !== "") {
-                payload.use_translated_dict = !!useDict;
-            }
+            const payload = {};
+            if (baseUrl !== undefined && baseUrl !== null) payload.base_url = baseUrl;
+            if (apiKey !== undefined && apiKey !== null) payload.api_key = apiKey;
+            if (model !== undefined && model !== null) payload.model = model;
+            if (targetLang !== undefined && targetLang !== null) payload.target_lang = targetLang;
             const response = await api.fetchApi(TRANSLATE_CONFIG_ENDPOINT, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -265,7 +258,7 @@ function registerExtensionWhenReady(tries = 0) {
                     const apiKey = getSettingValue(SETTING_TRANSLATOR_API_KEY);
                     const model = getSettingValue(SETTING_TRANSLATOR_MODEL);
                     const targetLang = getSettingValue(SETTING_TRANSLATOR_TARGET_LANG);
-                    await saveTranslatorConfig(value, apiKey, model, targetLang, getSettingValue(SETTING_TRANSLATOR_USE_DICT));
+                    await saveTranslatorConfig(value, apiKey, model, targetLang);
                 },
             });
 
@@ -281,7 +274,7 @@ function registerExtensionWhenReady(tries = 0) {
                     const baseUrl = getSettingValue(SETTING_TRANSLATOR_BASE_URL);
                     const model = getSettingValue(SETTING_TRANSLATOR_MODEL);
                     const targetLang = getSettingValue(SETTING_TRANSLATOR_TARGET_LANG);
-                    await saveTranslatorConfig(baseUrl, value, model, targetLang, getSettingValue(SETTING_TRANSLATOR_USE_DICT));
+                    await saveTranslatorConfig(baseUrl, value, model, targetLang);
                 },
             });
 
@@ -298,26 +291,7 @@ function registerExtensionWhenReady(tries = 0) {
                     const baseUrl = getSettingValue(SETTING_TRANSLATOR_BASE_URL);
                     const apiKey = getSettingValue(SETTING_TRANSLATOR_API_KEY);
                     const targetLang = getSettingValue(SETTING_TRANSLATOR_TARGET_LANG);
-                    await saveTranslatorConfig(baseUrl, apiKey, value, targetLang, getSettingValue(SETTING_TRANSLATOR_USE_DICT));
-                },
-            });
-
-            // 复用已翻译文件字典：相同词条直接使用已有译文，保证翻译一致性
-            addSettingFn({
-                id: SETTING_TRANSLATOR_USE_DICT,
-                name: "Use Translated Dictionary",
-                type: "boolean",
-                defaultValue: true,
-                tooltip:
-                    "Reuse existing translations in this plugin's locales files as a dictionary.\n" +
-                    "Identical words, phrases and sentences are reused directly instead of being re-translated,\n" +
-                    "keeping terminology consistent across runs and reducing API usage.",
-                onChange: async (value) => {
-                    const baseUrl = getSettingValue(SETTING_TRANSLATOR_BASE_URL);
-                    const apiKey = getSettingValue(SETTING_TRANSLATOR_API_KEY);
-                    const model = getSettingValue(SETTING_TRANSLATOR_MODEL);
-                    const targetLang = getSettingValue(SETTING_TRANSLATOR_TARGET_LANG);
-                    await saveTranslatorConfig(baseUrl, apiKey, model, targetLang, value);
+                    await saveTranslatorConfig(baseUrl, apiKey, value, targetLang);
                 },
             });
 
@@ -349,11 +323,11 @@ function registerExtensionWhenReady(tries = 0) {
                     const baseUrl = getSettingValue(SETTING_TRANSLATOR_BASE_URL);
                     const apiKey = getSettingValue(SETTING_TRANSLATOR_API_KEY);
                     const model = getSettingValue(SETTING_TRANSLATOR_MODEL);
-                    await saveTranslatorConfig(baseUrl, apiKey, model, value, getSettingValue(SETTING_TRANSLATOR_USE_DICT));
+                    await saveTranslatorConfig(baseUrl, apiKey, model, value);
                 },
             });
 
-            console.log(`[${NAMESPACE}] init：设置项已注册（节点API 2 / 翻译API 4 / 翻译设置 3 → UIIIAIII Toolkit）`);
+            console.log(`[${NAMESPACE}] init：设置项已注册（节点API 2 / 翻译API 4；翻译设置 3 项中字典开关由 SettingsPanel 注册）`);
         },
 
 
@@ -384,7 +358,6 @@ function registerExtensionWhenReady(tries = 0) {
                 setSettingValue(SETTING_TRANSLATOR_API_KEY, translatorConfig.api_key);
             }
             setSettingValue(SETTING_TRANSLATOR_MODEL, translatorConfig.model);
-            setSettingValue(SETTING_TRANSLATOR_USE_DICT, translatorConfig.use_dict !== false);
             setSettingValue(SETTING_TRANSLATOR_TARGET_LANG, translatorConfig.target_lang);
 
             console.log(`[${NAMESPACE}] 设置面板已加载（UIIIAIII Toolkit：节点API / 翻译API / 翻译设置）`);

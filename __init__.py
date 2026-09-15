@@ -304,17 +304,20 @@ try:
         """保存翻译 API 配置"""
         try:
             data = await request.json()
-            base_url = data.get("base_url", "")
-            api_key = data.get("api_key", "")
-            model = data.get("model", "")
-            target_lang = data.get("target_lang", "zh-CN")
+            # 部分更新：仅覆盖请求体中显式提供的字段（如字典开关只传 use_translated_dict）
             use_dict = data.get("use_translated_dict")
             if isinstance(use_dict, str):
                 use_dict = use_dict.lower() == "true"
 
-            success = config.save_translator_config(base_url, api_key, model, "auto", target_lang, use_dict)
+            success = config.save_translator_config(
+                base_url=data.get("base_url"),
+                api_key=data.get("api_key"),
+                model=data.get("model"),
+                target_lang=data.get("target_lang"),
+                use_translated_dict=use_dict,
+            )
             if success:
-                logger.info("翻译 API 配置已更新（目标语言：%s）", target_lang)
+                logger.info("翻译 API 配置已更新（目标语言：%s）", data.get("target_lang") or "未变更")
                 return web.json_response({"status": "ok"})
             else:
                 return web.json_response({"error": "保存失败"}, status=500)

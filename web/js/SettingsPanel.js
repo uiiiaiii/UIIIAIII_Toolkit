@@ -12,6 +12,62 @@ import {
   error
 } from "./utils.js";
 
+// ─── 顶栏按钮组合协调器（SettingsPanel.js 与 translator_menu.js 共享）───
+// 参考 rgthree 的做法：用官方 ComfyButtonGroup 实例作为唯一容器。
+// 谁先到谁创建组，后者通过官方 append()/insert() 加入（buttons 数组与 DOM 同步，
+// 不会被组内 update() 冲掉）；menu 未就绪时轮询挂载到 settingsGroup 之前。
+// 两个脚本无法共享模块作用域，故挂到 window 并用守卫防止重复定义。
+window.__UIIIAIII_TOPBAR__ = window.__UIIIAIII_TOPBAR__ || (() => {
+  const st = { group: null, mountTimer: null };
+
+  function ensureMounted() {
+    const app = window.comfyAPI?.app?.app || window.app;
+    const anchor = app?.menu?.settingsGroup?.element;
+    if (!anchor) return false;
+    if (st.group && !anchor.parentElement.contains(st.group.element)) {
+      anchor.before(st.group.element);
+      console.log("[UIIIAIII Toolkit] 顶栏按钮组已挂载（", st.group.element.children.length, "个按钮）");
+    }
+    return true;
+  }
+
+  return {
+    /**
+     * 把按钮加入共享组
+     * @param {HTMLElement} el - 按钮元素
+     * @param {boolean} toFront - true 插到组首（翻译开关固定在左）
+     */
+    add(el, toFront) {
+      try {
+        const ComfyButtonGroup = window.comfyAPI?.buttonGroup?.ComfyButtonGroup;
+        if (!el || !ComfyButtonGroup) return;
+        if (!st.group) {
+          st.group = new ComfyButtonGroup(el);
+          console.log("[UIIIAIII Toolkit] 创建共享按钮组");
+        } else if (toFront) {
+          st.group.insert(el, 0);
+        } else {
+          st.group.append(el);
+        }
+        if (!ensureMounted()) {
+          // menu 未就绪：轮询挂载
+          if (!st.mountTimer) {
+            let tries = 0;
+            st.mountTimer = setInterval(() => {
+              if (ensureMounted() || ++tries > 300) {
+                clearInterval(st.mountTimer);
+                st.mountTimer = null;
+              }
+            }, 100);
+          }
+        }
+      } catch (e) {
+        console.error("[UIIIAIII Toolkit] 顶栏按钮组挂载失败:", e);
+      }
+    },
+  };
+})();
+
 /**
  * 本地化设置项显示名：优先取翻译字典译文，未启用/无译文回退英文原文。
  */
@@ -73,6 +129,28 @@ export async function registerSettings(app) {
     }
   });
 
+  // 3. 复用已翻译文件字典开关（紧邻上面的 COMBO 开关，同为布尔项排列更整齐）
+  app.ui.settings.addSetting({
+    id: "UIIIAIII Toolkit.③ Translation Settings.useTranslatedDict",
+    name: "Use Translated Dictionary",
+    tooltip: "Reuse existing translations in this plugin's locales files as a dictionary.\nIdentical words, phrases and sentences are reused directly instead of being re-translated,\nkeeping terminology consistent across runs and reducing API usage.",
+    type: "boolean",
+    defaultValue: true,
+    onChange: async (newVal) => {
+      if (!isSettingsRegistered) return;
+      try {
+        // 后端为部分更新：仅提交本开关，不影响其他翻译 API 配置
+        await fetch("./agnes-translate/config", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ use_translated_dict: !!newVal }),
+        });
+      } catch (e) {
+        error("保存字典复用开关失败:", e);
+      }
+    }
+  });
+
   isSettingsRegistered = true;
 
   // 主动同步 config.json 的值到 ComfyUI Settings (localStorage)，
@@ -82,6 +160,12 @@ export async function registerSettings(app) {
     if (setter) {
       setter("UIIIAIII Toolkit.③ Translation Settings.Language", currentConfig.locale);
       setter("UIIIAIII Toolkit.③ Translation Settings.TranslateOptions", currentConfig.translate_options);
+      // 字典复用开关的实际值存于翻译 API 配置（config.json 的 translator_use_dict）
+      const stResp = await fetch("./agnes-translate/status");
+      if (stResp.ok) {
+        const stData = await stResp.json();
+        setter("UIIIAIII Toolkit.③ Translation Settings.useTranslatedDict", stData.use_translated_dict !== false);
+      }
     }
   } catch (e) {
     // 旧版 ComfyUI 可能不支持 setSettingValue，忽略即可
@@ -96,7 +180,8 @@ export async function registerSettings(app) {
  */
 export function addPanelButtons(app) {
   try {
-    if (document.getElementById("toggle-translation-button")) return;
+    // 去重：新旧按钮都以 toggle-translation-button 标识（游离节点也能查到）
+    if (document.querySelector(".toggle-translation-button")) return;
 
     const translationEnabled = isTranslationEnabled();
     const locale = currentConfig.locale;
@@ -110,68 +195,58 @@ export function addPanelButtons(app) {
 
     const styleElem = document.createElement("style");
     styleElem.textContent = `
-      .translation-active-plain {
-        background-color: var(--comfy-menu-bg, #353535);
-        color: var(--input-text, #ffffff);
-        border: 1px solid var(--border-color, #555555);
-        transition: all 0.2s ease;
+      /* 紧凑深色图标按钮（rgthree 式）：两按钮并排贴合，共享一个深色胶囊 */
+      .toggle-translation-button, .comfyui-api-translator-btn {
+        background-color: var(--comfy-input-bg, #2a2a2a);
+        color: var(--input-text, #ddd);
       }
-      .translation-inactive-plain {
-        background-color: var(--comfy-input-bg, #1e1e1e);
-        color: var(--descrip-text, #888888);
-        border: 1px solid var(--border-color, #333333);
-        transition: all 0.2s ease;
+      .toggle-translation-button:hover, .comfyui-api-translator-btn:hover {
+        filter: brightness(1.2);
       }
-      .translation-btn:hover {
-        transform: translateY(-1px); box-shadow: 0 4px 8px rgba(0,0,0,0.3); cursor: pointer; filter: brightness(1.1);
+      /* 同组内两按钮之间的细分隔线（后代选择器：兼容组内 wrapper 包裹） */
+      .uiiiaiii-topbar-group .comfyui-api-translator-btn {
+        border-left: 1px solid var(--border-color, #3d3d3d);
       }
-      .translation-btn {
-        cursor: pointer; border-radius: 6px; padding: 6px 12px; font-size: 12px;
-      }
+      /* 翻译关闭状态：弱化显示 */
+      .translation-inactive-plain { opacity: .45; }
     `;
     document.head.appendChild(styleElem);
 
     const activeClass = "translation-active-plain";
     const inactiveClass = "translation-inactive-plain";
 
-    // 旧版菜单按钮
+    // 旧版菜单按钮（文本兜底，缩小尺寸）
     if (document.querySelector(".comfy-menu") && !document.getElementById("toggle-translation-button")) {
       app.ui.menuContainer.appendChild(
         $el("button.translation-btn", {
           id: "toggle-translation-button",
-          textContent: translationEnabled ? onText : offText,
+          textContent: "🌐",
           className: translationEnabled ? `translation-btn ${activeClass}` : `translation-btn ${inactiveClass}`,
-          style: { fontWeight: "normal", margin: "2px" },
-          title: translationEnabled ? "Translation enabled" : "Using native language",
+          style: { fontWeight: "normal", margin: "2px", padding: "4px 8px", fontSize: "12px" },
+          title: translationEnabled ? onText : offText,
           onclick: async () => { await toggleTranslation(); },
         })
       );
     }
 
-    // 新版 UI 按钮
+    // 新版 UI 按钮：纯图标（MDI），状态信息放 tooltip，与顶栏其他图标按钮一致
     try {
-      if (window?.comfyAPI?.button?.ComfyButton && window?.comfyAPI?.buttonGroup?.ComfyButtonGroup) {
-        var ComfyButtonGroup = window.comfyAPI.buttonGroup.ComfyButtonGroup;
+      if (window?.comfyAPI?.button?.ComfyButton) {
         var ComfyButton = window.comfyAPI.button.ComfyButton;
 
         var btn = new ComfyButton({
           action: async () => { await toggleTranslation(); },
-          tooltip: translationEnabled ? "Translation enabled" : "Using native language",
-          content: translationEnabled ? onText : offText,
-          classList: "toggle-translation-button"
+          tooltip: `${translationEnabled ? onText : offText}`,
+          icon: translationEnabled ? "translate" : "translate-off",
+          classList: "comfyui-button toggle-translation-button"
         });
 
         if (btn.element) {
-          btn.element.classList.add("translation-btn");
           btn.element.classList.add(translationEnabled ? activeClass : inactiveClass);
-          btn.element.style.fontWeight = "normal";
-          btn.element.style.margin = "2px";
         }
 
-        var group = new ComfyButtonGroup(btn.element);
-        if (app.menu?.settingsGroup?.element) {
-          app.menu.settingsGroup.element.before(group.element);
-        }
+        // 交给共享协调器挂载：与"翻译插件"按钮（translator_menu.js）合并进同一胶囊
+        window.__UIIIAIII_TOPBAR__.add(btn.element, true);
       }
     } catch (e) {
       error("添加新版UI语言按钮失败:", e);

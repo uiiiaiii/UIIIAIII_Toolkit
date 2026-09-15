@@ -44,6 +44,54 @@ function tr(template, params) {
     return text;
 }
 
+// ─── 顶栏按钮组合协调器（与 SettingsPanel.js 共享，代码必须保持一致）───
+// 参考 rgthree 的做法：用官方 ComfyButtonGroup 实例作为唯一容器。
+// 谁先到谁创建组，后者通过官方 append()/insert() 加入；menu 未就绪时轮询挂载。
+window.__UIIIAIII_TOPBAR__ = window.__UIIIAIII_TOPBAR__ || (() => {
+    const st = { group: null, mountTimer: null };
+
+    function ensureMounted() {
+        const app = window.comfyAPI?.app?.app || window.app;
+        const anchor = app?.menu?.settingsGroup?.element;
+        if (!anchor) return false;
+        if (st.group && !anchor.parentElement.contains(st.group.element)) {
+            anchor.before(st.group.element);
+            console.log("[UIIIAIII Toolkit] 顶栏按钮组已挂载（", st.group.element.children.length, "个按钮）");
+        }
+        return true;
+    }
+
+    return {
+        add(el, toFront) {
+            try {
+                const ComfyButtonGroup = window.comfyAPI?.buttonGroup?.ComfyButtonGroup;
+                if (!el || !ComfyButtonGroup) return;
+                if (!st.group) {
+                    st.group = new ComfyButtonGroup(el);
+                    console.log("[UIIIAIII Toolkit] 创建共享按钮组");
+                } else if (toFront) {
+                    st.group.insert(el, 0);
+                } else {
+                    st.group.append(el);
+                }
+                if (!ensureMounted()) {
+                    if (!st.mountTimer) {
+                        let tries = 0;
+                        st.mountTimer = setInterval(() => {
+                            if (ensureMounted() || ++tries > 300) {
+                                clearInterval(st.mountTimer);
+                                st.mountTimer = null;
+                            }
+                        }, 100);
+                    }
+                }
+            } catch (e) {
+                console.error("[UIIIAIII Toolkit] 顶栏按钮组挂载失败:", e);
+            }
+        },
+    };
+})();
+
 /**
  * 等待 ComfyUI app 就绪并注册扩展
  */
@@ -538,55 +586,26 @@ function registerTranslatorExtensionWhenReady(tries = 0) {
         // 避免重复添加
         if (document.getElementById("comfyui-api-translator-topbtn")) return true;
 
-        // 注入按钮样式（使用 ComfyUI 原生主题变量，与经典按钮风格一致）
-        if (!document.getElementById("comfyui-api-translator-btn-style")) {
-            const styleElem = document.createElement("style");
-            styleElem.id = "comfyui-api-translator-btn-style";
-            styleElem.textContent = `
-                .comfyui-api-translator-btn {
-                    background-color: var(--comfy-input-bg, #1e1e1e);
-                    color: var(--input-text, #ddd);
-                    border: 1px solid var(--border-color, #555);
-                    border-radius: 6px;
-                    padding: 6px 12px;
-                    font-size: 12px;
-                    cursor: pointer;
-                    transition: all 0.2s ease;
-                }
-                .comfyui-api-translator-btn:hover {
-                    filter: brightness(1.15);
-                    cursor: pointer;
-                }
-            `;
-            document.head.appendChild(styleElem);
-        }
-
         const ComfyButton = window.comfyAPI?.button?.ComfyButton;
         const ComfyButtonGroup = window.comfyAPI?.buttonGroup?.ComfyButtonGroup;
 
-        // 新版 UI 可用
+        // 新版 UI 可用：纯图标按钮（rgthree 式紧凑风格），说明放 tooltip
         if (ComfyButton && ComfyButtonGroup && app.menu?.settingsGroup?.element) {
             try {
                 const btn = new ComfyButton({
                     action: async () => { await translatePlugin(); },
                     tooltip: tr("Extract all nodes of the plugin folder and translate them via the API"),
-                    content: tr("🌐 Translate Plugin"),
-                    classList: "comfyui-api-translator-btn",
+                    icon: "earth",
+                    classList: "comfyui-button comfyui-api-translator-btn",
                 });
 
-                // 设置按钮元素样式
                 if (btn.element) {
                     btn.element.id = "comfyui-api-translator-topbtn";
-                    btn.element.style.margin = "2px";
-                    // 移除可能的默认白色背景
-                    btn.element.style.background = "";
-                    btn.element.style.backgroundColor = "";
                 }
 
-                // 用 ComfyButtonGroup 包裹，插入到 settingsGroup 之前（与 UIIIAIII Toolkit 按钮并列）
-                const group = new ComfyButtonGroup(btn.element);
-                app.menu.settingsGroup.element.before(group.element);
-                console.log(`[${TRANSLATOR_NAMESPACE}] 主菜单按钮已注入（新版 UI，app.menu.settingsGroup）`);
+                // 交给共享协调器挂载：与翻译开关按钮（SettingsPanel.js）合并进同一胶囊
+                window.__UIIIAIII_TOPBAR__.add(btn.element);
+                console.log(`[${TRANSLATOR_NAMESPACE}] 主菜单按钮已注册（共享按钮组）`);
                 return true;
             } catch (e) {
                 console.error(`[${TRANSLATOR_NAMESPACE}] 新版菜单按钮注入失败：`, e);
@@ -599,9 +618,9 @@ function registerTranslatorExtensionWhenReady(tries = 0) {
             try {
                 const btn = document.createElement("button");
                 btn.id = "comfyui-api-translator-topbtn-legacy";
-                btn.textContent = tr("🌐 Translate Plugin");
+                btn.textContent = "🌐";
                 btn.title = tr("Extract all nodes of the plugin folder and translate them via the API");
-                btn.style.cssText = "margin:2px;padding:4px 10px;font-size:13px;cursor:pointer;";
+                btn.style.cssText = "margin:2px;padding:4px 8px;font-size:12px;cursor:pointer;";
                 btn.onclick = () => { translatePlugin(); };
                 menuContainer.appendChild(btn);
                 console.log(`[${TRANSLATOR_NAMESPACE}] 主菜单按钮已注入（旧版 UI，.comfy-menu）`);
