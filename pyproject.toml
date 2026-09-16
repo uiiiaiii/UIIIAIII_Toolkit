@@ -1,0 +1,13 @@
+[project]
+name = "uiiiaiii-toolkit"
+description = "UIIIAIII Toolkit: node category manager (rename/hide/move via tree context menu & drag), UI and dropdown translation, and other ComfyUI enhancements."
+version = "1.0.0"
+dependencies = ["requests>=2.28.0"]
+
+[project.urls]
+Repository = "https://github.com/uiiiaiii/UIIIAIII_Toolkit"
+
+[tool.comfy]
+PublisherId = "uiiiaiii"
+DisplayName = "UIIIAIII Toolkit"
+Icon = ""
