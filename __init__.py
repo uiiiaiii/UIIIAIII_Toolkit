@@ -342,8 +342,9 @@ try:
                 with open(_CATEGORY_OVERRIDES_FILE, "r", encoding="utf-8") as f:
                     data = json.load(f)
                 data.setdefault("empty_categories", [])
+                data.setdefault("hidden_nodes", [])
                 return web.json_response(data)
-            return web.json_response({"category_rename": {}, "hidden_categories": [], "node_move": {}, "empty_categories": []})
+            return web.json_response({"category_rename": {}, "hidden_categories": [], "node_move": {}, "empty_categories": [], "hidden_nodes": []})
         except Exception as e:
             logger.error("读取分类规则失败：%s", e)
             return web.json_response({"error": str(e)}, status=500)
@@ -358,12 +359,13 @@ try:
                 "hidden_categories": [str(x) for x in (data.get("hidden_categories") or []) if x],
                 "node_move": {str(k): str(v) for k, v in (data.get("node_move") or {}).items() if k and v},
                 "empty_categories": list(dict.fromkeys(str(x) for x in (data.get("empty_categories") or []) if x)),
+                "hidden_nodes": list(dict.fromkeys(str(x) for x in (data.get("hidden_nodes") or []) if x)),
             }
             with open(_CATEGORY_OVERRIDES_FILE, "w", encoding="utf-8") as f:
                 json.dump(clean, f, ensure_ascii=False, indent=2)
-            logger.info("分类规则已保存（重命名 %d / 隐藏 %d / 移动 %d / 空分类 %d）",
+            logger.info("分类规则已保存（重命名 %d / 隐藏 %d / 移动 %d / 空分类 %d / 隐藏节点 %d）",
                         len(clean["category_rename"]), len(clean["hidden_categories"]),
-                        len(clean["node_move"]), len(clean["empty_categories"]))
+                        len(clean["node_move"]), len(clean["empty_categories"]), len(clean["hidden_nodes"]))
             return web.json_response({"status": "ok"})
         except Exception as e:
             logger.error("保存分类规则失败：%s", e)

@@ -22,14 +22,15 @@
  *     "category_rename": { "显示路径": "新路径" },
  *     "hidden_categories": ["显示路径", ...],
  *     "node_move": { "comfyClass": "目标路径" },
- *     "empty_categories": ["显示路径", ...]   // 自建空分类
+ *     "empty_categories": ["显示路径", ...],  // 自建空分类
+ *     "hidden_nodes": ["comfyClass", ...]     // 单独隐藏的节点
  *   }
  */
 
 const CM_NAMESPACE = "UIIIAIII Toolkit-CategoryManager";
 
 const CM = {
-    rules: { category_rename: {}, hidden_categories: [], node_move: {}, empty_categories: [] },
+    rules: { category_rename: {}, hidden_categories: [], node_move: {}, empty_categories: [], hidden_nodes: [] },
     baseCategory: new Map(),   // comfyClass -> 基准 category（默认显示路径）
     catIndex: new Map(),       // 显示路径 -> 显示路径（树右键反查用）
     nodeIndex: new Map(),      // 叶子显示文本 -> [{ name, dispPath }]
@@ -81,6 +82,11 @@ function isHiddenDispPath(dispPath) {
     if (!dispPath) return false;
     if (hidden.includes(dispPath)) return true;
     return hidden.some((h) => h && dispPath.startsWith(h + "/"));
+}
+
+/** 单个节点（comfyClass）是否被隐藏 */
+function isHiddenNode(name) {
+    return (CM.rules.hidden_nodes || []).includes(name);
 }
 
 // ============================================================
@@ -143,7 +149,9 @@ function refreshHiddenFilter(store) {
             id: FILTER_ID,
             name: "UIIIAIII Hidden Categories",
             description: "按「节点分类管理」规则隐藏分类",
-            predicate: (nodeDef) => !isHiddenDispPath(String(nodeDef?.category || "")),
+            predicate: (nodeDef) =>
+                !isHiddenDispPath(String(nodeDef?.category || "")) &&
+                !isHiddenNode(String(nodeDef?.name || "")),
         });
     }
 }
@@ -399,10 +407,29 @@ function showMenu(x, y, items) {
     const rect = cmMenuEl.getBoundingClientRect();
     cmMenuEl.style.left = Math.min(x, window.innerWidth - rect.width - 8) + "px";
     cmMenuEl.style.top = Math.min(y, window.innerHeight - rect.height - 8) + "px";
-    setTimeout(() => {
-        window.addEventListener("click", closeMenu, { once: true });
-        window.addEventListener("contextmenu", closeMenu, { once: true, capture: true });
-    }, 0);
+}
+
+// 菜单外点击关闭：capture 阶段监听（组件内部 stopPropagation 也能收到）
+let cmDismissInstalled = false;
+function setupGlobalMenuDismiss() {
+    if (cmDismissInstalled) return;
+    cmDismissInstalled = true;
+    document.addEventListener("mousedown", (e) => {
+        if (cmMenuEl && !cmMenuEl.contains(e.target)) closeMenu();
+    }, true);
+    // 画布工作区用 pointerdown（mousedown 覆盖不到的场景），点击外部统一关闭
+    document.addEventListener("pointerdown", (e) => {
+        if (cmMenuEl && !cmMenuEl.contains(e.target)) closeMenu();
+    }, true);
+    document.addEventListener("contextmenu", (e) => {
+        if (cmMenuEl && !cmMenuEl.contains(e.target)) closeMenu();
+    }, true);
+    // 滚动会导致 fixed 定位的菜单与目标错位，直接关闭
+    document.addEventListener("wheel", () => { if (cmMenuEl) closeMenu(); }, true);
+    // Esc 关闭
+    document.addEventListener("keydown", (e) => {
+        if (cmMenuEl && (e.key === "Escape" || e.key === "Esc")) closeMenu();
+    }, true);
 }
 
 /** 通用输入对话框（替代原生 prompt，可控且样式一致） */
@@ -636,6 +663,85 @@ function actionHideCategory(key) {
     saveRules();
 }
 
+/** 隐藏单个节点 */
+function actionHideNode(name) {
+    if (!CM.rules.hidden_nodes) CM.rules.hidden_nodes = [];
+    if (!CM.rules.hidden_nodes.includes(name)) CM.rules.hidden_nodes.push(name);
+    saveRules();
+}
+
+/** 查看已隐藏列表（分类 + 节点），支持单项恢复 */
+function showHiddenListDialog() {
+    const cats = CM.rules.hidden_categories || [];
+    const nodes = CM.rules.hidden_nodes || [];
+    if (!cats.length && !nodes.length) { showToast("当前没有隐藏的分类或节点"); return; }
+
+    const overlay = document.createElement("div");
+    overlay.style.cssText =
+        "position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100001;display:flex;align-items:center;justify-content:center;";
+    const dlg = document.createElement("div");
+    dlg.style.cssText =
+        "background:#2a2a2a;color:#ddd;border-radius:8px;padding:16px;min-width:380px;max-width:460px;" +
+        "max-height:80vh;display:flex;flex-direction:column;box-shadow:0 8px 32px rgba(0,0,0,.5);font-size:13px;";
+    dlg.innerHTML =
+        `<div style="font-weight:bold;margin-bottom:10px;">已隐藏列表</div>` +
+        `<div id="cm-hidden-list" style="flex:1;min-height:100px;max-height:340px;overflow-y:auto;border:1px solid #444;border-radius:4px;padding:6px;margin-bottom:12px;"></div>` +
+        `<div style="display:flex;justify-content:flex-end;gap:8px;">` +
+        `<button id="cm-hidden-close" style="padding:5px 14px;background:#444;color:#ddd;border:none;border-radius:4px;cursor:pointer;">关闭</button></div>`;
+    overlay.appendChild(dlg);
+    document.body.appendChild(overlay);
+
+    const list = dlg.querySelector("#cm-hidden-list");
+    const close = () => overlay.remove();
+    dlg.querySelector("#cm-hidden-close").addEventListener("click", close);
+    overlay.addEventListener("click", (e) => { if (e.target === overlay) close(); });
+
+    let catHeader = null, nodeHeader = null;
+    function addSection(title) {
+        const h = document.createElement("div");
+        h.textContent = title;
+        h.style.cssText = "color:#888;font-size:11px;padding:4px 2px 2px;";
+        list.appendChild(h);
+        return h;
+    }
+    function addItem(label, kind, key) {
+        const row = document.createElement("div");
+        row.style.cssText = "display:flex;align-items:center;gap:8px;padding:4px 4px;border-radius:3px;";
+        const span = document.createElement("span");
+        span.textContent = label;
+        span.style.cssText = "flex:1;word-break:break-all;";
+        const btn = document.createElement("button");
+        btn.textContent = "恢复";
+        btn.style.cssText =
+            "padding:2px 10px;background:#4a9eff;color:#fff;border:none;border-radius:3px;cursor:pointer;font-size:12px;flex:none;";
+        btn.addEventListener("click", () => {
+            if (kind === "cat") {
+                CM.rules.hidden_categories = CM.rules.hidden_categories.filter((x) => x !== key);
+            } else {
+                CM.rules.hidden_nodes = (CM.rules.hidden_nodes || []).filter((x) => x !== key);
+            }
+            saveRules();
+            // 清掉空分组标题；全部恢复完则自动关闭对话框
+            if (catHeader && !CM.rules.hidden_categories.length) { catHeader.remove(); catHeader = null; }
+            if (nodeHeader && !(CM.rules.hidden_nodes || []).length) { nodeHeader.remove(); nodeHeader = null; }
+            row.remove();
+            if (!CM.rules.hidden_categories.length && !(CM.rules.hidden_nodes || []).length) close();
+        });
+        row.appendChild(span);
+        row.appendChild(btn);
+        list.appendChild(row);
+    }
+
+    if (cats.length) {
+        catHeader = addSection(`分类（${cats.length}）`);
+        for (const c of cats) addItem(c, "cat", c);
+    }
+    if (nodes.length) {
+        nodeHeader = addSection(`节点（${nodes.length}）`);
+        for (const n of nodes) addItem(n, "node", n);
+    }
+}
+
 /** 恢复此分类为默认（清除该分类及其后代的所有自定义规则） */
 function actionRestoreCategory(key) {
     let n = 0;
@@ -667,16 +773,23 @@ function actionRestoreNode(name) {
 /** 恢复所有分类：清空全部规则 */
 function actionRestoreAll() {
     const nRename = Object.keys(CM.rules.category_rename).length;
-    const nHidden = CM.rules.hidden_categories.length;
+    const nHidden = CM.rules.hidden_categories.length + (CM.rules.hidden_nodes || []).length;
     const nMove = Object.keys(CM.rules.node_move).length;
-    if (nRename + nHidden + nMove === 0) { showToast("当前没有分类管理规则"); return; }
+    const nEmpty = (CM.rules.empty_categories || []).length;
+    if (nRename + nHidden + nMove + nEmpty === 0) { showToast("当前没有分类管理规则"); return; }
+    const parts = [
+        `重命名 ${nRename} 条`,
+        `隐藏 ${nHidden} 条`,
+        `移动 ${nMove} 条`,
+    ];
+    if (nEmpty) parts.push(`空分类 ${nEmpty} 条`);
     showConfirmDialog({
         title: "恢复所有分类",
-        desc: `将清除全部规则，所有分类回到默认状态：\n重命名 ${nRename} 条 / 隐藏 ${nHidden} 条 / 移动 ${nMove} 条`,
+        desc: `将清除全部规则，所有分类回到默认状态：\n${parts.join(" / ")}`,
         confirmText: "恢复所有",
         danger: true,
         onConfirm: () => {
-            CM.rules = { category_rename: {}, hidden_categories: [], node_move: {} };
+            CM.rules = { category_rename: {}, hidden_categories: [], node_move: {}, empty_categories: [], hidden_nodes: [] };
             saveRules();
         },
     });
@@ -689,6 +802,7 @@ function actionRestoreAll() {
 function setupTreeInteraction() {
     if (window.__cm_tree_installed) return;
     window.__cm_tree_installed = true;
+    setupGlobalMenuDismiss();
 
     // ---- Alt + 右键拖拽（HTML5 DnD 不支持右键启动，用自定义指针拖拽） ----
     const rd = { pending: false, active: false, startX: 0, startY: 0, x: 0, y: 0, name: null, folderPath: null, label: null, ghost: null, targetRow: null, suppressCtxUntil: 0 };
@@ -803,6 +917,10 @@ function setupTreeInteraction() {
                 if (finalPath !== src) CM.rules.category_rename[src] = finalPath;
             } else if (rd.name) {
                 CM.rules.node_move[rd.name] = target.localPath;
+                // 拖拽移动视为主动整理：同时取消该节点的隐藏
+                if (CM.rules.hidden_nodes && CM.rules.hidden_nodes.includes(rd.name)) {
+                    CM.rules.hidden_nodes = CM.rules.hidden_nodes.filter((n) => n !== rd.name);
+                }
             }
             saveRules();
         }
@@ -824,6 +942,7 @@ function setupTreeInteraction() {
                 { label: "删除此分类", danger: true, onclick: () => actionDeleteEmptyCat(key) },
                 { label: "隐藏此分类", danger: true, onclick: () => actionHideCategory(key) },
                 { sep: true },
+                { label: "查看已隐藏列表...", onclick: showHiddenListDialog },
                 { label: "恢复所有分类", onclick: actionRestoreAll },
             ];
             e.preventDefault();
@@ -844,7 +963,9 @@ function setupTreeInteraction() {
                 { header: row.label },
                 { header: `类名：${ent.name} ｜ 当前分类：${ent.dispPath}` },
                 { label: "恢复此节点为默认分类", onclick: () => actionRestoreNode(ent.name) },
+                { label: "隐藏此节点", danger: true, onclick: () => actionHideNode(ent.name) },
                 { sep: true },
+                { label: "查看已隐藏列表...", onclick: showHiddenListDialog },
                 { label: "恢复所有分类", onclick: actionRestoreAll },
             ];
             e.preventDefault();
@@ -866,6 +987,7 @@ function setupTreeInteraction() {
             items.push({ label: "隐藏此分类", danger: true, onclick: () => actionHideCategory(key) });
             items.push({ label: "恢复此分类为默认", onclick: () => actionRestoreCategory(key) });
             items.push({ sep: true });
+            items.push({ label: "查看已隐藏列表...", onclick: showHiddenListDialog });
             items.push({ label: "恢复所有分类", onclick: actionRestoreAll });
         } else if (candidates.length > 1) {
             // 虚拟滚动导致路径不完整：列出候选让用户选择
@@ -883,6 +1005,7 @@ function setupTreeInteraction() {
                         sub.push({ label: "隐藏此分类", danger: true, onclick: () => actionHideCategory(c) });
                         sub.push({ label: "恢复此分类为默认", onclick: () => actionRestoreCategory(c) });
                         sub.push({ sep: true });
+                        sub.push({ label: "查看已隐藏列表...", onclick: showHiddenListDialog });
                         sub.push({ label: "恢复所有分类", onclick: actionRestoreAll });
                         showMenu(e.clientX, e.clientY, sub);
                     },
@@ -976,10 +1099,11 @@ function registerWhenReady(tries = 0) {
                         hidden_categories: data.hidden_categories || [],
                         node_move: data.node_move || {},
                         empty_categories: data.empty_categories || [],
+                        hidden_nodes: data.hidden_nodes || [],
                     };
                     const n = Object.keys(CM.rules.category_rename).length +
                         CM.rules.hidden_categories.length + Object.keys(CM.rules.node_move).length +
-                        CM.rules.empty_categories.length;
+                        CM.rules.empty_categories.length + CM.rules.hidden_nodes.length;
                     if (n > 0) console.log(`[${CM_NAMESPACE}] 已加载分类规则 ${n} 条`);
                 }
             } catch (e) {
