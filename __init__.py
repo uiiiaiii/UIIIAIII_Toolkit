@@ -343,8 +343,12 @@ try:
                     data = json.load(f)
                 data.setdefault("empty_categories", [])
                 data.setdefault("hidden_nodes", [])
+                data.setdefault("order_rules", [])
+                if "drag_trigger" not in data:
+                    # 兼容旧字段 drag_modifier
+                    data["drag_trigger"] = {"mouse": "right", "modifier": data.get("drag_modifier", "alt")}
                 return web.json_response(data)
-            return web.json_response({"category_rename": {}, "hidden_categories": [], "node_move": {}, "empty_categories": [], "hidden_nodes": []})
+            return web.json_response({"category_rename": {}, "hidden_categories": [], "node_move": {}, "empty_categories": [], "hidden_nodes": [], "order_rules": [], "drag_trigger": {"mouse": "right", "modifier": "alt"}})
         except Exception as e:
             logger.error("读取分类规则失败：%s", e)
             return web.json_response({"error": str(e)}, status=500)
@@ -361,11 +365,32 @@ try:
                 "empty_categories": list(dict.fromkeys(str(x) for x in (data.get("empty_categories") or []) if x)),
                 "hidden_nodes": list(dict.fromkeys(str(x) for x in (data.get("hidden_nodes") or []) if x)),
             }
+            # 排序规则：[{type: cat|node, key, before}]
+            order_rules = []
+            for r in (data.get("order_rules") or []):
+                if not isinstance(r, dict):
+                    continue
+                t, k, b = str(r.get("type") or ""), str(r.get("key") or ""), str(r.get("before") or "")
+                if t in ("cat", "node") and k and b:
+                    order_rules.append({"type": t, "key": k, "before": b})
+            clean["order_rules"] = order_rules
+            # 拖拽方式：{mouse: left|right, modifier: ""|ctrl/alt/shift 组合}
+            trigger = data.get("drag_trigger") or {}
+            if not isinstance(trigger, dict):
+                trigger = {}
+            mouse = str(trigger.get("mouse") or "right").lower()
+            mod = str(trigger.get("modifier") or "").lower()
+            allowed_mods = {"", "alt", "ctrl", "shift", "ctrl+alt", "ctrl+shift", "alt+shift", "ctrl+alt+shift"}
+            clean["drag_trigger"] = {
+                "mouse": mouse if mouse in ("left", "right") else "right",
+                "modifier": mod if mod in allowed_mods else "alt",
+            }
             with open(_CATEGORY_OVERRIDES_FILE, "w", encoding="utf-8") as f:
                 json.dump(clean, f, ensure_ascii=False, indent=2)
-            logger.info("分类规则已保存（重命名 %d / 隐藏 %d / 移动 %d / 空分类 %d / 隐藏节点 %d）",
+            logger.info("分类规则已保存（重命名 %d / 隐藏 %d / 移动 %d / 空分类 %d / 隐藏节点 %d / 排序 %d）",
                         len(clean["category_rename"]), len(clean["hidden_categories"]),
-                        len(clean["node_move"]), len(clean["empty_categories"]), len(clean["hidden_nodes"]))
+                        len(clean["node_move"]), len(clean["empty_categories"]),
+                        len(clean["hidden_nodes"]), len(clean["order_rules"]))
             return web.json_response({"status": "ok"})
         except Exception as e:
             logger.error("保存分类规则失败：%s", e)

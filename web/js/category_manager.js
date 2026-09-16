@@ -23,14 +23,16 @@
  *     "hidden_categories": ["显示路径", ...],
  *     "node_move": { "comfyClass": "目标路径" },
  *     "empty_categories": ["显示路径", ...],  // 自建空分类
- *     "hidden_nodes": ["comfyClass", ...]     // 单独隐藏的节点
+ *     "hidden_nodes": ["comfyClass", ...],    // 单独隐藏的节点
+ *     "order_rules": [ { type: "cat"|"node", key, before } ],  // 排序：key 排在 before 前
+ *     "drag_trigger": { "mouse": "left"|"right", "modifier": "ctrl+alt+shift" 或 "" }
  *   }
  */
 
 const CM_NAMESPACE = "UIIIAIII Toolkit-CategoryManager";
 
 const CM = {
-    rules: { category_rename: {}, hidden_categories: [], node_move: {}, empty_categories: [], hidden_nodes: [] },
+    rules: { category_rename: {}, hidden_categories: [], node_move: {}, empty_categories: [], hidden_nodes: [], order_rules: [], drag_trigger: { mouse: "right", modifier: "alt" } },
     baseCategory: new Map(),   // comfyClass -> 基准 category（默认显示路径）
     catIndex: new Map(),       // 显示路径 -> 显示路径（树右键反查用）
     nodeIndex: new Map(),      // 叶子显示文本 -> [{ name, dispPath }]
@@ -87,6 +89,111 @@ function isHiddenDispPath(dispPath) {
 /** 单个节点（comfyClass）是否被隐藏 */
 function isHiddenNode(name) {
     return (CM.rules.hidden_nodes || []).includes(name);
+}
+
+// ============================================================
+// 拖拽排序（重排 nodeDefsByName 字典 key 顺序 → 树按 original 策略实时重排）
+// ============================================================
+
+/** 添加/更新排序规则：key（组路径或类名）排在 before 之前 */
+function addOrderRule(type, key, before) {
+    if (!key || !before || key === before) return;
+    if (!CM.rules.order_rules) CM.rules.order_rules = [];
+    const i = CM.rules.order_rules.findIndex((r) => r.type === type && r.key === key);
+    if (i >= 0) CM.rules.order_rules.splice(i, 1);
+    CM.rules.order_rules.push({ type, key, before });
+    saveRules();
+}
+
+/** 清除与指定分类相关的排序规则（src 为该分类/其子分类/其内节点，或锚点在其中） */
+function removeOrderRulesForCategory(key) {
+    if (!CM.rules.order_rules) return 0;
+    const store = getNodeDefStore();
+    const dict = store?.nodeDefsByName || null;
+    const inCat = (k, isCat) => {
+        if (isCat) return k === key || k.startsWith(key + "/");
+        const c = dict ? String(dict[k]?.category || "") : null;
+        return c ? (c === key || c.startsWith(key + "/")) : false;
+    };
+    const before = CM.rules.order_rules;
+    CM.rules.order_rules = before.filter((r) => {
+        const srcHit = inCat(r.key, r.type === "cat");
+        const dstHit = r.type === "cat" && (r.before === key || r.before.startsWith(key + "/"));
+        return !(srcHit || dstHit);
+    });
+    return before.length - CM.rules.order_rules.length;
+}
+
+/**
+ * 应用排序规则：按规则链重排 nodeDefsByName 字典的 key 顺序。
+ * 依赖 ComfyUI 节点库默认 original 排序策略（按数组原序渲染树）。
+ * 内部实现 hack，全程保护：任何异常只跳过排序，不影响其他功能。
+ */
+function applyOrderRules() {
+    try {
+        const store = getNodeDefStore();
+        const dict = store?.nodeDefsByName;
+        const rules = CM.rules.order_rules || [];
+        if (!dict || !rules.length) return;
+        let keys = Object.keys(dict);
+        for (const rule of rules) {
+            if (!rule?.key || !rule.before) continue;
+            const isCat = rule.type === "cat";
+            const catOf = (k) => String(dict[k]?.category || "");
+            const nameOf = (k) => String(dict[k]?.name || "");
+            const hit = (k, path) =>
+                isCat ? (catOf(k) === path || catOf(k).startsWith(path + "/")) : nameOf(k) === path;
+            const srcKeys = keys.filter((k) => hit(k, rule.key));
+            if (!srcKeys.length) continue;
+            const dstKey = keys.find((k) => hit(k, rule.before));
+            if (!dstKey || srcKeys.includes(dstKey)) continue;
+            const nk = [];
+            for (const k of keys) {
+                if (k === dstKey) for (const s of srcKeys) nk.push(s);
+                if (!srcKeys.includes(k)) nk.push(k);
+            }
+            keys = nk;
+        }
+        const nd = {};
+        for (const k of keys) nd[k] = dict[k];
+        if (Object.keys(nd).length === Object.keys(dict).length) store.nodeDefsByName = nd;
+    } catch (e) {
+        console.warn(`[${CM_NAMESPACE}] 应用排序规则失败（已跳过）：`, e);
+    }
+}
+
+// ============================================================
+// 拖拽触发方式（鼠标键 + 任意修饰键组合，支持无修饰键直接拖拽）
+// ============================================================
+
+/** 规范化触发配置（容错） */
+function normalizeTrigger(t) {
+    const mouse = t && t.mouse === "left" ? "left" : "right";
+    let modifier = String((t && t.modifier) || "").toLowerCase();
+    const parts = modifier.split("+").map((s) => s.trim()).filter((p) => p === "alt" || p === "ctrl" || p === "shift");
+    // 去重并按固定顺序排列
+    const order = ["ctrl", "alt", "shift"];
+    modifier = order.filter((k) => parts.includes(k)).join("+");
+    return { mouse, modifier };
+}
+
+/** 事件是否命中当前配置的拖拽触发方式 */
+function matchTrigger(e) {
+    const t = normalizeTrigger(CM.rules.drag_trigger);
+    const wantBtn = t.mouse === "left" ? 0 : 2;
+    if (e.button !== wantBtn) return false;
+    const need = { alt: false, ctrl: false, shift: false };
+    if (t.modifier) for (const p of t.modifier.split("+")) if (p in need) need[p] = true;
+    return e.altKey === need.alt && e.ctrlKey === need.ctrl && e.shiftKey === need.shift;
+}
+
+/** 触发方式的显示文案（如 "Ctrl+Shift + 右键"、"左键"） */
+function triggerLabel() {
+    const t = normalizeTrigger(CM.rules.drag_trigger);
+    const btn = t.mouse === "left" ? "左键" : "右键";
+    if (!t.modifier) return btn;
+    const mod = t.modifier.split("+").map((s) => s.charAt(0).toUpperCase() + s.slice(1)).join("+");
+    return `${mod} + ${btn}`;
 }
 
 // ============================================================
@@ -192,6 +299,7 @@ function reapply() {
 async function saveRules() {
     try {
         reapply();
+        applyOrderRules(); // 排序规则：重排字典 key 序（树实时更新）
     } catch (e) {
         console.error(`[${CM_NAMESPACE}] 热更新失败：`, e);
     }
@@ -378,26 +486,41 @@ function closeMenu() {
     if (cmMenuEl) { cmMenuEl.remove(); cmMenuEl = null; }
 }
 
+/** 读取 ComfyUI 主题 CSS 变量（缺省回退旧配色） */
+function themeColor(name, fallback) {
+    try {
+        const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+        return v || fallback;
+    } catch (e) {
+        return fallback;
+    }
+}
+
 function showMenu(x, y, items) {
     closeMenu();
     cmMenuEl = document.createElement("div");
+    const bg = themeColor("--color-charcoal-800", "#2a2a2a");
+    const border = themeColor("--border-default", "#444");
+    const fg = themeColor("--color-white", "#ddd");
+    const hoverBg = themeColor("--color-charcoal-700", "#3a3a3a");
+    cmMenuEl.dataset.cmMenu = "1";
     cmMenuEl.style.cssText =
-        "position:fixed;z-index:100000;min-width:180px;background:#2a2a2a;border:1px solid #444;" +
-        "border-radius:6px;box-shadow:0 4px 16px rgba(0,0,0,.5);padding:4px;font-size:13px;color:#ddd;";
+        `position:fixed;z-index:100000;min-width:180px;background:${bg};border:1px solid ${border};` +
+        `border-radius:6px;box-shadow:0 4px 16px rgba(0,0,0,.5);padding:4px;font-size:13px;color:${fg};`;
     for (const it of items) {
         if (!it) continue;
         const b = document.createElement("div");
         if (it.header) {
             b.textContent = it.header;
-            b.style.cssText = "padding:4px 12px;color:#888;font-size:11px;border-bottom:1px solid #3a3a3a;margin-bottom:2px;white-space:nowrap;";
+            b.style.cssText = "padding:4px 12px;color:#888;font-size:11px;border-bottom:1px solid " + border + ";margin-bottom:2px;white-space:nowrap;";
         } else if (it.sep) {
-            b.style.cssText = "height:1px;background:#3a3a3a;margin:4px 6px;";
+            b.style.cssText = "height:1px;background:" + border + ";margin:4px 6px;";
         } else {
             b.textContent = it.label;
             b.style.cssText =
                 "padding:6px 12px;border-radius:4px;cursor:pointer;white-space:nowrap;" +
                 (it.danger ? "color:#e05555;" : "");
-            b.addEventListener("mouseenter", () => (b.style.background = "#3a3a3a"));
+            b.addEventListener("mouseenter", () => (b.style.background = hoverBg));
             b.addEventListener("mouseleave", () => (b.style.background = ""));
             b.addEventListener("click", () => { closeMenu(); it.onclick(); });
         }
@@ -632,6 +755,14 @@ function actionRenameCategory(key) {
         onConfirm: (np) => {
             if (np && np !== key) {
                 CM.rules.category_rename[key] = np;
+                // 同步排序规则中的路径引用（src 与锚点）
+                for (const r of CM.rules.order_rules || []) {
+                    if (r.type !== "cat") continue;
+                    if (r.key === key) r.key = np;
+                    else if (r.key.startsWith(key + "/")) r.key = np + r.key.slice(key.length);
+                    if (r.before === key) r.before = np;
+                    else if (r.before.startsWith(key + "/")) r.before = np + r.before.slice(key.length);
+                }
                 saveRules();
             }
         },
@@ -742,6 +873,65 @@ function showHiddenListDialog() {
     }
 }
 
+/** 拖拽方式设置对话框（录制式：任意修饰键 + 左/右键，可为空修饰键） */
+function showDragTriggerDialog() {
+    const overlay = document.createElement("div");
+    overlay.style.cssText =
+        "position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100001;display:flex;align-items:center;justify-content:center;";
+    const dlg = document.createElement("div");
+    dlg.style.cssText =
+        "background:#2a2a2a;color:#ddd;border-radius:8px;padding:16px;min-width:340px;box-shadow:0 8px 32px rgba(0,0,0,.5);font-size:13px;";
+    dlg.innerHTML =
+        `<div style="font-weight:bold;margin-bottom:6px;">拖拽方式</div>` +
+        `<div style="margin-bottom:10px;color:#aaa;">在下方区域按下想使用的组合（可按住 Ctrl / Alt / Shift 再按左键或右键）。<br />不按任何修饰键 = 直接拖拽。</div>` +
+        `<div id="cm-dk-capture" tabindex="0" style="padding:22px;text-align:center;border:1px dashed #555;border-radius:6px;cursor:pointer;` +
+        `margin-bottom:8px;background:#1e1e1e;color:#888;">在此按下组合键</div>` +
+        `<div id="cm-dk-result" style="margin-bottom:12px;min-height:18px;color:#4a9eff;">当前：${triggerLabel()}</div>` +
+        `<div style="display:flex;justify-content:flex-end;gap:8px;">` +
+        `<button id="cm-dk-cancel" style="padding:5px 14px;background:#444;color:#ddd;border:none;border-radius:4px;cursor:pointer;">取消</button>` +
+        `<button id="cm-dk-ok" style="padding:5px 14px;background:#4a9eff;color:#fff;border:none;border-radius:4px;cursor:pointer;">确定</button></div>`;
+    overlay.appendChild(dlg);
+    document.body.appendChild(overlay);
+
+    let selected = normalizeTrigger(CM.rules.drag_trigger);
+    const capture = dlg.querySelector("#cm-dk-capture");
+    const result = dlg.querySelector("#cm-dk-result");
+    const fmt = (t) => {
+        const btn = t.mouse === "left" ? "左键" : "右键";
+        const mod = t.modifier ? t.modifier.split("+").map((s) => s.charAt(0).toUpperCase() + s.slice(1)).join(" + ") + " + " : "";
+        return mod + btn;
+    };
+
+    // 录制：在捕获区按下即记录（捕获阶段吞掉，防止触发页面交互）
+    capture.addEventListener("mousedown", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (e.button !== 0 && e.button !== 2) return; // 只支持左/右键
+        const parts = [];
+        if (e.ctrlKey) parts.push("ctrl");
+        if (e.altKey) parts.push("alt");
+        if (e.shiftKey) parts.push("shift");
+        selected = normalizeTrigger({ mouse: e.button === 0 ? "left" : "right", modifier: parts.join("+") });
+        capture.style.borderColor = "#4a9eff";
+        result.textContent = "已录制：" + fmt(selected);
+    }, true);
+    capture.addEventListener("contextmenu", (e) => e.preventDefault());
+    capture.addEventListener("keydown", (e) => e.preventDefault()); // 屏蔽空格/回车默认行为
+
+    const close = () => overlay.remove();
+    dlg.querySelector("#cm-dk-cancel").addEventListener("click", close);
+    overlay.addEventListener("click", (e) => { if (e.target === overlay) close(); });
+    dlg.querySelector("#cm-dk-ok").addEventListener("click", () => {
+        close();
+        const cur = normalizeTrigger(CM.rules.drag_trigger);
+        if (selected.mouse !== cur.mouse || selected.modifier !== cur.modifier) {
+            CM.rules.drag_trigger = selected;
+            saveRules();
+            showToast("拖拽方式已设为 " + triggerLabel());
+        }
+    });
+}
+
 /** 恢复此分类为默认（清除该分类及其后代的所有自定义规则） */
 function actionRestoreCategory(key) {
     let n = 0;
@@ -759,6 +949,7 @@ function actionRestoreCategory(key) {
     const hiddenBefore = CM.rules.hidden_categories.length;
     CM.rules.hidden_categories = CM.rules.hidden_categories.filter((h) => h !== key && !h.startsWith(key + "/"));
     n += hiddenBefore - CM.rules.hidden_categories.length;
+    n += removeOrderRulesForCategory(key);
     if (!n) { showToast("该分类已是默认状态"); return; }
     saveRules();
 }
@@ -770,26 +961,32 @@ function actionRestoreNode(name) {
     saveRules();
 }
 
-/** 恢复所有分类：清空全部规则 */
+/** 恢复所有分类：清空全部规则（保留拖拽快捷键偏好） */
 function actionRestoreAll() {
     const nRename = Object.keys(CM.rules.category_rename).length;
     const nHidden = CM.rules.hidden_categories.length + (CM.rules.hidden_nodes || []).length;
     const nMove = Object.keys(CM.rules.node_move).length;
     const nEmpty = (CM.rules.empty_categories || []).length;
-    if (nRename + nHidden + nMove + nEmpty === 0) { showToast("当前没有分类管理规则"); return; }
+    const nOrder = (CM.rules.order_rules || []).length;
+    if (nRename + nHidden + nMove + nEmpty + nOrder === 0) { showToast("当前没有分类管理规则"); return; }
     const parts = [
         `重命名 ${nRename} 条`,
         `隐藏 ${nHidden} 条`,
         `移动 ${nMove} 条`,
     ];
     if (nEmpty) parts.push(`空分类 ${nEmpty} 条`);
+    if (nOrder) parts.push(`排序 ${nOrder} 条`);
     showConfirmDialog({
         title: "恢复所有分类",
         desc: `将清除全部规则，所有分类回到默认状态：\n${parts.join(" / ")}`,
         confirmText: "恢复所有",
         danger: true,
         onConfirm: () => {
-            CM.rules = { category_rename: {}, hidden_categories: [], node_move: {}, empty_categories: [], hidden_nodes: [] };
+            CM.rules = {
+                category_rename: {}, hidden_categories: [], node_move: {},
+                empty_categories: [], hidden_nodes: [], order_rules: [],
+                drag_trigger: CM.rules.drag_trigger || { mouse: "right", modifier: "alt" },
+            };
             saveRules();
         },
     });
@@ -805,13 +1002,14 @@ function setupTreeInteraction() {
     setupGlobalMenuDismiss();
 
     // ---- Alt + 右键拖拽（HTML5 DnD 不支持右键启动，用自定义指针拖拽） ----
-    const rd = { pending: false, active: false, startX: 0, startY: 0, x: 0, y: 0, name: null, folderPath: null, label: null, ghost: null, targetRow: null, suppressCtxUntil: 0 };
+    const rd = { pending: false, active: false, startX: 0, startY: 0, x: 0, y: 0, name: null, folderPath: null, label: null, ghost: null, targetRow: null, suppressCtxUntil: 0, targetIsFolder: false, dispPath: null, startButton: 2 };
 
     function rdCleanup() {
-        if (rd.targetRow) { rd.targetRow.el.style.outline = ""; }
+        if (rd.targetRow) { rd.targetRow.el.style.outline = ""; rd.targetRow.el.style.boxShadow = ""; }
         if (rd.ghost) { rd.ghost.remove(); rd.ghost = null; }
         rd.active = false; rd.pending = false;
         rd.name = null; rd.folderPath = null; rd.label = null;
+        rd.targetIsFolder = false; rd.dispPath = null;
     }
 
     function rdGhost(text) {
@@ -828,10 +1026,11 @@ function setupTreeInteraction() {
         rd.ghost.style.top = Math.min(rd.y + 14, window.innerHeight - 40) + "px";
     }
 
-    /** 指针位置下的可放置目标分类行（含自建空分类） */
+    /** 指针位置下的可放置目标行（含自建空分类），带上/下半部判定 */
     function rdTargetAt(x, y) {
         const el = document.elementFromPoint(x, y);
         let target = null;
+        let row = null;
         const emptyEl = el && el.closest ? el.closest("[data-cm-empty-cat]") : null;
         if (emptyEl) {
             // 自建空分类行（面板顶部区块）
@@ -840,21 +1039,39 @@ function setupTreeInteraction() {
             const rowEl = el && el.closest ? el.closest(ROW_SEL) : null;
             if (!rowEl) return null;
             const rows = visibleRowsWithPaths();
-            const row = rows.find((r) => r.el === rowEl);
-            if (!row || !row.isFolder || !droppableFolder(row)) return null;
-            target = row;
+            row = rows.find((r) => r.el === rowEl);
+            if (!row) return null;
+            target = { el: rowEl, localPath: row.localPath, isFolder: row.isFolder };
         }
         // 防止把分类拖进自己或自己的子分类
         if (rd.folderPath) {
             const t = target.localPath;
             if (t === rd.folderPath || t.startsWith(rd.folderPath + "/")) return null;
         }
+        // 空分类行只能作为拖入目标，不能作为排序锚点
+        if (emptyEl) { target.upper = false; return target; }
+
+        if (!target.isFolder) {
+            // 叶子行：仅叶子拖拽可作为排序锚点（整行 = 排到该节点前面）
+            if (rd.folderPath) return null; // 分类不接受叶子目标（防止写坏路径规则）
+            const entries = leafCandidates(row);
+            if (!entries.length) return null;
+            target.leafName = entries[0].name; // 排序锚点用类名
+            target.upper = true;
+            return target;
+        }
+
+        // 分类行：上半部 = 排到该分类前；下半部 = 拖入该分类
+        const r = target.el.getBoundingClientRect();
+        target.upper = (y - r.top) < r.height / 2;
+        // 分类只能排到分类前（叶子拖到分类行的排序由 node_move 语义承担）
+        if (target.upper && !rd.targetIsFolder) target.upper = false;
         return target;
     }
 
-    // 右键按下：记录待拖对象（叶子用显示名反查类名；分类取完整路径）
+    // 按下：记录待拖对象（鼠标键与修饰键按用户配置；叶子用显示名反查类名；分类取完整路径）
     document.addEventListener("mousedown", (e) => {
-        if (e.button !== 2 || !e.altKey) return;
+        if (!matchTrigger(e)) return;
         const rowEl = e.target.closest?.(ROW_SEL);
         if (!rowEl) return;
         const rows = visibleRowsWithPaths();
@@ -866,10 +1083,13 @@ function setupTreeInteraction() {
             rd.name = null;
         } else {
             const entries = leafCandidates(row);
-            rd.name = entries.length ? entries[0].name : null;
-            if (!rd.name) return; // 无法识别：不启动拖拽
+            if (!entries.length) return; // 无法识别：不启动拖拽
+            rd.name = entries[0].name;
+            rd.dispPath = entries[0].dispPath;
         }
         rd.label = row.label;
+        rd.targetIsFolder = row.isFolder;
+        rd.startButton = e.button;
         rd.pending = true;
         rd.startX = e.clientX; rd.startY = e.clientY;
         rd.x = e.clientX; rd.y = e.clientY;
@@ -882,21 +1102,30 @@ function setupTreeInteraction() {
         if (!rd.active) {
             if (Math.abs(e.clientX - rd.startX) + Math.abs(e.clientY - rd.startY) < 6) return;
             rd.active = true;
-            rdGhost((rd.name ? "移动节点：" : "移动分类：") + rd.label);
+            rdGhost(`拖动中：${rd.label}`);
         }
         const target = rdTargetAt(e.clientX, e.clientY);
-        if (rd.targetRow && (!target || target.el !== rd.targetRow.el)) rd.targetRow.el.style.outline = "";
+        // 清理上一个目标高亮/插入线
+        if (rd.targetRow && (!target || target.el !== rd.targetRow.el)) {
+            rd.targetRow.el.style.outline = "";
+            rd.targetRow.el.style.boxShadow = "";
+        }
         rd.targetRow = target;
-        if (target) {
-            target.el.style.outline = "1px solid #4a9eff";
-            rdGhost("松开移动到：" + target.localPath);
+        if (!target) { rdGhost(`拖动中：${rd.label}`); return; }
+        if (target.upper) {
+            // 上半部：行内顶部插入线（inset 阴影，宽度即面板内行宽）
+            target.el.style.outline = "";
+            target.el.style.boxShadow = "inset 0 2px 0 0 #4a9eff";
+            rdGhost(`排序到「${target.localPath}」上面`);
         } else {
-            rdGhost((rd.name ? "移动节点：" : "移动分类：") + rd.label);
+            target.el.style.outline = "1px solid #4a9eff";
+            target.el.style.boxShadow = "";
+            rdGhost(`松开移动到：${target.localPath}`);
         }
     }, true);
 
-    // 拖拽中/刚结束时阻止右键菜单（浏览器会在右键松开后补发 contextmenu）
-    document.addEventListener("contextmenu", (e) => {
+    // 拖拽中/刚结束时阻止右键菜单（挂在 window capture：早于 ComfyUI 的 document 监听，才能拦得住）
+    window.addEventListener("contextmenu", (e) => {
         if (rd.active || Date.now() < rd.suppressCtxUntil) {
             rd.suppressCtxUntil = 0;
             e.preventDefault();
@@ -904,35 +1133,65 @@ function setupTreeInteraction() {
         }
     }, true);
 
-    // 右键松开：拖拽模式 → 执行移动；未拖动 → 交给右键菜单 handler
+    // 松开：拖拽模式 → 执行移动/排序；未拖动 → 交给原生行为（点击展开/右键菜单）
     document.addEventListener("mouseup", (e) => {
-        if (!rd.pending || e.button !== 2) return;
+        if (!rd.pending || e.button !== rd.startButton) return;
         if (!rd.active) { rdCleanup(); return; }
         const target = rdTargetAt(e.clientX, e.clientY);
         if (target) {
-            if (rd.folderPath) {
+            if (target.upper) {
+                // ★ 排序：把对象排到锚点前面（分类锚 = 分类路径，节点锚 = 类名）
+                const anchorType = target.isFolder ? "cat" : "node";
+                const anchorKey = target.isFolder ? target.localPath : target.leafName;
+                const srcType = rd.targetIsFolder ? "cat" : "node";
+                const srcKey = rd.targetIsFolder ? rd.folderPath : rd.name;
+                if (srcType === anchorType && srcKey === anchorKey) {
+                    // 拖到自己上方：无意义，忽略
+                } else {
+                    addOrderRule(srcType, srcKey, anchorKey);
+                }
+            } else if (rd.folderPath) {
                 // 分类整体拖到目标分类下（子树跟随）
                 const src = rd.folderPath;
                 const finalPath = target.localPath + "/" + src.split("/").pop();
-                if (finalPath !== src) CM.rules.category_rename[src] = finalPath;
+                if (finalPath !== src) {
+                    if (removeOrderRulesForCategory(src)) saveRules(); // 分类位置变了，排序规则先失效
+                    CM.rules.category_rename[src] = finalPath;
+                }
+                saveRules();
             } else if (rd.name) {
                 CM.rules.node_move[rd.name] = target.localPath;
                 // 拖拽移动视为主动整理：同时取消该节点的隐藏
                 if (CM.rules.hidden_nodes && CM.rules.hidden_nodes.includes(rd.name)) {
                     CM.rules.hidden_nodes = CM.rules.hidden_nodes.filter((n) => n !== rd.name);
                 }
+                saveRules();
             }
-            saveRules();
         }
         rdCleanup();
-        rd.suppressCtxUntil = Date.now() + 400; // 吞掉紧随鼠标松开补发的 contextmenu
+        if (rd.startButton === 2) rd.suppressCtxUntil = Date.now() + 400; // 右键拖拽：吞掉松开后补发的 contextmenu
+        else rd.suppressClickUntil = Date.now() + 300; // 左键拖拽：吞掉松开后补发的 click（防止误开管理菜单）
     }, true);
 
-    // ---- 右键菜单（分类文件夹与自建空分类；叶子右键保留 ComfyUI 原生菜单） ----
-    document.addEventListener("contextmenu", (e) => {
-        if (rd.active) { e.preventDefault(); return; }
-        // 自建空分类（面板顶部区块）
-        const emptyEl = e.target.closest ? e.target.closest("[data-cm-empty-cat]") : null;
+    // ---- 管理菜单：由拖拽触发键打开；普通右键/左键完全交给 ComfyUI 原生行为 ----
+
+    /** 管理菜单触发配置：拖拽键含修饰键时沿用；纯鼠标键时回退 Alt+右键（保护原生菜单） */
+    function menuTriggerConfig() {
+        const t = normalizeTrigger(CM.rules.drag_trigger);
+        return t.modifier ? t : { mouse: "right", modifier: "alt" };
+    }
+
+    function matchMenuTrigger(e) {
+        const t = menuTriggerConfig();
+        const wantBtn = t.mouse === "left" ? 0 : 2;
+        if (e.button !== wantBtn) return false;
+        const need = { alt: false, ctrl: false, shift: false };
+        if (t.modifier) for (const p of t.modifier.split("+")) if (p in need) need[p] = true;
+        return e.altKey === need.alt && e.ctrlKey === need.ctrl && e.shiftKey === need.shift;
+    }
+
+    /** 构建并显示管理菜单（目标 = 右键/点击命中的行或空分类） */
+    function openManageMenu(e, rowEl, emptyEl) {
         if (emptyEl) {
             const key = emptyEl.dataset.cmEmptyCat;
             const items = [
@@ -942,22 +1201,21 @@ function setupTreeInteraction() {
                 { label: "删除此分类", danger: true, onclick: () => actionDeleteEmptyCat(key) },
                 { label: "隐藏此分类", danger: true, onclick: () => actionHideCategory(key) },
                 { sep: true },
+                { label: `拖拽方式（当前 ${triggerLabel()}）...`, onclick: showDragTriggerDialog },
                 { label: "查看已隐藏列表...", onclick: showHiddenListDialog },
                 { label: "恢复所有分类", onclick: actionRestoreAll },
             ];
-            e.preventDefault();
             showMenu(e.clientX, e.clientY, items);
             return;
         }
-        const rowEl = e.target.closest?.(ROW_SEL);
         if (!rowEl || !CM.catIndex.size) return;
         const rows = visibleRowsWithPaths();
         const row = rows.find((r) => r.el === rowEl);
         if (!row) return;
         if (!row.isFolder) {
-            // 节点（叶子）：显示节点管理菜单
+            // 节点（叶子）：节点管理菜单
             const entries = leafCandidates(row);
-            if (!entries.length) return; // 无法识别类名：交给原生菜单
+            if (!entries.length) return; // 无法识别类名：不弹菜单
             const ent = entries[0];
             const nodeItems = [
                 { header: row.label },
@@ -965,10 +1223,10 @@ function setupTreeInteraction() {
                 { label: "恢复此节点为默认分类", onclick: () => actionRestoreNode(ent.name) },
                 { label: "隐藏此节点", danger: true, onclick: () => actionHideNode(ent.name) },
                 { sep: true },
+                { label: `拖拽方式（当前 ${triggerLabel()}）...`, onclick: showDragTriggerDialog },
                 { label: "查看已隐藏列表...", onclick: showHiddenListDialog },
                 { label: "恢复所有分类", onclick: actionRestoreAll },
             ];
-            e.preventDefault();
             showMenu(e.clientX, e.clientY, nodeItems);
             return;
         }
@@ -987,6 +1245,7 @@ function setupTreeInteraction() {
             items.push({ label: "隐藏此分类", danger: true, onclick: () => actionHideCategory(key) });
             items.push({ label: "恢复此分类为默认", onclick: () => actionRestoreCategory(key) });
             items.push({ sep: true });
+            items.push({ label: `拖拽方式（当前 ${triggerLabel()}）...`, onclick: showDragTriggerDialog });
             items.push({ label: "查看已隐藏列表...", onclick: showHiddenListDialog });
             items.push({ label: "恢复所有分类", onclick: actionRestoreAll });
         } else if (candidates.length > 1) {
@@ -1005,6 +1264,7 @@ function setupTreeInteraction() {
                         sub.push({ label: "隐藏此分类", danger: true, onclick: () => actionHideCategory(c) });
                         sub.push({ label: "恢复此分类为默认", onclick: () => actionRestoreCategory(c) });
                         sub.push({ sep: true });
+                        sub.push({ label: `拖拽方式（当前 ${triggerLabel()}）...`, onclick: showDragTriggerDialog });
                         sub.push({ label: "查看已隐藏列表...", onclick: showHiddenListDialog });
                         sub.push({ label: "恢复所有分类", onclick: actionRestoreAll });
                         showMenu(e.clientX, e.clientY, sub);
@@ -1012,11 +1272,42 @@ function setupTreeInteraction() {
                 });
             }
         } else {
-            return; // 无法确定目标，保留原生行为
+            return; // 无法确定目标，不做任何事
         }
 
-        e.preventDefault();
         showMenu(e.clientX, e.clientY, items);
+    }
+
+    // 右键入口：命中管理触发键才接管；普通右键完全放行 ComfyUI 原生菜单
+    // （window capture：必须早于 ComfyUI 自己的 contextmenu 监听，否则 stopImmediatePropagation 拦不住 → 双菜单）
+    window.addEventListener("contextmenu", (e) => {
+        if (rd.active) { e.preventDefault(); return; }
+        if (!matchMenuTrigger(e)) return; // 普通右键 → 原生菜单
+        if (Date.now() < rd.suppressCtxUntil) { rd.suppressCtxUntil = 0; return; }
+        const emptyEl = e.target.closest ? e.target.closest("[data-cm-empty-cat]") : null;
+        const rowEl = emptyEl ? null : e.target.closest?.(ROW_SEL);
+        if (!emptyEl && !rowEl) return;
+        e.preventDefault();
+        e.stopImmediatePropagation(); // 阻止原生菜单同时弹出（双菜单）
+        openManageMenu(e, rowEl, emptyEl);
+    }, true);
+
+    // 左键入口：触发键为「修饰键 + 左键」时，单击行打开管理菜单
+    document.addEventListener("click", (e) => {
+        const t = menuTriggerConfig();
+        if (t.mouse !== "left") return;
+        if (Date.now() < rd.suppressClickUntil) { rd.suppressClickUntil = 0; return; } // 拖拽结束后的 click
+        if (!matchMenuTrigger(e)) return;
+        const rowEl = e.target.closest?.(ROW_SEL);
+        if (!rowEl) return;
+        e.preventDefault();
+        e.stopPropagation();
+        openManageMenu(e, rowEl, null);
+    }, true);
+
+    // 原生 HTML5 拖拽启动（如把叶子节点拖到画布添加）时，插件拖拽让位
+    document.addEventListener("dragstart", (e) => {
+        if (rd.pending || rd.active) rdCleanup();
     }, true);
 
     // ---- hover 提示（辅助确认目标） ----
@@ -1031,10 +1322,10 @@ function setupTreeInteraction() {
             const candidates = categoryCandidates(row.localPath, row.level);
             const valid = candidates.includes(row.localPath) ||
                 candidates.some((k) => k.startsWith(row.localPath + "/"));
-            if (valid) rowEl.title = row.localPath + "（右键管理；Alt+右键拖拽可整体移动）";
+            if (valid) rowEl.title = row.localPath + `（${triggerLabel()}：拖拽移动/排序、单击打开管理菜单）`;
         } else {
             const entries = leafCandidates(row);
-            if (entries.length) rowEl.title = `${entries[0].name}（${entries[0].dispPath}）｜Alt+右键拖拽即可移动`;
+            if (entries.length) rowEl.title = `${entries[0].name}（${entries[0].dispPath}）｜${triggerLabel()}：拖拽移动/排序（叶子拖到画布为添加节点）`;
         }
     });
 
@@ -1065,6 +1356,7 @@ function waitAndFirstApply() {
         clearInterval(timer);
         try {
             if (reapply()) {
+                applyOrderRules(); // 首次：按排序规则重排节点顺序（页面加载后恢复排序）
                 setupTreeInteraction();
                 console.log(`[${CM_NAMESPACE}] 规则已应用（实时生效，无需刷新）`);
             }
@@ -1100,10 +1392,13 @@ function registerWhenReady(tries = 0) {
                         node_move: data.node_move || {},
                         empty_categories: data.empty_categories || [],
                         hidden_nodes: data.hidden_nodes || [],
+                        order_rules: Array.isArray(data.order_rules) ? data.order_rules : [],
+                        drag_trigger: data.drag_trigger || (data.drag_modifier ? { mouse: "right", modifier: data.drag_modifier } : { mouse: "right", modifier: "alt" }),
                     };
                     const n = Object.keys(CM.rules.category_rename).length +
                         CM.rules.hidden_categories.length + Object.keys(CM.rules.node_move).length +
-                        CM.rules.empty_categories.length + CM.rules.hidden_nodes.length;
+                        CM.rules.empty_categories.length + CM.rules.hidden_nodes.length +
+                        CM.rules.order_rules.length;
                     if (n > 0) console.log(`[${CM_NAMESPACE}] 已加载分类规则 ${n} 条`);
                 }
             } catch (e) {
