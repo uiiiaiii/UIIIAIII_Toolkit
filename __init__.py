@@ -50,7 +50,7 @@ PLUGIN_INFO = {
     "name": "UIIIAIII Toolkit",
     "version": __version__,
     "author": "UIIIAIII Toolkit",
-    "description": "多 API 自定义节点：Agnes AI（文生图/图生图/文生视频/图生视频/关键帧动画）+ ModelScope Qwen-Image-Edit-2511（图像编辑）",
+    "description": "Multi-API custom nodes: Agnes AI (text-to-image / image-to-image / text-to-video / image-to-video / keyframe animation) + ModelScope Qwen-Image-Edit-2511 (image editing)",
     "models": [
         "agnes-image-2.1-flash",
         "agnes-video-v2.0",
@@ -94,7 +94,7 @@ try:
                 logger.info("API Key 配置已更新")
                 return web.json_response({"status": "ok"})
             else:
-                return web.json_response({"status": "error", "message": "保存失败"}, status=500)
+                return web.json_response({"status": "error", "message": "Save failed"}, status=500)
         except Exception as e:
             logger.error("保存 API Key 配置异常：%s", e)
             return web.json_response({"status": "error", "message": str(e)}, status=500)
@@ -166,7 +166,7 @@ try:
             data = await request.json()
             class_names = data.get("class_names", [])
             if not class_names:
-                return web.json_response({"error": "未提供 class_names"}, status=400)
+                return web.json_response({"error": "Missing class_names"}, status=400)
 
             result = node_extractor.extract_selected_nodes(class_names)
 
@@ -195,7 +195,7 @@ try:
             data = await request.json()
             plugin_name = data.get("plugin_name", "")
             if not plugin_name:
-                return web.json_response({"error": "未提供 plugin_name"}, status=400)
+                return web.json_response({"error": "Missing plugin_name"}, status=400)
 
             result = node_extractor.extract_plugin_nodes(plugin_name)
 
@@ -245,7 +245,7 @@ try:
             target_lang = data.get("target_lang") or translator_cfg.get("target_lang", "zh-CN")
 
             if not nodes_data and not menus_data:
-                return web.json_response({"error": "没有待翻译的内容"}, status=400)
+                return web.json_response({"error": "Nothing to translate"}, status=400)
 
             # 调用翻译 API（translator.py 内部会自动分批翻译节点和菜单）
             # 合并节点、分类、菜单到一个 JSON
@@ -320,7 +320,7 @@ try:
                 logger.info("翻译 API 配置已更新（目标语言：%s）", data.get("target_lang") or "未变更")
                 return web.json_response({"status": "ok"})
             else:
-                return web.json_response({"error": "保存失败"}, status=500)
+                return web.json_response({"error": "Save failed"}, status=500)
         except Exception as e:
             logger.error("保存翻译配置失败：%s", e)
             return web.json_response({"error": str(e)}, status=500)
@@ -380,7 +380,7 @@ try:
                 trigger = {}
             mouse = str(trigger.get("mouse") or "right").lower()
             mod = str(trigger.get("modifier") or "").lower()
-            allowed_mods = {"", "alt", "ctrl", "shift", "ctrl+alt", "ctrl+shift", "alt+shift", "ctrl+alt+shift"}
+            allowed_mods = {"", "alt"}  # 仅支持：右键 / Alt+右键
             clean["drag_trigger"] = {
                 "mouse": mouse if mouse in ("left", "right") else "right",
                 "modifier": mod if mod in allowed_mods else "alt",

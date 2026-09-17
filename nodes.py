@@ -179,21 +179,21 @@ class AgnesTextToImage:
                         "min": 0,
                         "max": 0xFFFFFFFFFFFFFFFF,
                         "control_after_generate": True,
-                        "tooltip": "随机种子，用于打破 ComfyUI 执行缓存（Agnes Image API 本身不支持 seed，此参数不会发送给 API）",
+                        "tooltip": "Random seed used to break the ComfyUI execution cache (the Agnes Image API does not support seed, so this value is not sent to the API)",
                     },
                 ),
                 "size": (
                     ["1K", "2K", "3K", "4K"],
                     {
                         "default": "2K",
-                        "tooltip": "输出尺寸档位",
+                        "tooltip": "Output size preset",
                     },
                 ),
                 "ratio": (
                     agnes_client.IMAGE_RATIO_OPTIONS,
                     {
                         "default": "1:1",
-                        "tooltip": "宽高比",
+                        "tooltip": "Aspect ratio",
                     },
                 ),
             },
@@ -315,14 +315,14 @@ class AgnesImageToImage:
                         "min": 0,
                         "max": 0xFFFFFFFFFFFFFFFF,
                         "control_after_generate": True,
-                        "tooltip": "随机种子，用于打破 ComfyUI 执行缓存（Agnes Image API 本身不支持 seed，此参数不会发送给 API）",
+                        "tooltip": "Random seed used to break the ComfyUI execution cache (the Agnes Image API does not support seed, so this value is not sent to the API)",
                     },
                 ),
                 "size": (
                     ["1K", "2K", "3K", "4K"],
                     {
                         "default": "2K",
-                        "tooltip": "输出尺寸档位",
+                        "tooltip": "Output size preset",
                     },
                 ),
                 "ratio": (
@@ -479,7 +479,7 @@ class AgnesTextToVideo:
                     {
                         "default": "",
                         "multiline": True,
-                        "tooltip": "反向提示词，描述需要避免的内容",
+                        "tooltip": "Negative prompt describing what to avoid",
                     },
                 ),
                 "seed": (
@@ -489,7 +489,7 @@ class AgnesTextToVideo:
                         "min": 0,
                         "max": 0xFFFFFFFFFFFFFFFF,
                         "control_after_generate": True,
-                        "tooltip": "随机种子（0 表示不指定）",
+                        "tooltip": "Random seed (0 means not specified)",
                     },
                 ),
                 "num_inference_steps": (
@@ -498,7 +498,7 @@ class AgnesTextToVideo:
                         "default": 0,
                         "min": 0,
                         "max": 200,
-                        "tooltip": "推理步数（0 表示使用默认值）",
+                        "tooltip": "Inference steps (0 uses the default value)",
                     },
                 ),
                 "poll_interval": (
@@ -635,7 +635,7 @@ class AgnesImageToVideo:
                     {
                         "default": "",
                         "multiline": True,
-                        "tooltip": "反向提示词，描述需要避免的内容",
+                        "tooltip": "Negative prompt describing what to avoid",
                     },
                 ),
                 "seed": (
@@ -645,7 +645,7 @@ class AgnesImageToVideo:
                         "min": 0,
                         "max": 0xFFFFFFFFFFFFFFFF,
                         "control_after_generate": True,
-                        "tooltip": "随机种子（0 表示不指定）",
+                        "tooltip": "Random seed (0 means not specified)",
                     },
                 ),
                 "num_inference_steps": (
@@ -654,7 +654,7 @@ class AgnesImageToVideo:
                         "default": 0,
                         "min": 0,
                         "max": 200,
-                        "tooltip": "推理步数（0 表示使用默认值）",
+                        "tooltip": "Inference steps (0 uses the default value)",
                     },
                 ),
                 "poll_interval": (
@@ -749,16 +749,16 @@ class AgnesKeyframeAnimation:
                     {
                         "default": "Generate a smooth cinematic transition between the keyframes, maintaining visual consistency and natural camera movement",
                         "multiline": True,
-                        "tooltip": "描述关键帧之间的过渡效果",
+                        "tooltip": "Describe the transition between keyframes",
                     },
                 ),
                 "image1": (
                     "IMAGE",
-                    {"tooltip": "关键帧 1（起始帧，必填）"},
+                    {"tooltip": "Keyframe 1 (start frame, required)"},
                 ),
                 "image2": (
                     "IMAGE",
-                    {"tooltip": "关键帧 2（结束帧，必填）"},
+                    {"tooltip": "Keyframe 2 (end frame, required)"},
                 ),
                 "ratio": (
                     ["16:9", "9:16", "1:1", "4:3", "3:4"],
@@ -783,7 +783,7 @@ class AgnesKeyframeAnimation:
                     {
                         "default": "",
                         "multiline": True,
-                        "tooltip": "反向提示词，描述需要避免的内容",
+                        "tooltip": "Negative prompt describing what to avoid",
                     },
                 ),
                 "seed": (
@@ -793,12 +793,12 @@ class AgnesKeyframeAnimation:
                         "min": 0,
                         "max": 0xFFFFFFFFFFFFFFFF,
                         "control_after_generate": True,
-                        "tooltip": "随机种子（0 表示不指定）",
+                        "tooltip": "Random seed (0 means not specified)",
                     },
                 ),
                 "num_inference_steps": (
                     "INT",
-                    {"default": 0, "min": 0, "max": 200, "tooltip": "推理步数（0 表示使用默认值）"},
+                    {"default": 0, "min": 0, "max": 200, "tooltip": "Inference steps (0 uses the default value)"},
                 ),
                 "poll_interval": (
                     "INT",
@@ -1126,7 +1126,7 @@ class QwenImageEdit:
                         "min": 0,
                         "max": 0xFFFFFFFFFFFFFFFF,
                         "control_after_generate": True,
-                        "tooltip": "随机种子。0 表示使用 API 随机种子。用于打破 ComfyUI 执行缓存",
+                        "tooltip": "Random seed. 0 means the API picks a random seed. Used to break the ComfyUI execution cache",
                     },
                 ),
                 "ratio": (
@@ -1278,7 +1278,7 @@ class TextPreview:
         上游文本自动填入 TextPreview 的编辑框，用户可修改后输出
     """
 
-    DESCRIPTION = "二合一文本节点：可编辑输入文本，或接收上游文本自动同步到编辑框后修改输出"
+    DESCRIPTION = "Two-in-one text node: edit text directly, or sync upstream text into the edit box and modify the output"
 
     CATEGORY = "UIIIAIII Toolkit/Text"
 
@@ -1298,7 +1298,7 @@ class TextPreview:
                     {
                         "multiline": True,
                         "default": "",
-                        "tooltip": "文本内容（可直接编辑）。连接 source 时上游文本会自动同步到此编辑框",
+                        "tooltip": "Text content (editable). When source is connected, the upstream text is synced into this box automatically",
                     },
                 ),
             },
@@ -1307,7 +1307,7 @@ class TextPreview:
                     "STRING",
                     {
                         "forceInput": True,
-                        "tooltip": "可选：连接上游文本节点，文本会自动同步到编辑框供修改",
+                        "tooltip": "Optional: connect an upstream text node; its text is synced into the edit box for editing",
                     },
                 ),
             },
@@ -1501,7 +1501,7 @@ class RandomNoiseSeed:
                         "default": 0,
                         "min": 0,
                         "max": 0xFFFFFFFFFFFFFFFF,
-                        "tooltip": "噪声种子（-1 表示随机，配合按钮使用）",
+                        "tooltip": "Noise seed (-1 means random; used together with the button)",
                     },
                 ),
             },

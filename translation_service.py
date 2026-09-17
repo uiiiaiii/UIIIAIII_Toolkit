@@ -226,7 +226,7 @@ async def set_config(request: web.Request):
             translate_options=translate_options,
         )
         if not success:
-            return web.Response(status=500, body=json.dumps({"success": False, "error": "保存配置失败"}),
+            return web.Response(status=500, body=json.dumps({"success": False, "error": "Failed to save config"}),
                                 headers={"Content-Type": "application/json"})
         return web.Response(status=200, body=json.dumps({"success": True}),
                             headers={"Content-Type": "application/json"})

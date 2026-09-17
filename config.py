@@ -104,10 +104,10 @@ def get_agnes_api_key(node_api_key: Optional[str] = None) -> str:
         return env_key.strip()
 
     raise ValueError(
-        "未找到 Agnes API Key。请通过以下方式之一配置：\n"
-        "1. 在 ComfyUI 设置 → UIIIAIII Toolkit → 节点API 中填写\n"
-        "2. 在节点的 api_key 参数中填入\n"
-        "3. 设置环境变量 AGNES_API_KEY"
+        "Agnes API Key not found. Configure it in one of the following ways:\n"
+        "1. Fill it in ComfyUI Settings → UIIIAIII Toolkit → Node API\n"
+        "2. Enter it in the api_key parameter of the node\n"
+        "3. Set the AGNES_API_KEY environment variable"
     )
 
 
@@ -146,11 +146,11 @@ def get_modelscope_api_key(node_api_key: Optional[str] = None) -> str:
             return env_key.strip()
 
     raise ValueError(
-        "未找到 ModelScope API Token。请通过以下方式之一配置：\n"
-        "1. 在 ComfyUI 设置 → UIIIAIII Toolkit → 节点API 中填写\n"
-        "2. 在节点的 api_key 参数中填入\n"
-        "3. 设置环境变量 MODELSCOPE_API_TOKEN\n"
-        "获取 Token：https://modelscope.cn/my/myaccesstoken"
+        "ModelScope API Token not found. Configure it in one of the following ways:\n"
+        "1. Fill it in ComfyUI Settings → UIIIAIII Toolkit → Node API\n"
+        "2. Enter it in the api_key parameter of the node\n"
+        "3. Set the MODELSCOPE_API_TOKEN environment variable\n"
+        "Get a token at: https://modelscope.cn/my/myaccesstoken"
     )
 
 

@@ -594,11 +594,11 @@ def extract_plugin_nodes(plugin_name: str) -> Dict[str, Any]:
             break
 
     if not plugin_path:
-        raise FileNotFoundError(f"插件目录不存在：{plugin_name}")
+        raise FileNotFoundError(f"Plugin directory not found: {plugin_name}")
 
     init_file = os.path.join(plugin_path, "__init__.py")
     if not os.path.isfile(init_file):
-        raise FileNotFoundError(f"插件 __init__.py 不存在：{init_file}")
+        raise FileNotFoundError(f"Plugin __init__.py not found: {init_file}")
 
     # AST 解析提取类名
     ast_class_names = _parse_node_class_mappings_from_ast(init_file)

@@ -154,7 +154,7 @@ def write_translation(
             "mode": actual_mode,
             "nodes_file": nodes_file,
             "categories_file": categories_file,
-            "message": f"写入节点文件失败：{e}",
+            "message": f"Failed to write nodes file: {e}",
         }
 
     # 写入分类翻译文件（合并已有分类，避免多次翻译丢失旧分类）
@@ -187,7 +187,7 @@ def write_translation(
             "mode": actual_mode,
             "nodes_file": nodes_file,
             "categories_file": categories_file,
-            "message": f"写入分类文件失败：{e}",
+            "message": f"Failed to write categories file: {e}",
         }
 
     # 写入菜单翻译文件（合并已有菜单，避免多次翻译丢失旧菜单）
@@ -218,7 +218,7 @@ def write_translation(
                 "nodes_file": nodes_file,
                 "categories_file": categories_file,
                 "menus_file": menus_file,
-                "message": f"写入菜单文件失败：{e}",
+                "message": f"Failed to write menus file: {e}",
             }
 
     return {
@@ -230,7 +230,7 @@ def write_translation(
         "translated_count": len(clean_nodes),       # 本次翻译的节点数
         "merged_count": len(merged_nodes),           # 合并后文件中的总节点数
         "menu_count": len(translated_menus),         # 本次翻译的菜单数
-        "message": f"翻译已写入：{nodes_file}" + (f"，{categories_file}" if categories_file else "") + (f"，{menus_file}" if menus_file else ""),
+        "message": f"Translation written to: {nodes_file}" + (f", {categories_file}" if categories_file else "") + (f", {menus_file}" if menus_file else ""),
     }
 
 
