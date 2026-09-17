@@ -29,6 +29,9 @@
  *   }
  */
 
+// 翻译开关（未启用翻译时无需等字典，规则可立即应用）
+import { isTranslationEnabled } from "./utils.js";
+
 const CM_NAMESPACE = "UIIIAIII Toolkit-CategoryManager";
 
 const CM = {
@@ -39,6 +42,8 @@ const CM = {
     classIndex: new Map(),     // comfyClass -> [{ name, dispPath }]
     emptySet: new Set(),       // 自建空分类（尚未放入任何内容，显示在树面板顶部区块）
     ready: false,              // 首次 reapply 完成
+    // 启动耗时打点（毫秒，相对页面加载；诊断加载慢时可在控制台查看 window.__CM__.perf）
+    perf: { startedAt: performance.now(), storeReadyAt: 0, interactionAt: 0, dictReadyAt: 0, appliedAt: 0, calibratedAt: 0, lastChanged: 0 },
 };
 
 const FILTER_ID = "uiiiaiii.hiddenCategories";
@@ -269,6 +274,7 @@ function applyOrderRules() {
         const rules = CM.rules.order_rules || [];
         if (!dict || !rules.length) return;
         let keys = Object.keys(dict);
+        let moved = false;
         for (const rule of rules) {
             if (!rule?.key || !rule.before) continue;
             const isCat = rule.type === "cat";
@@ -286,7 +292,9 @@ function applyOrderRules() {
                 if (!srcKeys.includes(k)) nk.push(k);
             }
             keys = nk;
+            moved = true;
         }
+        if (!moved) return; // 规则未命中：不重排，避免触发无意义的树重建
         const nd = {};
         for (const k of keys) nd[k] = dict[k];
         if (Object.keys(nd).length === Object.keys(dict).length) store.nodeDefsByName = nd;
@@ -415,13 +423,15 @@ function reapply() {
     }
 
     // 从基准 + 规则重算每个节点的 category（赋值触发 nodeTree 响应式重算）
+    let changed = 0;
     for (const nd of store.nodeDefs) {
         if (!nd || !nd.name) continue;
         const base = CM.baseCategory.get(nd.name);
         if (base === undefined) continue;
         const final = applyRulesTo(nd.name, base);
-        if (nd.category !== final) nd.category = final;
+        if (nd.category !== final) { nd.category = final; changed++; }
     }
+    CM.perf.lastChanged = changed;
 
     refreshHiddenFilter(store);
     rebuildIndex(store);
@@ -1492,31 +1502,97 @@ function setupTreeInteraction() {
 // 扩展注册
 // ============================================================
 
-/** 等待 store 就绪且（翻译就绪 或 超时），然后首次应用规则 */
+/**
+ * 翻译字典晚到时的校准（规则已按未翻译状态应用过一次）：
+ * - 若上次应用未改动任何节点（规则未命中，store 未被污染）→ 以当前 store 状态重建基准
+ * - 用分类字典把基准映射为显示路径（幂等：中文段不在字典键中，映射后不变）→ 规则得以命中
+ * 随后重新应用一次，规则/隐藏/排序按显示路径生效。
+ */
+function calibrateWithDict() {
+    const store = getNodeDefStore();
+    if (CM.perf.lastChanged === 0 && store && Array.isArray(store.nodeDefs)) {
+        CM.baseCategory.clear();
+        for (const nd of store.nodeDefs) {
+            if (nd && nd.name) CM.baseCategory.set(nd.name, String(nd.category || ""));
+        }
+    }
+    const catsT = window.__UiTranslated?.NodeCategory || {};
+    if (Object.keys(catsT).length) {
+        for (const [name, base] of CM.baseCategory) {
+            const mapped = String(base).split("/").map((c) => catsT[c] || c).join("/");
+            if (mapped !== base) CM.baseCategory.set(name, mapped);
+        }
+    }
+    reapply();
+    applyOrderRules();
+    CM.perf.calibratedAt = performance.now();
+}
+
+/**
+ * 等待 store 就绪并分三段启用，避免右键菜单/拖拽被翻译同步拖慢：
+ * - 阶段一（store 就绪）：注册隐藏过滤器 + 建索引 + 装交互 → 右键菜单立即可用
+ * - 阶段二（同一时刻）：立即应用规则；翻译未启用时这就是最终结果
+ * - 阶段三（字典就绪，可能晚于阶段二）：校准基准（按分类字典映射为显示路径）并重新应用
+ */
 function waitAndFirstApply() {
     let tries = 0;
+    let interactionInstalled = false;
+    let applied = false;
+    let calibrated = false;
+
     const timer = setInterval(() => {
         tries++;
         const store = getNodeDefStore();
         if (!store || !Array.isArray(store.nodeDefs) || !store.nodeDefs.length) {
-            if (tries > 100) clearInterval(timer); // 10 秒后放弃
+            if (tries > 200) clearInterval(timer); // 10 秒后放弃
             return;
         }
-        // 翻译就绪（window.__UiTranslated 由翻译扩展填充）或已等待 10 秒
-        const translated = !!window.__UiTranslated?.Nodes && Object.keys(window.__UiTranslated.Nodes).length > 0;
-        if (!translated && tries < 100) return;
 
-        clearInterval(timer);
-        try {
-            if (reapply()) {
-                applyOrderRules(); // 首次：按排序规则重排节点顺序（页面加载后恢复排序）
+        // ---- 阶段一：交互立即就绪 ----
+        if (!interactionInstalled) {
+            interactionInstalled = true;
+            CM.perf.storeReadyAt = performance.now();
+            try {
+                refreshHiddenFilter(store);
+                rebuildIndex(store);
                 setupTreeInteraction();
-                console.log(`[${CM_NAMESPACE}] 规则已应用（实时生效，无需刷新）`);
+            } catch (e) {
+                console.error(`[${CM_NAMESPACE}] 初始化树交互失败：`, e);
             }
-        } catch (e) {
-            console.error(`[${CM_NAMESPACE}] 首次应用规则失败：`, e);
+            CM.perf.interactionAt = performance.now();
         }
-    }, 100);
+
+        // ---- 阶段二：立即应用规则（不等翻译字典）----
+        if (!applied) {
+            applied = true;
+            CM.perf.dictReadyAt = performance.now();
+            try {
+                if (reapply()) {
+                    applyOrderRules();
+                    CM.perf.appliedAt = performance.now();
+                    const p = CM.perf;
+                    console.log(
+                        `[${CM_NAMESPACE}] 规则已应用（交互 ${Math.round(p.interactionAt - p.startedAt)}ms / 规则 ${Math.round(p.appliedAt - p.startedAt)}ms，实时生效）`
+                    );
+                }
+            } catch (e) {
+                console.error(`[${CM_NAMESPACE}] 首次应用规则失败：`, e);
+            }
+            // 翻译未启用 → 无需校准
+            if (!isTranslationEnabled()) calibrated = true;
+        }
+
+        // ---- 阶段三：字典就绪后校准（基准按显示路径重算；幂等，可安全重复执行）----
+        if (!calibrated && window.__UiTranslated) {
+            calibrated = true;
+            try {
+                calibrateWithDict();
+            } catch (e) {
+                console.error(`[${CM_NAMESPACE}] 字典校准失败：`, e);
+            }
+        }
+        if (calibrated || tries > 200) clearInterval(timer);
+    }, 50);
 }
 
 function registerWhenReady(tries = 0) {
