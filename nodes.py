@@ -1261,6 +1261,221 @@ class QwenImageEdit:
 
 
 # ============================================================
+# Qwen-Image-2.1 节点（文生图 + 图像编辑统一模型）
+# ============================================================
+
+
+class QwenImage21:
+    """
+    Qwen-Image-2.1 节点（文生图 + 图像编辑统一模型）
+
+    基于 ModelScope API-Inference 调用 Qwen/Qwen-Image-2.1：
+    - 不连接图片：文生图（原生 2K 输出）
+    - 连接图片：按指令编辑，支持 1~4 张参考图
+      （模型本身支持 10 张，但 ModelScope API-Inference 实测限制为 4 张）
+
+    特点：
+    - 异步任务模式（POST 创建任务 → GET 轮询结果）
+    - 自动检测首张输入图比例，保持输出比例一致（文生图默认 1:1）
+    - 支持随机种子（仅本地使用，打破 ComfyUI 缓存）
+    - 轮询过程实时显示进度
+    """
+
+    DESCRIPTION = "Unified text-to-image generation and image editing with the Qwen-Image-2.1 model (ModelScope API-Inference), supporting up to 4 reference images"
+    CATEGORY = "UIIIAIII Toolkit/Modelscope"
+    RETURN_TYPES = ("IMAGE",)
+    RETURN_NAMES = ("image",)
+    FUNCTION = "generate"
+    OUTPUT_NODE = True
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "prompt": (
+                    "STRING",
+                    {
+                        "multiline": True,
+                        "default": "",
+                        "tooltip": "Generation prompt, or edit instruction describing the desired change. With multiple images, specify each image's role/position",
+                    },
+                ),
+                "seed": (
+                    "INT",
+                    {
+                        "default": 0,
+                        "min": 0,
+                        "max": 0xFFFFFFFFFFFFFFFF,
+                        "control_after_generate": True,
+                        "tooltip": "Random seed. 0 means the API picks a random seed. Used to break the ComfyUI execution cache",
+                    },
+                ),
+                "ratio": (
+                    ["auto"] + qwen_client.IMAGE_RATIO_OPTIONS_21,
+                    {
+                        "default": "auto",
+                        "tooltip": "Output aspect ratio. 'auto' detects the ratio of the first connected image, and falls back to 1:1 for text-to-image",
+                    },
+                ),
+                "resolution": (
+                    qwen_client.IMAGE_RESOLUTION_OPTIONS_21,
+                    {
+                        "default": "1K",
+                        "tooltip": "Output resolution. 1K (1024px max edge) is fast and stable and recommended for multi-image editing; 2K (2048px max edge) is the native quality but much slower and may fail with 4 reference images",
+                    },
+                ),
+            },
+            "optional": {
+                "image1": (
+                    "IMAGE",
+                    {
+                        "tooltip": "Reference image 1 (optional). Connect images for editing; leave all empty for text-to-image",
+                    },
+                ),
+                "image2": (
+                    "IMAGE",
+                    {
+                        "tooltip": "Reference image 2 (optional). Up to 4 reference images per run",
+                    },
+                ),
+                "image3": (
+                    "IMAGE",
+                    {
+                        "tooltip": "Reference image 3 (optional). Up to 4 reference images per run",
+                    },
+                ),
+                "image4": (
+                    "IMAGE",
+                    {
+                        "tooltip": "Reference image 4 (optional). Up to 4 reference images per run",
+                    },
+                ),
+            },
+            "hidden": {
+                "unique_id": "UNIQUE_ID",
+                "prompt_id": "PROMPT_ID",
+                "control_after_generate": True,
+            },
+        }
+
+    def generate(
+        self,
+        prompt: str,
+        seed: int = 0,
+        ratio: str = "auto",
+        resolution: str = "1K",
+        image1=None,
+        image2=None,
+        image3=None,
+        image4=None,
+        unique_id: Optional[str] = None,
+        prompt_id: Optional[str] = None,
+    ):
+        """执行文生图或图像编辑"""
+        # 验证提示词
+        if not prompt or not prompt.strip():
+            raise RuntimeError("Prompt cannot be empty")
+
+        # 收集所有非空的输入图像（全部为空 = 文生图）
+        input_images = [img for img in [image1, image2, image3, image4] if img is not None]
+
+        # 平台参考图数量上限校验（避免 API 端报错）
+        max_refs = qwen_client.QWEN_21_MAX_REFERENCE_IMAGES
+        if len(input_images) > max_refs:
+            raise RuntimeError(
+                f"Too many input images: {len(input_images)}. "
+                f"ModelScope API-Inference allows at most {max_refs} reference images "
+                f"for {qwen_client.QWEN_21_MODEL}"
+            )
+
+        logging.info(
+            "Qwen-Image-2.1：%s",
+            f"图像编辑（%d 张参考图）" % len(input_images) if input_images else "文生图",
+        )
+
+        # 进度条
+        pbar = _update_progress(
+            unique_id, 0, 100,
+            f"Encoding {len(input_images)} input images..." if input_images
+            else "Preparing text-to-image request...",
+        )
+
+        # 将所有输入图像转换为 Data URI（文生图时跳过）
+        data_uris = []
+        if input_images:
+            try:
+                for idx, img in enumerate(input_images):
+                    data_uri = qwen_client.image_tensor_to_data_uri(img)
+                    data_uris.append(data_uri)
+                    # 更新编码进度（0~5 区间）
+                    progress = int(5 * (idx + 1) / len(input_images))
+                    pbar = _update_progress(
+                        unique_id, progress, 100,
+                        f"Encoded {idx + 1}/{len(input_images)} input images",
+                        pbar,
+                    )
+            except Exception as e:
+                raise RuntimeError(f"Input image encoding failed: {e}")
+
+        # 比例：auto → 有输入图按首图检测，文生图固定 1:1
+        if ratio == "auto":
+            ratio = qwen_client.detect_image_ratio(input_images[0]) if input_images else "1:1"
+        size = qwen_client.ratio_to_size_21(ratio, resolution)
+
+        # 处理 seed：0 表示使用 API 随机种子
+        api_seed = None if seed == 0 else min(seed, 2147483647)
+
+        pbar = _update_progress(unique_id, 5, 100, "Submitting task to ModelScope...", pbar)
+
+        # 定义进度回调（用于异步任务轮询过程中更新进度条）
+        def _poll_progress_callback(elapsed, max_poll_time, attempt):
+            # 进度从 10 到 90，根据已用时间占比计算
+            progress = min(90, 10 + int(80 * elapsed / max_poll_time))
+            _update_progress(
+                unique_id, progress, 100,
+                f"Generating image... (waited {elapsed:.1f}s, poll attempt {attempt})",
+                pbar,
+            )
+
+        # 调用 API（异步任务模式：创建任务 + 轮询结果）
+        # 单张图像传字符串，多张图像传列表；无图像传空（文生图）
+        # API Key 自动从 ComfyUI 设置面板读取
+        try:
+            image_data = data_uris[0] if len(data_uris) == 1 else data_uris
+            image_url = qwen_client.edit_image(
+                prompt=prompt.strip(),
+                image_data_uris=image_data,
+                size=size,
+                seed=api_seed,
+                timeout=qwen_client.DEFAULT_TIMEOUT,
+                progress_callback=_poll_progress_callback,
+                model=qwen_client.QWEN_21_MODEL,
+                max_poll_time=qwen_client.MAX_POLL_TIME_21,
+            )
+        except Exception as e:
+            raise RuntimeError(f"ModelScope Qwen-Image-2.1 API call failed: {e}")
+
+        pbar = _update_progress(unique_id, 95, 100, "Downloading generated image...", pbar)
+
+        # 下载并转换图像
+        try:
+            image_buffer = qwen_client.download_url_to_bytesio(image_url)
+            image_tensor = qwen_client.bytesio_to_image_tensor(image_buffer)
+        except Exception as e:
+            raise RuntimeError(f"Image download/decode failed: {e}")
+
+        # 诊断日志
+        logging.info(
+            "Qwen-Image-2.1 完成：输入图数量=%d，返回张量形状 %s，dtype=%s",
+            len(input_images), tuple(image_tensor.shape), image_tensor.dtype,
+        )
+
+        _update_progress(unique_id, 100, 100, "Image generation complete", pbar)
+
+        return (image_tensor,)
+
+
+# ============================================================
 # 文本节点（二合一：可编辑输入 + 接收上游同步）
 # ============================================================
 
@@ -1530,6 +1745,7 @@ NODE_CLASS_MAPPINGS = {
     "AgnesImageToVideo": AgnesImageToVideo,
     "AgnesKeyframeAnimation": AgnesKeyframeAnimation,
     "QwenImageEdit": QwenImageEdit,
+    "QwenImage21": QwenImage21,
     "TextPreview": TextPreview,
     "BackgroundFill": BackgroundFill,
     "RandomNoiseSeed": RandomNoiseSeed,
@@ -1543,6 +1759,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "AgnesImageToVideo": "Agnes Image to Video (agnes-video-v2.0)",
     "AgnesKeyframeAnimation": "Agnes Keyframe Animation (agnes-video-v2.0)",
     "QwenImageEdit": "Qwen Image Edit (qwen-image-edit-2511)",
+    "QwenImage21": "Qwen Image 2.1 (qwen-image-2.1)",
     "TextPreview": "Text Input/Preview",
     "BackgroundFill": "Background Fill",
     "RandomNoiseSeed": "Random Noise Seed",

@@ -37,6 +37,9 @@ MODELSCOPE_API_BASE_URL = "https://api-inference.modelscope.cn/"
 # 模型名称（带斜杠，ModelScope 标识）
 QWEN_MODEL = "Qwen/Qwen-Image-Edit-2511"
 
+# Qwen-Image-2.1：文生图 + 图像编辑统一模型
+QWEN_21_MODEL = "Qwen/Qwen-Image-2.1"
+
 # 创建图像生成任务的端点
 IMAGES_GENERATIONS_ENDPOINT = "v1/images/generations"
 
@@ -51,6 +54,11 @@ POLL_INTERVAL = 5
 
 # 任务最大轮询时间（秒，10 分钟）
 MAX_POLL_TIME = 600
+
+# Qwen-Image-2.1 的任务最大轮询时间（秒，30 分钟）
+# 原生 2K 分辨率下单次生成可能耗时 8 分钟以上，多参考图编辑更久，
+# 实测 600 秒上限会导致任务尚未完成即超时失败，因此单独放宽。
+MAX_POLL_TIME_21 = 1800
 
 # 最大重试次数（仅针对网络异常，不针对业务错误）
 MAX_RETRIES = 3
@@ -80,6 +88,44 @@ _RATIO_TO_RESOLUTION = {
 
 # 支持的宽高比选项
 IMAGE_RATIO_OPTIONS = list(_RATIO_TO_RESOLUTION.keys())
+
+# Qwen-Image-2.1 的推荐分辨率（原生 2K 模型）
+# 注意：ModelScope API-Inference 限制宽高必须在 [64, 2048] 内，
+# 因此官方推荐的 2752x1536 等超宽 2K 尺寸无法使用，这里按最大边 2048 对齐到 8 的倍数。
+_RATIO_TO_RESOLUTION_21 = {
+    "1:1": "2048x2048",     # 正方形（原生 2K）
+    "2:3": "1368x2048",     # 竖图（2:3 ≈ 0.667）
+    "3:2": "2048x1368",     # 横图（3:2 = 1.5）
+    "3:4": "1536x2048",     # 竖图（3:4 = 0.75）
+    "4:3": "2048x1536",     # 横图（4:3 ≈ 1.333）
+    "9:16": "1152x2048",    # 竖屏（9:16 = 0.5625）
+    "16:9": "2048x1152",    # 宽屏横图（16:9 ≈ 1.778）
+    "21:9": "2048x880",     # 超宽横图（21:9 ≈ 2.333）
+}
+
+# Qwen-Image-2.1 支持的宽高比选项
+IMAGE_RATIO_OPTIONS_21 = list(_RATIO_TO_RESOLUTION_21.keys())
+
+# Qwen-Image-2.1 的 1K 档位尺寸（最大边 1024，对齐到 8 的倍数）
+# 实测：2K + 4 张参考图会因平台算力限制导致生成失败（等待 20 分钟后报 generate task failed），
+# 1K 档位则快速稳定（实测 4 图约 19 秒完成），多图编辑建议使用该档位。
+_RATIO_TO_RESOLUTION_21_1K = {
+    "1:1": "1024x1024",
+    "2:3": "680x1024",
+    "3:2": "1024x680",
+    "3:4": "768x1024",
+    "4:3": "1024x768",
+    "9:16": "576x1024",
+    "16:9": "1024x576",
+    "21:9": "1024x440",
+}
+
+# Qwen-Image-2.1 的输出尺寸档位
+IMAGE_RESOLUTION_OPTIONS_21 = ["1K", "2K"]
+
+# Qwen-Image-2.1 在 ModelScope API-Inference 上单次请求的参考图数量上限
+# （模型本身支持 10 张，但该平台实测限制为 4 张）
+QWEN_21_MAX_REFERENCE_IMAGES = 4
 
 # 各比例的浮点数值（宽/高），用于匹配最接近的比例
 _RATIO_VALUES = {
@@ -175,6 +221,22 @@ def ratio_to_size(ratio: str) -> str:
         size 字符串，如 "1365x768"
     """
     return _RATIO_TO_RESOLUTION.get(ratio, "1024x1024")
+
+
+def ratio_to_size_21(ratio: str, resolution: str = "1K") -> str:
+    """
+    Qwen-Image-2.1 专用：将宽高比转换为 size
+
+    Args:
+        ratio: 宽高比字符串，如 "16:9"
+        resolution: 输出尺寸档位，"1K"（最大边 1024）或 "2K"（最大边 2048，原生质量）
+
+    Returns:
+        size 字符串，如 "1024x576"
+    """
+    if resolution == "2K":
+        return _RATIO_TO_RESOLUTION_21.get(ratio, "2048x2048")
+    return _RATIO_TO_RESOLUTION_21_1K.get(ratio, "1024x1024")
 
 
 # ============================================================
@@ -561,24 +623,30 @@ def edit_image(
     negative_prompt: Optional[str] = None,
     timeout: int = DEFAULT_TIMEOUT,
     progress_callback=None,
+    model: str = QWEN_MODEL,
+    max_poll_time: int = MAX_POLL_TIME,
 ) -> str:
     """
-    调用 ModelScope API-Inference 进行图像编辑（图生图，支持多图像）
+    调用 ModelScope API-Inference 生成/编辑图像
 
-    使用 Qwen-Image-Edit-2511 模型对输入图像按指令进行编辑。
+    默认使用 Qwen-Image-Edit-2511 模型对输入图像按指令进行编辑；
+    传入 model=QWEN_21_MODEL 时使用 Qwen-Image-2.1（文生图 + 图像编辑统一模型，
+    image_data_uris 为空即文生图）。
     支持单图像编辑（传入单个 Data URI 字符串）或多图像编辑（传入 Data URI 列表）。
     采用异步任务模式：先创建任务，再轮询结果。
 
     Args:
         api_key: ModelScope API Token
-        prompt: 编辑指令（提示词）
+        prompt: 编辑指令或生成提示词
         image_data_uris: 输入图像的 Data URI（Base64 编码）
-                       单张：字符串；多张：字符串列表
+                       单张：字符串；多张：字符串列表；为空：文生图
         size: 输出分辨率，格式 "宽x高"，如 "1024x1024"。None 表示使用默认
         seed: 随机种子（0-2147483647），None 表示随机
         negative_prompt: 负向提示词
         timeout: 单次请求超时时间（秒）
         progress_callback: 进度回调函数，接收 (elapsed, max_poll_time, attempt) 参数
+        model: 模型名称（ModelScope 标识）
+        max_poll_time: 任务最大轮询时间（秒），超时抛错
 
     Returns:
         生成图像的 URL
@@ -593,7 +661,7 @@ def edit_image(
     task_id = _create_image_task(
         api_key=api_key,
         prompt=prompt,
-        model=QWEN_MODEL,
+        model=model,
         image_data_uris=image_data_uris,
         size=size,
         seed=seed,
@@ -606,6 +674,7 @@ def edit_image(
         api_key=api_key,
         task_id=task_id,
         timeout=timeout,
+        max_poll_time=max_poll_time,
         progress_callback=progress_callback,
     )
 

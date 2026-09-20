@@ -50,10 +50,11 @@ PLUGIN_INFO = {
     "name": "UIIIAIII Toolkit",
     "version": __version__,
     "author": "UIIIAIII Toolkit",
-    "description": "Multi-API custom nodes: Agnes AI (text-to-image / image-to-image / text-to-video / image-to-video / keyframe animation) + ModelScope Qwen-Image-Edit-2511 (image editing)",
+    "description": "Multi-API custom nodes: Agnes AI (text-to-image / image-to-image / text-to-video / image-to-video / keyframe animation) + ModelScope Qwen-Image-2.1 (unified text-to-image and editing) and Qwen-Image-Edit-2511 (image editing)",
     "models": [
         "agnes-image-2.1-flash",
         "agnes-video-v2.0",
+        "Qwen-Image-2.1",
         "Qwen-Image-Edit-2511",
     ],
 }
@@ -401,6 +402,6 @@ except ImportError:
 
 # 日志输出
 logger.info(
-    "UIIIAIII Toolkit 插件已加载（v%s）：提供 7 个节点（Agnes 文生图/图生图/文生视频/图生视频/关键帧动画 + ModelScope Qwen 图像编辑 + 文本输入/预览）",
+    "UIIIAIII Toolkit 插件已加载（v%s）：提供 8 个节点（Agnes 文生图/图生图/文生视频/图生视频/关键帧动画 + ModelScope Qwen-Image-2.1 文生图与图像编辑 + Qwen-Image-Edit-2511 图像编辑 + 文本输入/预览）",
     __version__,
 )

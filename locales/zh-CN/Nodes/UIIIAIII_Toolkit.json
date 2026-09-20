@@ -55,6 +55,22 @@
             "Random seed. 0 means the API picks a random seed. Used to break the ComfyUI execution cache": "随机种子。0 表示使用 API 随机种子。用于打破 ComfyUI 执行缓存"
         }
     },
+    "QwenImage21": {
+        "title": "Qwen Image 2.1 (qwen-image-2.1)",
+        "description": "Unified text-to-image generation and image editing with the Qwen-Image-2.1 model (ModelScope API-Inference), supporting up to 4 reference images",
+        "inputs": {
+            "Reference image 1 (optional). Connect images for editing; leave all empty for text-to-image": "参考图 1（可选）。连接图片则进行图像编辑；全部留空则为文生图",
+            "Reference image 2 (optional). Up to 4 reference images per run": "参考图 2（可选）。单次最多 4 张参考图",
+            "Reference image 3 (optional). Up to 4 reference images per run": "参考图 3（可选）。单次最多 4 张参考图",
+            "Reference image 4 (optional). Up to 4 reference images per run": "参考图 4（可选）。单次最多 4 张参考图"
+        },
+        "widgets": {
+            "Generation prompt, or edit instruction describing the desired change. With multiple images, specify each image's role/position": "生成提示词，或描述期望修改的编辑指令。多图时请说明每张图的角色/位置",
+            "Random seed. 0 means the API picks a random seed. Used to break the ComfyUI execution cache": "随机种子。0 表示使用 API 随机种子。用于打破 ComfyUI 执行缓存",
+            "Output aspect ratio. 'auto' detects the ratio of the first connected image, and falls back to 1:1 for text-to-image": "输出宽高比。auto 会检测首张输入图的比例，文生图时回退为 1:1",
+            "Output resolution. 1K (1024px max edge) is fast and stable and recommended for multi-image editing; 2K (2048px max edge) is the native quality but much slower and may fail with 4 reference images": "输出分辨率。1K（最大边 1024）快速稳定，推荐多图编辑使用；2K（最大边 2048）为原生画质，但耗时显著更长，且 4 张参考图时可能失败"
+        }
+    },
     "TextPreview": {
         "title": "Text Input/Preview",
         "description": "二合一文本节点：可编辑输入文本，或接收上游文本自动同步到编辑框后修改输出",
