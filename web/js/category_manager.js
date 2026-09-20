@@ -36,7 +36,11 @@ const CM_NAMESPACE = "UIIIAIII Toolkit-CategoryManager";
 
 const CM = {
     rules: { category_rename: {}, hidden_categories: [], node_move: {}, empty_categories: [], hidden_nodes: [], order_rules: [], drag_trigger: { mouse: "right", modifier: "alt" } },
-    baseCategory: new Map(),   // comfyClass -> 基准 category（默认显示路径）
+    baseCategory: new Map(),   // comfyClass -> 英文基准 category（与界面语言无关）
+    finalBase: new Map(),      // comfyClass -> 应用规则后的英文基准 category（排序/隐藏匹配用）
+    baseByDisp: new Map(),     // 显示路径 -> 英文基准路径（把树上的中文路径反查回基准）
+    rawCategory: new Map(),    // comfyClass -> 后端原始 category（纯英文，基准的权威来源）
+    rawFetched: false,         // 是否已从后端拉取原始分类
     catIndex: new Map(),       // 显示路径 -> 显示路径（树右键反查用）
     nodeIndex: new Map(),      // 叶子显示文本 -> [{ name, dispPath }]
     classIndex: new Map(),     // comfyClass -> [{ name, dispPath }]
@@ -123,12 +127,12 @@ function applyRulesTo(name, base) {
     return cur;
 }
 
-/** 分类（显示路径）是否被隐藏：精确命中或位于被隐藏文件夹内 */
-function isHiddenDispPath(dispPath) {
+/** 分类（英文基准路径）是否被隐藏：精确命中或位于被隐藏文件夹内 */
+function isHiddenBasePath(basePath) {
     const hidden = CM.rules.hidden_categories || [];
-    if (!dispPath) return false;
-    if (hidden.includes(dispPath)) return true;
-    return hidden.some((h) => h && dispPath.startsWith(h + "/"));
+    if (!basePath) return false;
+    if (hidden.includes(basePath)) return true;
+    return hidden.some((h) => h && basePath.startsWith(h + "/"));
 }
 
 /** 单个节点（comfyClass）是否被隐藏 */
@@ -142,11 +146,15 @@ function isHiddenNode(name) {
 
 /** 添加/更新排序规则：key（组路径或类名）排在 before 之前（save=false 时由调用方统一保存） */
 function addOrderRule(type, key, before, save = true) {
-    if (!key || !before || key === before) return;
+    if (!key || !before) return;
+    // 分类排序规则以英文基准路径记录（与界面语言无关）；节点排序用类名，无需转换
+    const k = type === "cat" ? (baseOfDispPath(key) || key) : key;
+    const b = type === "cat" ? (baseOfDispPath(before) || before) : before;
+    if (!k || !b || k === b) return;
     if (!CM.rules.order_rules) CM.rules.order_rules = [];
-    const i = CM.rules.order_rules.findIndex((r) => r.type === type && r.key === key);
+    const i = CM.rules.order_rules.findIndex((r) => r.type === type && r.key === k);
     if (i >= 0) CM.rules.order_rules.splice(i, 1);
-    CM.rules.order_rules.push({ type, key, before });
+    CM.rules.order_rules.push({ type, key: k, before: b });
     if (save) saveRules();
 }
 
@@ -157,7 +165,10 @@ function removeOrderRulesForCategory(key) {
     const dict = store?.nodeDefsByName || null;
     const inCat = (k, isCat) => {
         if (isCat) return k === key || k.startsWith(key + "/");
-        const c = dict ? String(dict[k]?.category || "") : null;
+        const fb = CM.finalBase.get(k);
+        const c = fb !== undefined
+            ? fb
+            : (dict ? String(CM.rawCategory.get(k) ?? dict[k]?._original_category ?? dict[k]?.category ?? "") : null);
         return c ? (c === key || c.startsWith(key + "/")) : false;
     };
     const before = CM.rules.order_rules;
@@ -182,14 +193,46 @@ function syncOrderRulesForRename(oldPath, newPath) {
 }
 
 /**
- * 当前显示路径 → 基准路径（反向链式）。
+ * 英文基准路径 → 当前语言显示路径（用分类翻译字典逐段映射）。
+ * 翻译未启用 / 字典不可用时为恒等映射（显示英文原文）。
+ * 用户自定义的中文分类名不在字典键中，会原样保留。
+ */
+function toDisplayPath(basePath) {
+    const catsT = window.__UiTranslated?.NodeCategory || {};
+    if (!basePath || !Object.keys(catsT).length) return String(basePath || "");
+    return String(basePath).split("/").map((seg) => catsT[seg] || seg).join("/");
+}
+
+/**
+ * 当前显示路径 → 英文基准路径。
  *
- * 规则是「基准 → 显示」的正向映射；反查时沿规则逆向回溯：
- *   例：rename = { "A": "B/A", "X": "A/X" }
- *       显示 "B/A/X" → 反向：值 "B/A" 是其前缀 → "A/X" → 值 "A/X" 精确 → "X" ✓
- * 未被任何规则改写过的路径，本身就是基准（直接返回）。
+ * 规则以英文基准路径为准（界面语言切换不影响规则），因此把树上拿到的
+ * 显示路径（可能是中文）反查回基准：
+ * 1. 优先用节点数据反查（最可靠，能覆盖用户重命名后的自定义分类名）
+ * 2. 其次用规则逆向回溯（兼容历史规则）
  */
 function baseOfDispPath(dispPath) {
+    if (!dispPath) return "";
+    // 1) 节点数据反查
+    const exact = CM.baseByDisp.get(dispPath);
+    if (exact) return exact;
+    // 2) 父级前缀反查：dispPath 是某个已知显示路径的祖先
+    let best = null;
+    let bestLen = -1;
+    for (const [disp, base] of CM.baseByDisp) {
+        if (disp.startsWith(dispPath + "/") && dispPath.length > bestLen) {
+            const rest = disp.slice(dispPath.length);
+            bestLen = dispPath.length;
+            best = base.slice(0, base.length - rest.length);
+        }
+    }
+    if (best) return best;
+    // 3) 规则逆向回溯（历史规则兼容）
+    return baseOfDispPathByRules(dispPath);
+}
+
+/** 沿 category_rename 规则逆向回溯：显示路径 → 基准路径 */
+function baseOfDispPathByRules(dispPath) {
     const rename = CM.rules.category_rename || {};
     const entries = Object.entries(rename).filter(([k, v]) => k && v);
     let cur = dispPath;
@@ -232,7 +275,10 @@ function parentOfPath(p) {
  */
 function moveCategoryTo(dispPath, newDispPath, nameOverride) {
     if (!dispPath || !newDispPath || dispPath === newDispPath) return false;
-    const name = nameOverride || dispPath.split("/").pop();
+    // 规则一律记录英文基准路径：末段名取基准路径的末段，
+    // 避免把中文显示名（翻译结果）写进规则导致关闭翻译后错位。
+    const srcBase = baseOfDispPath(dispPath);
+    const name = nameOverride || srcBase.split("/").pop();
 
     // 自建空分类（尚未包含真实节点）
     if (CM.emptySet && CM.emptySet.has(dispPath)) {
@@ -245,8 +291,7 @@ function moveCategoryTo(dispPath, newDispPath, nameOverride) {
         return true;
     }
 
-    // 普通分类：反查基准，构造「基准语义」的目标值
-    const srcBase = baseOfDispPath(dispPath);
+    // 普通分类：构造「基准语义」的目标值
     const parentDisp = parentOfPath(newDispPath);
     const parentBase = parentDisp ? baseOfDispPath(parentDisp) : "";
     const ruleValue = parentBase ? parentBase + "/" + name : name;
@@ -258,7 +303,7 @@ function moveCategoryTo(dispPath, newDispPath, nameOverride) {
         rename[srcBase] = ruleValue;
     }
     if (srcBase !== dispPath && rename[dispPath] !== undefined) delete rename[dispPath]; // 清理历史遗留键
-    syncOrderRulesForRename(dispPath, newDispPath);
+    syncOrderRulesForRename(srcBase, ruleValue); // 排序规则同样以基准路径记录
     return true;
 }
 
@@ -278,7 +323,13 @@ function applyOrderRules() {
         for (const rule of rules) {
             if (!rule?.key || !rule.before) continue;
             const isCat = rule.type === "cat";
-            const catOf = (k) => String(dict[k]?.category || "");
+            // 排序规则以英文基准路径记录，用节点应用规则后的基准路径匹配
+            const catOf = (k) => {
+                const fb = CM.finalBase.get(k);
+                if (fb !== undefined) return fb;
+                const nd = dict[k];
+                return String(CM.rawCategory.get(k) ?? nd?._original_category ?? nd?.category ?? "");
+            };
             const nameOf = (k) => String(dict[k]?.name || "");
             const hit = (k, path) =>
                 isCat ? (catOf(k) === path || catOf(k).startsWith(path + "/")) : nameOf(k) === path;
@@ -329,12 +380,27 @@ function matchTrigger(e) {
 }
 
 /** 触发方式的显示文案（如 "Ctrl+Shift + Right"、"Left"） */
-function triggerLabel() {
-    const t = normalizeTrigger(CM.rules.drag_trigger);
+function triggerLabelOf(t) {
     const btn = tr(t.mouse === "left" ? "Left" : "Right");
     if (!t.modifier) return btn;
     const mod = t.modifier.split("+").map((s) => s.charAt(0).toUpperCase() + s.slice(1)).join("+");
     return `${mod} + ${btn}`;
+}
+
+/** 拖拽触发键的显示文案 */
+function triggerLabel() {
+    return triggerLabelOf(normalizeTrigger(CM.rules.drag_trigger));
+}
+
+/** 管理菜单触发配置：拖拽键含修饰键时沿用；纯鼠标键时回退 Alt+右键（保护原生菜单） */
+function menuTriggerConfig() {
+    const t = normalizeTrigger(CM.rules.drag_trigger);
+    return t.modifier ? t : { mouse: "right", modifier: "alt" };
+}
+
+/** 管理菜单触发键的显示文案（可能与拖拽键不同） */
+function menuTriggerLabel() {
+    return triggerLabelOf(menuTriggerConfig());
 }
 
 // ============================================================
@@ -345,12 +411,18 @@ function rebuildIndex(store) {
     CM.catIndex.clear();
     CM.nodeIndex.clear();
     CM.classIndex.clear();
+    CM.baseByDisp.clear();
     for (const nd of store.nodeDefs) {
         if (!nd || !nd.name) continue;
         const dispPath = String(nd.category || "");
         if (!dispPath) continue;
 
         CM.catIndex.set(dispPath, dispPath);
+
+        // 显示路径 → 英文基准路径（把树上的路径反查回与语言无关的基准）
+        if (!CM.baseByDisp.has(dispPath)) {
+            CM.baseByDisp.set(dispPath, String(CM.rawCategory.get(nd.name) ?? nd._original_category ?? nd.category ?? ""));
+        }
 
         const entry = { name: nd.name, dispPath };
         const label = nd.display_name || nd.name;
@@ -383,6 +455,37 @@ function rebuildIndex(store) {
     renderEmptyRows();
 }
 
+/**
+ * 拉取后端原始分类（/object_info 的 category 是纯英文原文）。
+ *
+ * 前端 i18n 会在插件钩子执行前就改写 nodeDef.category（可能只翻译其中一部分，
+ * 例如 "conditioning/video_models" → "条件/video_models"），因此节点自带的
+ * category 不能作为与语言无关的基准。后端数据才是权威来源。
+ */
+async function fetchRawCategories() {
+    if (CM.rawFetched) return;
+    CM.rawFetched = true;
+    try {
+        const resp = await fetch("./object_info");
+        if (!resp.ok) return;
+        const info = await resp.json();
+        let n = 0;
+        for (const cls of Object.keys(info)) {
+            const c = info[cls]?.category;
+            if (typeof c === "string" && c) { CM.rawCategory.set(cls, c); n++; }
+        }
+        if (!n) return;
+        // 用后端原始分类重建基准，再重新应用规则（交互早已就绪，不影响使用）
+        CM.ready = false;
+        CM.baseCategory.clear();
+        reapply();
+        applyOrderRules();
+        console.log(`[${CM_NAMESPACE}] 已载入后端原始分类 ${n} 条（基准与界面语言无关）`);
+    } catch (e) {
+        console.warn(`[${CM_NAMESPACE}] 载入后端原始分类失败，回退到节点自带分类：`, e);
+    }
+}
+
 // ============================================================
 // 热更新核心
 // ============================================================
@@ -397,9 +500,14 @@ function refreshHiddenFilter(store) {
             id: FILTER_ID,
             name: "UIIIAIII Hidden Categories",
             description: tr("Hide categories and nodes according to the Node Category Manager rules"),
-            predicate: (nodeDef) =>
-                !isHiddenDispPath(String(nodeDef?.category || "")) &&
-                !isHiddenNode(String(nodeDef?.name || "")),
+            predicate: (nodeDef) => {
+                // 隐藏规则以英文基准路径记录，这里查节点应用规则后的基准路径
+                const cls = String(nodeDef?.name || "");
+                const base = CM.finalBase.get(cls)
+                    ?? CM.rawCategory.get(cls)
+                    ?? String(nodeDef?._original_category ?? nodeDef?.category ?? "");
+                return !isHiddenBasePath(base) && !isHiddenNode(cls);
+            },
         });
     }
 }
@@ -412,24 +520,27 @@ function reapply() {
     const store = getNodeDefStore();
     if (!store || !Array.isArray(store.nodeDefs)) return false;
 
-    // 首次：记录基准（此时 category 是干净的默认显示路径）
+    // 首次：记录英文基准（优先后端原始分类，与界面语言无关）
     if (!CM.ready) {
         for (const nd of store.nodeDefs) {
             if (nd && nd.name && !CM.baseCategory.has(nd.name)) {
-                CM.baseCategory.set(nd.name, String(nd.category || ""));
+                CM.baseCategory.set(nd.name, String(CM.rawCategory.get(nd.name) ?? nd._original_category ?? nd.category ?? ""));
             }
         }
         CM.ready = true;
     }
 
-    // 从基准 + 规则重算每个节点的 category（赋值触发 nodeTree 响应式重算）
+    // 从基准 + 规则重算每个节点的基准路径，再按当前语言翻译为显示路径
+    CM.finalBase.clear();
     let changed = 0;
     for (const nd of store.nodeDefs) {
         if (!nd || !nd.name) continue;
         const base = CM.baseCategory.get(nd.name);
         if (base === undefined) continue;
-        const final = applyRulesTo(nd.name, base);
-        if (nd.category !== final) { nd.category = final; changed++; }
+        const finalBase = applyRulesTo(nd.name, base);
+        CM.finalBase.set(nd.name, finalBase);
+        const disp = toDisplayPath(finalBase);
+        if (nd.category !== disp) { nd.category = disp; changed++; }
     }
     CM.perf.lastChanged = changed;
 
@@ -594,7 +705,7 @@ function ensureEmptyRowsObserver(host) {
 
 /** 渲染/刷新空分类行（紧跟分类树最后一行之后，外观与普通分类一致） */
 function renderEmptyRows() {
-    const list = [...CM.emptySet].filter((p) => !isHiddenDispPath(p)).sort();
+    const list = [...CM.emptySet].filter((p) => !isHiddenBasePath(p)).sort();
     const rowsList = list.length ? visibleRows() : [];
     const anchor = rowsList.length ? rowsList[rowsList.length - 1].el : null; // 视觉最后一行
     const seg = anchor ? anchor.parentElement : null;                          // 其所在段落容器
@@ -938,7 +1049,8 @@ function actionDeleteCategory(key) {
 
 /** 隐藏分类 */
 function actionHideCategory(key) {
-    if (!CM.rules.hidden_categories.includes(key)) CM.rules.hidden_categories.push(key);
+    const base = baseOfDispPath(key) || key; // 隐藏规则以英文基准路径记录
+    if (!CM.rules.hidden_categories.includes(base)) CM.rules.hidden_categories.push(base);
     saveRules();
 }
 
@@ -1101,7 +1213,9 @@ function actionRestoreCategory(key) {
         }
     }
     const hiddenBefore = CM.rules.hidden_categories.length;
-    CM.rules.hidden_categories = CM.rules.hidden_categories.filter((h) => h !== key && !h.startsWith(key + "/"));
+    CM.rules.hidden_categories = CM.rules.hidden_categories.filter(
+        (h) => h !== key && !h.startsWith(key + "/") && h !== base && !h.startsWith(base + "/")
+    );
     n += hiddenBefore - CM.rules.hidden_categories.length;
     n += removeOrderRulesForCategory(base);
     n += removeOrderRulesForCategory(key);
@@ -1307,12 +1421,16 @@ function setupTreeInteraction() {
                 // ★ 上半部（"排到它前面"）：成为与目标「同级」的兄弟
                 if (rd.targetIsFolder) {
                     // 分类 → 移到目标分类的同级（顶层目标则移出为顶层分类），并排在目标前面
-                    const srcName = rd.folderPath.split("/").pop();
+                    // 比较用英文基准路径（与界面语言无关），移动/排序仍传显示路径
+                    const srcBase = baseOfDispPath(rd.folderPath);
+                    const srcName = srcBase.split("/").pop();
                     const parentDisp = parentOfPath(target.localPath);
-                    const newPath = parentDisp ? parentDisp + "/" + srcName : srcName;
-                    if (newPath !== rd.folderPath) {
-                        moveCategoryTo(rd.folderPath, newPath);   // 整个分类（含子分类/节点）跟随
-                        addOrderRule("cat", newPath, target.localPath, false);
+                    const parentBase = parentDisp ? baseOfDispPath(parentDisp) : "";
+                    const newBase = parentBase ? parentBase + "/" + srcName : srcName;
+                    if (newBase !== srcBase) {
+                        const newDisp = parentDisp ? parentDisp + "/" + toDisplayPath(srcName) : toDisplayPath(srcName);
+                        moveCategoryTo(rd.folderPath, newDisp);   // 整个分类（含子分类/节点）跟随
+                        addOrderRule("cat", newDisp, target.localPath, false);
                     } else {
                         addOrderRule("cat", rd.folderPath, target.localPath, false); // 已在同级：纯排序
                     }
@@ -1332,7 +1450,7 @@ function setupTreeInteraction() {
                 }
             } else if (rd.folderPath) {
                 // 分类整体拖到目标分类下（子树跟随）：连同子分类与已移入的节点一起进入
-                const srcName = rd.folderPath.split("/").pop();
+                const srcName = toDisplayPath(baseOfDispPath(rd.folderPath).split("/").pop());
                 moveCategoryTo(rd.folderPath, target.localPath + "/" + srcName);
                 saveRules();
             } else if (rd.name) {
@@ -1350,12 +1468,6 @@ function setupTreeInteraction() {
     }, true);
 
     // ---- 管理菜单：由拖拽触发键打开；普通右键/左键完全交给 ComfyUI 原生行为 ----
-
-    /** 管理菜单触发配置：拖拽键含修饰键时沿用；纯鼠标键时回退 Alt+右键（保护原生菜单） */
-    function menuTriggerConfig() {
-        const t = normalizeTrigger(CM.rules.drag_trigger);
-        return t.modifier ? t : { mouse: "right", modifier: "alt" };
-    }
 
     function matchMenuTrigger(e) {
         const t = menuTriggerConfig();
@@ -1485,10 +1597,23 @@ function setupTreeInteraction() {
             const candidates = categoryCandidates(row.localPath, row.level);
             const valid = candidates.includes(row.localPath) ||
                 candidates.some((k) => k.startsWith(row.localPath + "/"));
-            if (valid) rowEl.title = tr("{path} ({trigger}: drag to move/sort, click to open the manage menu)", { path: row.localPath, trigger: triggerLabel() });
+            if (valid) {
+                rowEl.title = tr("{path}\nShortcuts: {drag}: drag to move/sort, {menu}: open the manage menu", {
+                    path: row.localPath,
+                    drag: triggerLabel(),
+                    menu: menuTriggerLabel(),
+                });
+            }
         } else {
             const entries = leafCandidates(row);
-            if (entries.length) rowEl.title = tr("{name} ({path}) | {trigger}: drag to move/sort (drag a leaf onto the canvas to add the node)", { name: entries[0].name, path: entries[0].dispPath, trigger: triggerLabel() });
+            if (entries.length) {
+                rowEl.title = tr("{name} ({path})\nShortcuts: {drag}: drag to move/sort, {menu}: open the manage menu (drag onto the canvas to add the node)", {
+                    name: entries[0].name,
+                    path: entries[0].dispPath,
+                    drag: triggerLabel(),
+                    menu: menuTriggerLabel(),
+                });
+            }
         }
     });
 
@@ -1509,20 +1634,7 @@ function setupTreeInteraction() {
  * 随后重新应用一次，规则/隐藏/排序按显示路径生效。
  */
 function calibrateWithDict() {
-    const store = getNodeDefStore();
-    if (CM.perf.lastChanged === 0 && store && Array.isArray(store.nodeDefs)) {
-        CM.baseCategory.clear();
-        for (const nd of store.nodeDefs) {
-            if (nd && nd.name) CM.baseCategory.set(nd.name, String(nd.category || ""));
-        }
-    }
-    const catsT = window.__UiTranslated?.NodeCategory || {};
-    if (Object.keys(catsT).length) {
-        for (const [name, base] of CM.baseCategory) {
-            const mapped = String(base).split("/").map((c) => catsT[c] || c).join("/");
-            if (mapped !== base) CM.baseCategory.set(name, mapped);
-        }
-    }
+    // 基准路径来自节点数据（与界面语言无关），字典晚到只需按字典重算显示路径
     reapply();
     applyOrderRules();
     CM.perf.calibratedAt = performance.now();
@@ -1560,6 +1672,8 @@ function waitAndFirstApply() {
                 console.error(`[${CM_NAMESPACE}] 初始化树交互失败：`, e);
             }
             CM.perf.interactionAt = performance.now();
+            // 异步拉取后端原始分类作为权威基准（前端 category 可能已被 i18n 部分翻译）
+            fetchRawCategories();
         }
 
         // ---- 阶段二：立即应用规则（不等翻译字典）----

@@ -165,7 +165,13 @@ export class TUtils {
     try {
       const catsT = TUtils.T.NodeCategory;
       if (!nodeDef.category) return;
-      const catArr = nodeDef.category.split("/");
+      // 记录进入插件翻译前的 category（只记一次），翻译始终基于它计算，避免多次翻译累积。
+      // 注意：此时 ComfyUI 内置 i18n 可能已改写部分分类名，它不保证是纯英文原文；
+      // 分类管理需要与语言无关的基准时，改用后端 /object_info 的原始分类。
+      if (nodeDef._original_category === undefined) {
+        nodeDef._original_category = nodeDef.category;
+      }
+      const catArr = String(nodeDef._original_category).split("/");
       nodeDef.category = catArr.map((cat) => catsT?.[cat] || cat).join("/");
     } catch (e) {
       error(`为Vue节点 ${nodeDef?.name} 应用翻译失败:`, e);

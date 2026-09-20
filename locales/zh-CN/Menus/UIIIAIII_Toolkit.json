@@ -244,6 +244,6 @@
     "Drag Button (Current: {label})...": "拖拽按键（当前 {label}）...",
     "Class: {name} | Category: {path}": "类名：{name} ｜ 当前分类：{path}",
     "Please select a category to manage": "请选择要管理的分类",
-    "{path} ({trigger}: drag to move/sort, click to open the manage menu)": "{path}（{trigger}：拖拽移动/排序、单击打开管理菜单）",
-    "{name} ({path}) | {trigger}: drag to move/sort (drag a leaf onto the canvas to add the node)": "{name}（{path}）｜{trigger}：拖拽移动/排序（叶子拖到画布为添加节点）"
+    "{path}\nShortcuts: {drag}: drag to move/sort, {menu}: open the manage menu": "{path}\n设置的快捷键：{drag}：拖拽移动/排序、{menu}：打开管理菜单",
+    "{name} ({path})\nShortcuts: {drag}: drag to move/sort, {menu}: open the manage menu (drag onto the canvas to add the node)": "{name}（{path}）\n设置的快捷键：{drag}：拖拽移动/排序、{menu}：打开管理菜单（拖到画布可添加节点）"
 }
