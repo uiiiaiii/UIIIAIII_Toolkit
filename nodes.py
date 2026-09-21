@@ -1610,6 +1610,15 @@ class BackgroundFill:
         ).permute(0, 2, 3, 1).squeeze(0)
 
     @staticmethod
+    def _to_rgb(img_tensor):
+        """统一为 3 通道 RGB：丢弃 alpha / 复制单通道，避免与背景画布通道数不匹配"""
+        if img_tensor.shape[-1] == 4:
+            return img_tensor[..., :3]
+        if img_tensor.shape[-1] == 1:
+            return img_tensor.repeat(1, 1, 3)
+        return img_tensor
+
+    @staticmethod
     def _parse_hex_color(hex_str, fallback=(0.0, 0.0, 0.0)):
         """解析 #RRGGBB 颜色为 0-1 RGB 元组，格式非法时返回 fallback"""
         try:
@@ -1640,13 +1649,13 @@ class BackgroundFill:
             background_color, feathering,
         )
 
-        # 前景：等比缩放到指定尺寸
-        fg = self._scale_to(image[0], foreground_height, foreground_width)
+        # 前景：统一为 RGB 后等比缩放到指定尺寸
+        fg = self._scale_to(self._to_rgb(image[0]), foreground_height, foreground_width)
         FG_H, FG_W = fg.shape[0], fg.shape[1]
 
         # 背景画布：有背景图则等比缩放，否则用纯色
         if background is not None:
-            bg = self._scale_to(background[0], background_height, background_width)
+            bg = self._scale_to(self._to_rgb(background[0]), background_height, background_width)
         else:
             r, g, b = self._parse_hex_color(background_color)
             bg = torch.zeros((background_height, background_width, 3),
