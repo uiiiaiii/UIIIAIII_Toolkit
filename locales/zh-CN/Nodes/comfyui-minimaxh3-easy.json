@@ -1,0 +1,575 @@
+{
+    "MiniMaxH3EasyOutput": {
+        "title": "MiniMax H3 简易输出",
+        "description": "解包 MiniMax H3 条件、AV 隐空间、VAE 和 FPS。",
+        "inputs": {
+            "h3_context": "h3 上下文"
+        },
+        "outputs": {
+            "positive": "积极情感",
+            "latent": "隐空间",
+            "video_vae": "视频VAE",
+            "audio_vae": "音频VAE",
+            "fps": "帧率"
+        }
+    },
+    "MiniMaxH3EasyAspectRatio": {
+        "title": "MiniMax H3 Easy 宽高比",
+        "description": "保持下游分辨率选择器与 MiniMax H3 Easy 对齐，无需复制宽度或高度。",
+        "inputs": {
+            "h3_context": "h3 上下文"
+        },
+        "outputs": {
+            "aspect_ratio": "宽高比"
+        }
+    },
+    "MiniMaxH3EasyMediaBridge": {
+        "title": "MiniMax H3 简易媒体桥接器",
+        "description": "收集显式的图像、视频和音频输入，用于构建 API 友好的 MiniMax H3 工作流。",
+        "inputs": {
+            "video_2": "视频 2",
+            "video_3": "视频 3",
+            "image_1": "图像1",
+            "image_2": "图像2",
+            "image_3": "图像_3",
+            "image_4": "图像_4",
+            "image_5": "图像_5",
+            "image_6": "图像_6",
+            "image_7": "图像_7",
+            "image_8": "图像_8",
+            "image_9": "图像_9",
+            "video_1": "视频_1",
+            "audio_1": "音频1",
+            "audio_2": "音频2",
+            "audio_3": "音频_3"
+        },
+        "outputs": {
+            "media_bundle": "媒体包"
+        },
+        "widgets": {
+            "video_count": "视频数量",
+            "audio_count": "音频数量",
+            "image_count": "图像数量"
+        }
+    },
+    "MiniMaxH3Easy": {
+        "title": "MiniMax H3 简易",
+        "description": "一个用于文本、图像、参考视频和数字人工作流的 MiniMax H3 节点。",
+        "inputs": {
+            "h3_bundle": "H3 模型包",
+            "media": "媒体",
+            "media_1": "媒体 1",
+            "media_2": "媒体 2",
+            "media_3": "媒体 3",
+            "media_4": "媒体 4",
+            "media_5": "媒体 5",
+            "media_6": "媒体 6",
+            "media_7": "媒体 7",
+            "media_8": "媒体 8",
+            "media_9": "媒体 9",
+            "media_10": "媒体 10",
+            "media_11": "媒体 11",
+            "media_12": "媒体 12",
+            "media_13": "媒体 13",
+            "media_14": "媒体 14",
+            "media_15": "媒体 15"
+        },
+        "outputs": {
+            "model": "模型",
+            "h3_context": "h3 上下文"
+        },
+        "widgets": {
+            "keyframe_role": "关键帧角色",
+            "ref_image_size": "参考图像尺寸",
+            "reference_mention_mode": "参考提及模式",
+            "prompt_optimizer_settings": "提示词优化器设置",
+            "prompt_optimizer_scene_guide": "提示词优化器场景指南",
+            "prompt_optimizer_resources": "提示词优化器资源",
+            "prompt_optimizer_marker": "提示词优化器标记",
+            "prompt_optimizer_prompt_connected": "提示词优化器提示词连接",
+            "media_type_1": "媒体类型 1",
+            "media_type_2": "媒体类型 2",
+            "media_type_3": "媒体类型 3",
+            "media_type_4": "媒体类型 4",
+            "media_type_5": "媒体类型 5",
+            "media_type_6": "媒体类型 6",
+            "media_type_7": "媒体类型 7",
+            "media_type_8": "媒体类型 8",
+            "media_type_9": "媒体类型 9",
+            "media_type_10": "媒体类型 10",
+            "media_type_11": "媒体类型 11",
+            "media_type_12": "媒体类型 12",
+            "media_type_13": "媒体类型 13",
+            "media_type_14": "媒体类型 14",
+            "media_type_15": "媒体类型 15",
+            "mode": "模式",
+            "prompt": "提示词",
+            "resolution": "分辨率",
+            "aspect_ratio": "宽高比",
+            "width": "宽度",
+            "height": "高度",
+            "seconds": "时长",
+            "advanced": "高级",
+            "fps": "帧率"
+        }
+    },
+    "MiniMaxH3EasySampler": {
+        "title": "MiniMax H3 简易采样",
+        "description": "对正常的 MiniMax H3 简易上下文进行采样。如果没有采样计划，这等同于普通的 Basic Guider 路径；连接诸如 SelfLift 之类的策略以切换执行方式。",
+        "inputs": {
+            "sampling_plan": "采样计划",
+            "h3_context": "h3 上下文",
+            "model": "模型",
+            "sampler": "采样器",
+            "sigmas": "噪声调度"
+        },
+        "outputs": {
+            "sampled_latent": "采样隐空间"
+        },
+        "widgets": {
+            "seed": "随机种子"
+        }
+    },
+    "MiniMaxH3EasySelectedVideoContext": {
+        "title": "MiniMax H3 简易选定视频上下文",
+        "description": "从选定的候选 VIDEO 准备自定义的单段或多段计划。将 H3 上下文连接到分段采样，然后进行分段细化和分段解码。",
+        "inputs": {
+            "h3_bundle": "H3 模型包",
+            "selected_video": "选中的视频",
+            "media": "媒体",
+            "media_1": "媒体 1",
+            "media_2": "媒体 2",
+            "media_3": "媒体 3",
+            "media_4": "媒体 4",
+            "media_5": "媒体 5",
+            "media_6": "媒体 6",
+            "media_7": "媒体 7",
+            "media_8": "媒体 8",
+            "media_9": "媒体 9",
+            "media_10": "媒体 10",
+            "media_11": "媒体 11",
+            "media_12": "媒体 12",
+            "media_13": "媒体 13",
+            "media_14": "媒体 14",
+            "media_15": "媒体 15"
+        },
+        "outputs": {
+            "model": "模型",
+            "h3_context": "h3 上下文"
+        },
+        "widgets": {
+            "segment_mode": "片段模式",
+            "segment_cuts": "片段剪切",
+            "continuity_mode": "连续性模式",
+            "keyframe_role": "关键帧角色",
+            "ref_image_size": "参考图像尺寸",
+            "reference_mention_mode": "参考提及模式",
+            "prompt_optimizer_settings": "提示词优化器设置",
+            "prompt_optimizer_scene_guide": "提示词优化器场景指南",
+            "context_prompt_optimizer_mode": "上下文提示词优化器模式",
+            "context_prompt_optimizer_concurrency": "上下文提示词优化器并发数",
+            "prompt_optimizer_resources": "提示词优化器资源",
+            "prompt_optimizer_marker": "提示词优化器标记",
+            "prompt_optimizer_prompt_connected": "提示词优化器提示词连接",
+            "media_type_1": "媒体类型 1",
+            "media_type_2": "媒体类型 2",
+            "media_type_3": "媒体类型 3",
+            "media_type_4": "媒体类型 4",
+            "media_type_5": "媒体类型 5",
+            "media_type_6": "媒体类型 6",
+            "media_type_7": "媒体类型 7",
+            "media_type_8": "媒体类型 8",
+            "media_type_9": "媒体类型 9",
+            "media_type_10": "媒体类型 10",
+            "media_type_11": "媒体类型 11",
+            "media_type_12": "媒体类型 12",
+            "media_type_13": "媒体类型 13",
+            "media_type_14": "媒体类型 14",
+            "media_type_15": "媒体类型 15",
+            "mode": "模式",
+            "prompt": "提示词",
+            "context_length": "上下文长度",
+            "advanced": "高级"
+        }
+    },
+    "MiniMaxH3EasyLatentUpscaler3D": {
+        "title": "MiniMax H3 简易 3D 隐空间放大（内置）",
+        "inputs": {
+            "latent": "隐空间",
+            "Input MiniMax H3 latent.": "输入 MiniMax H3 隐空间。",
+            "model_name": "模型名称",
+            "Latent upscaler checkpoint.": "隐空间放大检查点。",
+            "device": "设备",
+            "precision": "精度"
+        },
+        "outputs": {
+            "latent": "隐空间",
+            "Upscaled H3 latent.": "放大后的 H3 隐空间。"
+        },
+        "widgets": {
+            "mode": "模式",
+            "How the output size is selected.": "输出尺寸的选择方式。",
+            "scale": "缩放",
+            "width": "宽度",
+            "height": "高度",
+            "megapixels": "百万像素",
+            "align": "对齐",
+            "Output pixel-grid alignment; 32 is recommended for H3.": "输出像素网格对齐；H3 建议使用 32。",
+            "enable_chunking": "启用分块",
+            "Use temporal overlap blending for long clips.": "对长片段使用时间重叠混合。"
+        }
+    },
+    "MiniMaxH3EasyMediaLoader": {
+        "title": "MiniMax H3 简易媒体加载器",
+        "description": "从 ComfyUI 输入中加载有序的图像、音频和视频参考。视频组件会被解码一次，并通过 ComfyUI 的节点缓存进行复用。",
+        "outputs": {
+            "media_bundle": "媒体包"
+        },
+        "widgets": {
+            "media_state": "媒体状态"
+        }
+    },
+    "MiniMaxH3EasySegmentSampleSetup": {
+        "title": "MiniMax H3 简易采样设置",
+        "description": "一次性连接上下文、模型、采样器和 sigmas，然后在第一个分段步骤中使用该设置。",
+        "inputs": {
+            "sampling_plan": "采样计划",
+            "h3_context": "h3 上下文",
+            "model": "模型",
+            "sampler": "采样器",
+            "sigmas": "噪声调度"
+        },
+        "outputs": {
+            "setup": "设置"
+        }
+    },
+    "MiniMaxH3EasySegmentDecode": {
+        "title": "MiniMax H3 简易分段解码",
+        "description": "一次解码一个上下文分段的帧，并返回带有混音音频的完整 VIDEO。",
+        "inputs": {
+            "segments": "分段数"
+        },
+        "outputs": {
+            "preview": "预览图象"
+        }
+    },
+    "MiniMaxH3EasyContextSegments": {
+        "title": "MiniMax H3 简易上下文分段",
+        "description": "为 MiniMax H3 准备上下文分段计划。选择音频模式；数字人使用一个 Media 音频轨道作为锁定的外部驱动器，或在未提供音频时回退到正常的生成音频/参考处理。将 H3 上下文输出连接到 MiniMax H3 简易分段采样。",
+        "inputs": {
+            "h3_bundle": "H3 模型包",
+            "media": "媒体",
+            "media_1": "媒体 1",
+            "media_2": "媒体 2",
+            "media_3": "媒体 3",
+            "media_4": "媒体 4",
+            "media_5": "媒体 5",
+            "media_6": "媒体 6",
+            "media_7": "媒体 7",
+            "media_8": "媒体 8",
+            "media_9": "媒体 9",
+            "media_10": "媒体 10",
+            "media_11": "媒体 11",
+            "media_12": "媒体 12",
+            "media_13": "媒体 13",
+            "media_14": "媒体 14",
+            "media_15": "媒体 15",
+            "media_16": "媒体 16",
+            "media_17": "媒体 17",
+            "media_18": "媒体 18",
+            "media_19": "媒体 19",
+            "media_20": "媒体 20",
+            "media_21": "媒体 21",
+            "media_22": "媒体 22",
+            "media_23": "媒体 23",
+            "media_24": "媒体 24",
+            "media_25": "媒体 25",
+            "media_26": "媒体 26",
+            "media_27": "媒体 27",
+            "media_28": "媒体 28",
+            "media_29": "媒体 29",
+            "media_30": "媒体 30",
+            "media_31": "媒体 31",
+            "media_32": "媒体 32",
+            "media_33": "媒体 33",
+            "media_34": "媒体 34",
+            "media_35": "媒体 35",
+            "media_36": "媒体 36",
+            "media_37": "媒体 37",
+            "media_38": "媒体 38",
+            "media_39": "媒体 39",
+            "media_40": "媒体 40",
+            "media_41": "媒体 41",
+            "media_42": "媒体 42",
+            "media_43": "媒体 43",
+            "media_44": "媒体 44",
+            "media_45": "媒体 45"
+        },
+        "outputs": {
+            "model": "模型",
+            "h3_context": "h3 上下文"
+        },
+        "widgets": {
+            "audio_mode": "音频模式",
+            "segment_seconds": "片段秒数",
+            "continuity_mode": "连续性模式",
+            "keyframe_role": "关键帧角色",
+            "ref_image_size": "参考图像尺寸",
+            "reference_mention_mode": "参考提及模式",
+            "prompt_optimizer_settings": "提示词优化器设置",
+            "prompt_optimizer_scene_guide": "提示词优化器场景指南",
+            "context_prompt_optimizer_mode": "上下文提示词优化器模式",
+            "context_prompt_optimizer_concurrency": "上下文提示词优化器并发数",
+            "prompt_optimizer_resources": "提示词优化器资源",
+            "prompt_optimizer_marker": "提示词优化器标记",
+            "prompt_optimizer_prompt_connected": "提示词优化器提示词连接",
+            "media_type_1": "媒体类型 1",
+            "media_type_2": "媒体类型 2",
+            "media_type_3": "媒体类型 3",
+            "media_type_4": "媒体类型 4",
+            "media_type_5": "媒体类型 5",
+            "media_type_6": "媒体类型 6",
+            "media_type_7": "媒体类型 7",
+            "media_type_8": "媒体类型 8",
+            "media_type_9": "媒体类型 9",
+            "media_type_10": "媒体类型 10",
+            "media_type_11": "媒体类型 11",
+            "media_type_12": "媒体类型 12",
+            "media_type_13": "媒体类型 13",
+            "media_type_14": "媒体类型 14",
+            "media_type_15": "媒体类型 15",
+            "media_type_16": "媒体类型 16",
+            "media_type_17": "媒体类型 17",
+            "media_type_18": "媒体类型 18",
+            "media_type_19": "媒体类型 19",
+            "media_type_20": "媒体类型 20",
+            "media_type_21": "媒体类型 21",
+            "media_type_22": "媒体类型 22",
+            "media_type_23": "媒体类型 23",
+            "media_type_24": "媒体类型 24",
+            "media_type_25": "媒体类型 25",
+            "media_type_26": "媒体类型 26",
+            "media_type_27": "媒体类型 27",
+            "media_type_28": "媒体类型 28",
+            "media_type_29": "媒体类型 29",
+            "media_type_30": "媒体类型 30",
+            "media_type_31": "媒体类型 31",
+            "media_type_32": "媒体类型 32",
+            "media_type_33": "媒体类型 33",
+            "media_type_34": "媒体类型 34",
+            "media_type_35": "媒体类型 35",
+            "media_type_36": "媒体类型 36",
+            "media_type_37": "媒体类型 37",
+            "media_type_38": "媒体类型 38",
+            "media_type_39": "媒体类型 39",
+            "media_type_40": "媒体类型 40",
+            "media_type_41": "媒体类型 41",
+            "media_type_42": "媒体类型 42",
+            "media_type_43": "媒体类型 43",
+            "media_type_44": "媒体类型 44",
+            "media_type_45": "媒体类型 45",
+            "mode": "模式",
+            "prompt": "提示词",
+            "resolution": "分辨率",
+            "aspect_ratio": "宽高比",
+            "width": "宽度",
+            "height": "高度",
+            "seconds": "时长",
+            "context_length": "上下文长度",
+            "advanced": "高级",
+            "fps": "帧率"
+        }
+    },
+    "MiniMaxH3EasySegmentCollect": {
+        "title": "MiniMax H3 简易分段收集",
+        "description": "仅连接最终的分段步骤，然后将完整的链传递给分段解码。",
+        "inputs": {
+            "final_segment": "最终片段"
+        },
+        "outputs": {
+            "segments": "分段数"
+        }
+    },
+    "MiniMaxH3EasySelfLiftStrategy": {
+        "title": "MiniMax H3 简易 SelfLift",
+        "description": "创建渐进式分辨率的 SelfLift 采样策略。将其连接到 MiniMax H3 简易采样、分段采样或采样设置的可选采样计划输入。",
+        "outputs": {
+            "sampling_plan": "采样计划"
+        },
+        "widgets": {
+            "upscaler_device": "放大器设备",
+            "upscaler_precision": "放大器精度",
+            "upscaler_chunking": "放大器分块",
+            "transition_step": "转换步",
+            "lowres_scale": "低分辨率缩放",
+            "upscaler_model": "放大模型",
+            "advanced": "高级",
+            "cfg": "CFG",
+            "rho": "校正比例",
+            "w_min": "最小权重",
+            "w_max": "最大权重"
+        }
+    },
+    "MiniMaxH3EasyMediaSplitter": {
+        "title": "MiniMax H3 简易媒体拆分器",
+        "description": "将一个媒体捆绑包拆分为标准的 IMAGE、VIDEO 和 AUDIO 输出。设置计数以暴露您希望在下游使用的资源；选择是否在缺少请求的输出时保持原始的阻塞分支行为，或返回 None。",
+        "inputs": {
+            "media_bundle": "媒体包"
+        },
+        "outputs": {
+            "image_21": "图像 21",
+            "image_22": "图像 22",
+            "image_23": "图像 23",
+            "image_24": "图像 24",
+            "image_25": "图像 25",
+            "image_26": "图像 26",
+            "image_27": "图像 27",
+            "video_2": "视频 2",
+            "video_3": "视频 3",
+            "video_4": "视频 4",
+            "video_5": "视频 5",
+            "video_6": "视频 6",
+            "video_7": "视频 7",
+            "video_8": "视频 8",
+            "video_9": "视频 9",
+            "audio_5": "音频 5",
+            "audio_6": "音频 6",
+            "audio_7": "音频 7",
+            "audio_8": "音频 8",
+            "audio_9": "音频 9",
+            "image_1": "图像1",
+            "image_2": "图像2",
+            "image_3": "图像_3",
+            "image_4": "图像_4",
+            "image_5": "图像_5",
+            "image_6": "图像_6",
+            "image_7": "图像_7",
+            "image_8": "图像_8",
+            "image_9": "图像_9",
+            "image_10": "图像_10",
+            "image_11": "图像 11",
+            "image_12": "图像 12",
+            "image_13": "图像 13",
+            "image_14": "图像 14",
+            "image_15": "图像 15",
+            "image_16": "图像 16",
+            "image_17": "图像 17",
+            "image_18": "图像 18",
+            "image_19": "图像 19",
+            "image_20": "图像 20",
+            "video_1": "视频_1",
+            "audio_1": "音频1",
+            "audio_2": "音频2",
+            "audio_3": "音频_3",
+            "audio_4": "音频_4"
+        },
+        "widgets": {
+            "video_count": "视频数量",
+            "audio_count": "音频数量",
+            "empty_output_mode": "空输出模式",
+            "image_count": "图像数量"
+        }
+    },
+    "MiniMaxH3EasySecondPassConditioning": {
+        "title": "MiniMax H3 简易二次处理条件",
+        "description": "在二次处理分辨率下重新编码 I2V/FL2V 关键帧，同时保留文本和参考媒体条件。",
+        "inputs": {
+            "h3_context": "h3 上下文",
+            "second_pass_video_latent": "二次处理视频隐空间"
+        },
+        "outputs": {
+            "second_pass_positive": "二次处理正向条件"
+        }
+    },
+    "MiniMaxH3EasyLoader": {
+        "title": "MiniMax H3 简易加载器",
+        "description": "加载一个或两个 MiniMax H3 变换器，以及文本编码器和两个 AV VAE。",
+        "outputs": {
+            "h3_bundle": "H3 模型包"
+        },
+        "widgets": {
+            "fl2va_model": "FL2VA 模型",
+            "ref2va_model": "REF2VA 模型",
+            "text_encoder": "文本编码器",
+            "video_vae": "视频VAE",
+            "audio_vae": "音频VAE"
+        }
+    },
+    "MiniMaxH3EasySegmentRefine": {
+        "title": "MiniMax H3 简易分段细化",
+        "description": "对每个上下文分段执行分辨率感知的二次处理。每个分段保留自己的提示词和媒体参考，然后将其细化的尾部传递给下一个分段。使用 tiled_low_vram 在空间分块中采样高分辨率分段。",
+        "inputs": {
+            "h3_context": "h3 上下文",
+            "segments": "分段数",
+            "model": "模型",
+            "sampler": "采样器",
+            "sigmas": "噪声调度"
+        },
+        "outputs": {
+            "refined_segments": "精炼片段"
+        },
+        "widgets": {
+            "refine_mode": "精炼模式",
+            "refine_execution": "精炼执行",
+            "latent_upscale_scale": "隐空间放大倍数",
+            "latent_upscale_device": "隐空间放大设备",
+            "latent_upscale_precision": "隐空间放大精度",
+            "tile_fade": "分块淡入淡出",
+            "segment_seeds": "片段种子",
+            "seed": "随机种子",
+            "target_width": "目标宽度",
+            "target_height": "目标高度",
+            "latent_upscale_model": "隐空间放大模型",
+            "tile_width": "瓦片宽度",
+            "tile_height": "瓦片高度",
+            "tile_overlap": "分块重叠"
+        }
+    },
+    "MiniMaxH3EasyModelAdapter": {
+        "title": "MiniMax H3 简易模型适配器",
+        "description": "将标准的 ComfyUI MODEL、CLIP 和 VAE 输出组装成 MiniMax H3 捆绑包。",
+        "inputs": {
+            "fl2va_model": "FL2VA 模型",
+            "ref2va_model": "REF2VA 模型",
+            "text_encoder": "文本编码器",
+            "video_vae": "视频VAE",
+            "audio_vae": "音频VAE"
+        },
+        "outputs": {
+            "h3_bundle": "H3 模型包"
+        }
+    },
+    "MiniMaxH3EasySegmentStep": {
+        "title": "MiniMax H3 简易分段步骤",
+        "description": "处理一个上下文分段。仅将采样设置连接到第一步，然后通过上一个分段链接每个后续步骤。分段顺序从链中推断；可选地仅覆盖此分段的提示词。",
+        "inputs": {
+            "previous_segment": "上一片段",
+            "prompt_override": "提示词覆盖",
+            "sample_setup": "采样设置"
+        },
+        "outputs": {
+            "segment": "segment分割"
+        },
+        "widgets": {
+            "seed": "随机种子"
+        }
+    },
+    "MiniMaxH3EasySegmentRender": {
+        "title": "MiniMax H3 简易分段采样",
+        "description": "使用 MotionContext 风格的隐空间连续性对上下文分段计划进行采样。将结果连接到分段解码以进行预览，或连接到分段细化以进行逐段的二次细化。",
+        "inputs": {
+            "sampling_plan": "采样计划",
+            "h3_context": "h3 上下文",
+            "model": "模型",
+            "sampler": "采样器",
+            "sigmas": "噪声调度"
+        },
+        "outputs": {
+            "segments": "分段数"
+        },
+        "widgets": {
+            "segment_seeds": "片段种子",
+            "seed": "随机种子"
+        }
+    }
+}
