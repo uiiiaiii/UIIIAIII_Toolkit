@@ -105,10 +105,21 @@ function getNodeDefStore() {
  */
 function applyRulesTo(name, base) {
     const move = CM.rules.node_move || {};
+    const start = (move[name] !== undefined && move[name]) ? String(move[name]) : base;
+    return renameChain(start);
+}
+
+/**
+ * 对分类路径套用 rename 规则链（基准路径 → 最终基准路径）
+ *
+ * 精确命中优先，其次最长前缀命中；最多迭代 6 次防止规则环（A->B 且 B->A）。
+ * 与 applyRulesTo 的区别：不含节点级 node_move 起点，用于纯分类路径推导
+ * （例如把隐藏列表里的基准路径还原成用户当前看到的分类名）。
+ */
+function renameChain(basePath) {
     const rename = CM.rules.category_rename || {};
     const renameKeys = Object.keys(rename).filter(Boolean);
-
-    let cur = (move[name] !== undefined && move[name]) ? String(move[name]) : base;
+    let cur = String(basePath || "");
     for (let i = 0; i < 6; i++) {
         let next = cur;
         if (rename[cur]) {
@@ -201,6 +212,25 @@ function toDisplayPath(basePath) {
     const catsT = window.__UiTranslated?.NodeCategory || {};
     if (!basePath || !Object.keys(catsT).length) return String(basePath || "");
     return String(basePath).split("/").map((seg) => catsT[seg] || seg).join("/");
+}
+
+/**
+ * 当前显示路径 → 「最终基准路径」（= 用户看到的这个分类的基准形态）。
+ *
+ * 与 baseOfDispPath 的区别：
+ * - baseOfDispPath 反查「基准源路径」，适合作为 rename 规则的 key（规则源语义）
+ * - baseOfDisplayPath 反查「最终基准路径」，适合隐藏/排序等以 finalBase 比对的场景
+ *   因为用户看到的是最终形态；且用户自建分类名（如「其他节点」）不在翻译字典中，
+ *   会原样保留，不会像 baseOfDispPath 那样被误反查成内部节点的原始分类。
+ */
+function baseOfDisplayPath(dispPath) {
+    if (!dispPath) return "";
+    const catsT = window.__UiTranslated?.NodeCategory || {};
+    const rev = {};
+    for (const [k, v] of Object.entries(catsT)) {
+        if (k && v && k !== v && rev[v] === undefined) rev[v] = k;
+    }
+    return String(dispPath).split("/").map((seg) => rev[seg] || seg).join("/");
 }
 
 /**
@@ -501,12 +531,15 @@ function refreshHiddenFilter(store) {
             name: "UIIIAIII Hidden Categories",
             description: tr("Hide categories and nodes according to the Node Category Manager rules"),
             predicate: (nodeDef) => {
-                // 隐藏规则以英文基准路径记录，这里查节点应用规则后的基准路径
+                // 隐藏规则记录的是英文基准路径，但可能属于两种语义：
+                // - 基准源路径：隐藏"被改名前"的分类（如 image/upscaling → 放大节点）
+                // - 最终路径：隐藏"改名后的目标分类"或用户自建分类（如 其他节点）
+                // 两者任一命中即隐藏，保证分类改名前后都能正确隐藏。
                 const cls = String(nodeDef?.name || "");
-                const base = CM.finalBase.get(cls)
-                    ?? CM.rawCategory.get(cls)
-                    ?? String(nodeDef?._original_category ?? nodeDef?.category ?? "");
-                return !isHiddenBasePath(base) && !isHiddenNode(cls);
+                const fallback = String(nodeDef?._original_category ?? nodeDef?.category ?? "");
+                const src = CM.baseCategory.get(cls) ?? CM.rawCategory.get(cls) ?? fallback;
+                const final = CM.finalBase.get(cls) ?? src;
+                return !isHiddenBasePath(src) && !isHiddenBasePath(final) && !isHiddenNode(cls);
             },
         });
     }
@@ -705,7 +738,9 @@ function ensureEmptyRowsObserver(host) {
 
 /** 渲染/刷新空分类行（紧跟分类树最后一行之后，外观与普通分类一致） */
 function renderEmptyRows() {
-    const list = [...CM.emptySet].filter((p) => !isHiddenBasePath(p)).sort();
+    const list = [...CM.emptySet]
+        .filter((p) => !isHiddenBasePath(p) && !isHiddenBasePath(baseOfDisplayPath(p)))
+        .sort();
     const rowsList = list.length ? visibleRows() : [];
     const anchor = rowsList.length ? rowsList[rowsList.length - 1].el : null; // 视觉最后一行
     const seg = anchor ? anchor.parentElement : null;                          // 其所在段落容器
@@ -1049,7 +1084,10 @@ function actionDeleteCategory(key) {
 
 /** 隐藏分类 */
 function actionHideCategory(key) {
-    const base = baseOfDispPath(key) || key; // 隐藏规则以英文基准路径记录
+    // 记录「用户看到的这个分类」的最终基准路径：
+    // 过滤时是按 finalBase 比对的，若用 baseOfDispPath（基准源路径）会错位——
+    // 例如用户自建/改名得到的「其他节点」会被误反查成内部节点的原始分类（如 image）。
+    const base = baseOfDisplayPath(key) || key;
     if (!CM.rules.hidden_categories.includes(base)) CM.rules.hidden_categories.push(base);
     saveRules();
 }
@@ -1125,7 +1163,9 @@ function showHiddenListDialog() {
 
     if (cats.length) {
         catHeader = addSection(tr("Categories ({n})", { n: cats.length }));
-        for (const c of cats) addItem(c, "cat", c);
+        // 显示用户当前看到的分类名：把基准路径套用 rename 链还原为最终路径，再按当前语言翻译
+        // （key 仍用原始基准路径，保证恢复操作能精确匹配规则）
+        for (const c of cats) addItem(toDisplayPath(renameChain(c)) || c, "cat", c);
     }
     if (nodes.length) {
         nodeHeader = addSection(tr("Nodes ({n})", { n: nodes.length }));
@@ -1213,8 +1253,11 @@ function actionRestoreCategory(key) {
         }
     }
     const hiddenBefore = CM.rules.hidden_categories.length;
-    CM.rules.hidden_categories = CM.rules.hidden_categories.filter(
-        (h) => h !== key && !h.startsWith(key + "/") && h !== base && !h.startsWith(base + "/")
+    const dispBase = baseOfDisplayPath(key); // 隐藏规则可能以"最终基准路径"记录
+    CM.rules.hidden_categories = CM.rules.hidden_categories.filter((h) =>
+        h !== key && !h.startsWith(key + "/") &&
+        h !== base && !h.startsWith(base + "/") &&
+        h !== dispBase && !h.startsWith(dispBase + "/")
     );
     n += hiddenBefore - CM.rules.hidden_categories.length;
     n += removeOrderRulesForCategory(base);

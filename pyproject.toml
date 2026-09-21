@@ -1,7 +1,7 @@
 [project]
 name = "uiiiaiii-toolkit"
 description = "UIIIAIII Toolkit: a node category manager (rename / move / hide / sort / restore categories directly in the node library tree via right-click menu and drag), node and plugin UI translation for multiple languages (derived from AIGODLIKE-ComfyUI-Translation and ComfyUI-DD-Translation with modifications), plus bundled nodes: Agnes AI (text-to-image / image-to-image / text-to-video / image-to-video / keyframe animation), Qwen-Image-2.1 (unified generation and editing) and Qwen-Image-Edit-2511 via ModelScope API, text input/preview, background fill, and random noise seed."
-version = "1.3.1"
+version = "1.3.2"
 dependencies = ["requests>=2.28.0"]
 license = { file = "LICENSE" }
 
