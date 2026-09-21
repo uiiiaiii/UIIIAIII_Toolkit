@@ -1,5 +1,9 @@
 /**
  * ComfyUI-Translation 主逻辑模块
+ *
+ * 翻译功能基于以下两个开源项目修改而来：
+ * - AIGODLIKE-ComfyUI-Translation (https://github.com/AIGODLIKE/AIGODLIKE-ComfyUI-Translation)
+ * - ComfyUI-DD-Translation
  */
 
 import { app } from "../../../scripts/app.js";

@@ -43,14 +43,14 @@ from . import translation_writer
 from . import translation_service  # 注册 /translation_node/* 界面翻译端点
 
 # 插件版本
-__version__ = "1.3.0"
+__version__ = "1.3.1"
 
 # 插件信息
 PLUGIN_INFO = {
     "name": "UIIIAIII Toolkit",
     "version": __version__,
     "author": "UIIIAIII Toolkit",
-    "description": "Multi-API custom nodes: Agnes AI (text-to-image / image-to-image / text-to-video / image-to-video / keyframe animation) + ModelScope Qwen-Image-2.1 (unified text-to-image and editing) and Qwen-Image-Edit-2511 (image editing)",
+    "description": "Node category manager (rename/move/hide/sort via tree menu & drag), node and plugin UI translation (derived from AIGODLIKE-ComfyUI-Translation and ComfyUI-DD-Translation with modifications), plus bundled nodes: Agnes AI (text-to-image / image-to-image / text-to-video / image-to-video / keyframe animation), Qwen-Image-2.1 (unified generation and editing) and Qwen-Image-Edit-2511 via ModelScope API, text input/preview, background fill, and random noise seed.",
     "models": [
         "agnes-image-2.1-flash",
         "agnes-video-v2.0",
