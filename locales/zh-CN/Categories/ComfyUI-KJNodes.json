@@ -45,5 +45,6 @@
     "model_merging": "模型合并",
     "_for_testing": "用于测试",
     "wan": "Wan",
-    "samplers": "采样器"
+    "samplers": "采样器",
+    "looping": "循环"
 }

@@ -1809,7 +1809,7 @@
     },
     "PathchSageAttentionKJ": {
         "title": "修补 Sage Attention KJ",
-        "description": "用于修补注意力模式的实验性节点。此节点不使用模型修补系统，因此如果不使用“禁用”选项再次运行该节点，则无法禁用。",
+        "description": "用于修补注意力模式的实验性节点。此节点不使用模型修补系统，因此除非使用“禁用”选项重新运行该节点，否则无法禁用。",
         "inputs": {
             "model": "模型"
         },
@@ -1823,7 +1823,7 @@
         }
     },
     "CheckpointLoaderKJ": {
-        "title": "CheckpointLoaderKJ",
+        "title": "检查点加载器 KJ",
         "description": "用于将 torch.nn.Linear 修补为 CublasLinear 的实验性节点。",
         "outputs": {
             "MODEL": "模型",
@@ -1894,7 +1894,7 @@
         }
     },
     "TorchCompileModelFluxAdvancedV2": {
-        "title": "TorchCompileModelFluxAdvancedV2",
+        "title": "Torch 编译模型 Flux 高级版 V2",
         "description": "已弃用，请改用 TorchCompileModelAdvanced。",
         "inputs": {
             "model": "模型"
@@ -1938,7 +1938,7 @@
         }
     },
     "TorchCompileModelWanVideoV2": {
-        "title": "TorchCompileModelWanVideoV2",
+        "title": "Torch 编译模型 Wan 视频 V2",
         "description": "已弃用，请改用 TorchCompileModelAdvanced。",
         "inputs": {
             "model": "模型"
@@ -1960,7 +1960,7 @@
         }
     },
     "TorchCompileVAE": {
-        "title": "TorchCompileVAE",
+        "title": "Torch 编译 VAE",
         "inputs": {
             "vae": "Vae"
         },
@@ -1976,7 +1976,7 @@
         }
     },
     "TorchCompileControlNet": {
-        "title": "TorchCompileControlNet",
+        "title": "Torch 编译 ControlNet",
         "inputs": {
             "controlnet": "ControlNet"
         },
@@ -2727,16 +2727,16 @@
         }
     },
     "FluxBlockLoraSelect": {
-        "title": "Flux 块 Lora 选择",
-        "description": "选择单个块的 alpha 值，值为 0 时完全移除该块",
+        "title": "Flux 块 LoRA 选择",
+        "description": "选择各个块的 alpha 值，值为 0 时完全移除该块",
         "outputs": {
             "blocks": "模块",
             "The modified diffusion model.": "修改后的扩散模型。"
         }
     },
     "HunyuanVideoBlockLoraSelect": {
-        "title": "Hunyuan 视频块 Lora 选择",
-        "description": "选择单个块的 alpha 值，值为 0 时完全移除该块",
+        "title": "Hunyuan 视频块 LoRA 选择",
+        "description": "选择各个块的 alpha 值，值为 0 时完全移除该块",
         "outputs": {
             "blocks": "模块",
             "The modified diffusion model.": "修改后的扩散模型。"
@@ -3061,8 +3061,8 @@
         }
     },
     "Wan21BlockLoraSelect": {
-        "title": "Wan21 块 Lora 选择",
-        "description": "选择单个块的 alpha 值，值为 0 时完全移除该块",
+        "title": "Wan21 块 LoRA 选择",
+        "description": "选择各个块的 alpha 值，值为 0 时完全移除该块",
         "outputs": {
             "blocks": "模块",
             "The modified diffusion model.": "修改后的扩散模型。"
@@ -3668,7 +3668,7 @@
         }
     },
     "TorchCompileModelAdvanced": {
-        "title": "TorchCompileModelAdvanced",
+        "title": "Torch 编译模型高级版",
         "description": "用于扩散模型的高级 torch.compile 修补。",
         "inputs": {
             "model": "模型"
@@ -4162,20 +4162,23 @@
     },
     "ModelPreviewOverrideKJ": {
         "title": "模型预览覆盖 KJ",
-        "description": "在此节点上添加一个专用的实时预览框，并支持覆盖最大分辨率。默认的 ComfyUI 预览上限为 512 像素；此节点将其自身的预览直接发送到节点上的 DOM 组件，以便像素空间模型（Chroma Radiance、ZImage、HiDream-O1 等）可以在完整的采样器分辨率下进行预览。",
+        "description": "在此节点上添加专用的实时预览帧，并支持覆盖最大分辨率。默认的ComfyUI预览限制为512像素；此节点将其自身的预览直接发送到节点上的DOM组件，因此像素空间模型（如Chroma Radiance、ZImage、HiDream-O1等）可以在完整的采样器分辨率下进行预览。",
         "inputs": {
+            "Optional audio VAE for audio+video models (MiniMax H3). With preview_frames > 1 the audio latent is decoded each step, muxed into the animated preview played back in real time (preview_fps is ignored), and its spectrogram is drawn under the graphs.": "用于音频+视频模型（MiniMax H3）的可选音频VAE。当预览帧数大于1时，每一步都会解码音频隐空间，混入实时播放的动画预览中（此时预览帧率被忽略），并在图形下方绘制其频谱图。",
             "model": "模型",
             "Model to attach the preview override to.": "要附加预览覆盖的模型。",
             "vae": "Vae",
             "Optional LTX VAE for true-RGB previews. TAEHV-LTX = fast tiny decode (VAE pinned to GPU). Any other LTX VAE = full-quality decode via vae.decode() — MUCH slower per step.": "可选的LTX VAE，用于真RGB预览。TAEHV-LTX = 快速微型解码（VAE固定在GPU上）。任何其他LTX VAE = 通过vae.decode()进行全质量解码——每一步要慢得多。",
             "tiny_vae": "微型 VAE",
-            "Tiny VAE decoder from models/vae_approx for true-RGB previews. Overrides Latent2RGB and the 'vae' input.": "来自models/vae_approx的微型VAE解码器，用于真RGB预览。覆盖Latent2RGB和'vae'输入。"
+            "Tiny VAE decoder from models/vae_approx for true-RGB previews. Overrides Latent2RGB and the 'vae' input.": "来自models/vae_approx的微型VAE解码器，用于真RGB预览。覆盖Latent2RGB和'vae'输入。",
+            "audio_vae": "音频VAE"
         },
         "outputs": {
             "MODEL": "模型",
             "Model with preview override attached.": "附加了预览覆盖的模型。"
         },
         "widgets": {
+            "Playback FPS for the animated preview. Ignored when preview_frames=1, and when an audio_vae is connected (the clip then plays in real time with its audio).": "动画预览的播放帧率。当预览帧数=1或连接了音频VAE时忽略此设置（此时片段将与其音频实时播放）。",
             "max_resolution": "最大分辨率",
             "Max preview side in pixels for the live widget. 0 = full sampler resolution (no downscale).": "实时控件预览的最大边长（像素）。0 = 采样器全分辨率（不缩小）。",
             "jpeg_quality": "JPEG 质量",
@@ -4184,8 +4187,7 @@
             "Suppress the standard sampler-node preview overlay while sampling, so only this node's frame updates. Progress bar still advances normally.": "采样时抑制标准采样器节点的预览覆盖，仅更新此节点的帧。进度条仍正常前进。",
             "preview_frames": "预览帧数",
             "Frames to sample from each video step's latent for animated preview. 1 = single frame (current behavior, fastest). >1 = animated WebP playing back at preview_fps. Only applies to video models (5D latents); ignored for image models.": "每个视频步骤的隐空间采样的帧数，用于动画预览。1 = 单帧（当前行为，最快）。>1 = 以preview_fps播放的动画WebP。仅适用于视频模型（5D隐空间）；图像模型忽略。",
-            "preview_fps": "预览帧率",
-            "Playback FPS for the animated WebP preview. Ignored when preview_frames=1.": "动画WebP预览的播放帧率。当preview_frames=1时忽略。"
+            "preview_fps": "预览帧率"
         }
     },
     "RandomImageFromBatch": {
@@ -4252,8 +4254,8 @@
         }
     },
     "LTX2BlockLoraSelect": {
-        "title": "LTX2 块 Lora 选择",
-        "description": "选择单个块的 alpha 值，值为 0 时完全移除该块",
+        "title": "LTX2 块 LoRA 选择",
+        "description": "选择各个块的 alpha 值，值为 0 时完全移除该块",
         "outputs": {
             "blocks": "模块",
             "The modified diffusion model.": "修改后的扩散模型。"
@@ -4607,6 +4609,188 @@
             "H.264 CRF. Lower = higher quality / larger file.": "H.264 CRF。值越低 = 质量越高 / 文件越大。",
             "max_grid_frames": "最大网格帧数",
             "If batch exceeds this, frames are stride-sampled evenly.": "如果批次超过此值，帧将按步长均匀采样。"
+        }
+    },
+    "MiniMaxH3TokenCounter": {
+        "title": "MiniMax H3 令牌计数器",
+        "description": "在不进行采样的情况下，计算 MiniMax H3 生成将运行的打包序列长度。根据 AV 隐空间和条件（包括文本长度、关键帧和参考块）构建与模型使用的相同的 [文本 | 关键帧/参考 | 音频 | 视频] 布局。",
+        "inputs": {
+            "The AV latent that would be sampled (video+audio pair from the H3 latent nodes).": "将要采样的 AV 隐空间（来自 H3 隐空间节点的视频+音频对）。",
+            "Positive conditioning; text length and any keyframe/reference blocks are read from it.": "正向条件；文本长度以及任何关键帧/参考块都从中读取。",
+            "samples": "Latent",
+            "conditioning": "条件"
+        },
+        "outputs": {
+            "The input latent, unchanged.": "输入的隐空间，保持不变。",
+            "The input conditioning, unchanged.": "输入的条件，保持不变。",
+            "samples": "Latent",
+            "conditioning": "条件",
+            "tokens": "Token"
+        }
+    },
+    "TensorLoopOpen": {
+        "title": "打开张量循环",
+        "inputs": {
+            "Optional value to use as `previous_value` on the first iteration.": "可选值，在第一次迭代时用作 `previous_value`。"
+        },
+        "outputs": {
+            "The value from the previous iteration (or initial_value on first pass).": "上一次迭代的值（第一次传递时为 initial_value）。",
+            "Number of items collected so far (0 on first iteration).": "到目前为止收集的项目数（第一次迭代时为 0）。",
+            "Current iteration index (1-based).": "当前迭代索引（从 1 开始）。",
+            "flow_control": "循环控制"
+        },
+        "widgets": {
+            "Loop termination mode.": "循环终止模式。",
+            "Number of loop iterations. Set to 0 to skip looping and pass through initial_value.": "循环迭代次数。设置为 0 可跳过循环并直接传递 initial_value。",
+            "Target number of output frames. The loop continues until this many frames are accumulated.": "目标输出帧数。循环持续直到累积到这么多帧。",
+            "mode": "模式",
+            "iterations": "迭代次数",
+            "total_frames": "总帧数"
+        }
+    },
+    "TensorLoopClose": {
+        "title": "关闭张量循环",
+        "inputs": {
+            "Output generated this iteration.": "本次迭代生成的输出。",
+            "Optional early stop signal from inside the loop body. When True, the loop stops after the current iteration regardless of remaining iterations or total_frames target.": "来自循环体内部的可选提前停止信号。当为 True 时，循环在当前迭代后停止，无论剩余迭代次数或 total_frames 目标如何。",
+            "flow_control": "循环控制",
+            "processed": "处理图像",
+            "stop": "停止"
+        },
+        "outputs": {
+            "Accumulated batch or final iteration result, depending on 'accumulate' setting.": "累积的批次或最终迭代结果，取决于“累积”设置。",
+            "output": "输出"
+        },
+        "widgets": {
+            "When enabled, collects all iterations into a batch. When disabled, only outputs the final iteration's result.": "启用时，将所有迭代收集到一个批次中。禁用时，仅输出最终迭代的结果。",
+            "How to handle duplicate frames where consecutive iterations overlap (e.g. context frames a video model re-generates).\n- disabled: keep every frame as-is\n- start/end: cut the duplicates from the start or end of each iteration's output\n- fade_linear/fade_smooth: crossfade the end of each iteration into the start of the next": "如何处理连续迭代重叠处的重复帧（例如视频模型重新生成的上下文帧）。\n- disabled：保持所有帧不变\n- start/end：从每次迭代输出的开头或结尾裁剪重复帧\n- fade_linear/fade_smooth：将每次迭代的结尾交叉淡化到下一次迭代的开头",
+            "Number of frames to cut from the START of each iteration's output. Use when the model re-generates its context frames at the start of its output (most common for video continuation). The first generation is always kept whole; only iterations 2+ are trimmed.": "从每次迭代输出开头裁剪的帧数。当模型在其输出开头重新生成上下文帧时使用（视频续接最常见）。第一次生成始终保留完整；仅修剪第 2 次及以后的迭代。",
+            "Number of frames to cut from the END of each iteration's output. Use when the model generates look-ahead frames at the end of its output that the next iteration re-generates. The trimmed tail of the final iteration is re-appended.": "从每次迭代输出结尾裁剪的帧数。当模型在其输出结尾生成下一次迭代会重新生成的预看帧时使用。最终迭代被裁剪的尾部会重新附加。",
+            "Number of overlapping frames to crossfade: the end of each iteration is blended into the start of the next with a linear ramp. The first generation is kept whole.": "要交叉淡化的重叠帧数：每次迭代的结尾通过线性斜坡混合到下一次迭代的开头。第一次生成保持完整。",
+            "Number of overlapping frames to crossfade: the end of each iteration is blended into the start of the next with a smoothstep (ease in/out) ramp. The first generation is kept whole.": "要交叉淡化的重叠帧数：每次迭代的结尾通过平滑步进（缓入/缓出）斜坡混合到下一次迭代的开头。第一次生成保持完整。",
+            "accumulate": "累积",
+            "overlap": "重叠",
+            "overlap_frames": "重叠帧"
+        }
+    },
+    "_AccumulationToImageBatch": {
+        "title": "累积到批次",
+        "inputs": {
+            "accumulation": "累积",
+            "overlap_mode": "重叠模式"
+        },
+        "outputs": {
+            "result": "人脸解析结果"
+        },
+        "widgets": {
+            "overlap_frames": "重叠帧"
+        }
+    },
+    "_ConditionalSelect": {
+        "title": "条件选择",
+        "inputs": {
+            "value_if_true": "检测为真时",
+            "value_if_false": "检测为假时"
+        },
+        "outputs": {
+            "result": "人脸解析结果"
+        },
+        "widgets": {
+            "condition": "条件"
+        }
+    },
+    "_AccumulateNode": {
+        "title": "累积",
+        "inputs": {
+            "to_add": "累加",
+            "accumulation": "累积"
+        },
+        "outputs": {
+            "ACCUMULATION": "累积"
+        }
+    },
+    "_ImageAccumStatePack": {
+        "title": "图像累积状态打包",
+        "inputs": {
+            "remaining": "次数",
+            "count": "检测数量",
+            "total_frames": "总帧数"
+        }
+    },
+    "_WhileLoopClose": {
+        "title": "关闭 While 循环",
+        "inputs": {
+            "flow_control": "循环控制",
+            "condition": "条件",
+            "initial_value0": "初始值_0",
+            "initial_value1": "初始值_1",
+            "initial_value2": "初始值_2",
+            "initial_value3": "初始值_3",
+            "initial_value4": "初始值_4"
+        },
+        "outputs": {
+            "value0": "值_0",
+            "value1": "值_1",
+            "value2": "值_2",
+            "value3": "值_3",
+            "value4": "值_4"
+        }
+    },
+    "_WhileLoopOpen": {
+        "title": "打开 While 循环",
+        "inputs": {
+            "initial_value0": "初始值_0",
+            "initial_value1": "初始值_1",
+            "initial_value2": "初始值_2",
+            "initial_value3": "初始值_3",
+            "initial_value4": "初始值_4"
+        },
+        "outputs": {
+            "FLOW_CONTROL": "循环控制",
+            "value0": "值_0",
+            "value1": "值_1",
+            "value2": "值_2",
+            "value3": "值_3",
+            "value4": "值_4"
+        },
+        "widgets": {
+            "condition": "条件"
+        }
+    },
+    "_IntOperations": {
+        "title": "整数运算",
+        "inputs": {
+            "operation": "操作"
+        },
+        "outputs": {
+            "INT": "整数",
+            "BOOLEAN": "布尔"
+        },
+        "widgets": {
+            "a": "角度",
+            "b": "B"
+        }
+    },
+    "_BatchOps": {
+        "title": "批次运算",
+        "inputs": {
+            "batch": "批次",
+            "operation": "操作"
+        },
+        "outputs": {
+            "output": "输出"
+        },
+        "widgets": {
+            "amount": "数量"
+        }
+    },
+    "_ImageAccumStateUnpack": {
+        "title": "图像累积状态解包",
+        "outputs": {
+            "remaining": "次数",
+            "accumulation": "累积",
+            "count": "检测数量",
+            "total_frames": "总帧数"
         }
     }
 }

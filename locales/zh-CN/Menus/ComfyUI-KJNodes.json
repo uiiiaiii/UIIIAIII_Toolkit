@@ -600,5 +600,7 @@
     "Next spline": "下一个样条线",
     "Spline 1": "样条线 1",
     "Control": "控制",
-    "copy": "复制"
+    "copy": "复制",
+    "Toggle preview audio": "切换预览音频",
+    "audio spectrogram": "音频频谱图"
 }
