@@ -480,7 +480,9 @@ function registerTranslatorExtensionWhenReady(tries = 0) {
                 throw new Error(tr("Loading plugin list failed HTTP {code}", { code: listResp.status }));
             }
             const listData = await listResp.json();
-            const plugins = (listData.plugins || []).filter((p) => p.node_count > 0);
+            // 放行两类插件：有 Python 节点的；纯前端插件（node_count=0 但有前端 JS，
+            // 其菜单/设置文本可翻译，如 quick-connections）
+            const plugins = (listData.plugins || []).filter((p) => p.node_count > 0 || p.has_web);
 
             if (plugins.length === 0) {
                 progress.close();
@@ -511,16 +513,20 @@ function registerTranslatorExtensionWhenReady(tries = 0) {
             }
             const extractData = await extractResp.json();
 
-            if (extractData.node_count === 0) {
+            // 节点与菜单都没有 → 无可翻译内容
+            const menuCount = extractData.menu_count ?? 0;
+            if (extractData.node_count === 0 && menuCount === 0) {
                 progress2.close();
                 showToast(tr("No loaded nodes extracted from plugin {name}", { name: selected }), "warn");
                 return;
             }
 
             progress2.update(
-                extractData.menu_count > 0
-                    ? tr("Extracted {n} nodes, {m} menu texts. Calling the translation API (this may take a while)...", { n: extractData.node_count, m: extractData.menu_count })
-                    : tr("Extracted {n} nodes. Calling the translation API (this may take a while)...", { n: extractData.node_count })
+                extractData.node_count > 0 && menuCount > 0
+                    ? tr("Extracted {n} nodes, {m} menu texts. Calling the translation API (this may take a while)...", { n: extractData.node_count, m: menuCount })
+                    : menuCount > 0
+                        ? tr("Extracted {m} menu texts. Calling the translation API (this may take a while)...", { m: menuCount })
+                        : tr("Extracted {n} nodes. Calling the translation API (this may take a while)...", { n: extractData.node_count })
             );
 
             // 翻译并写入（同时翻译节点、分类、菜单）
@@ -707,21 +713,33 @@ function registerTranslatorExtensionWhenReady(tries = 0) {
 
         /**
          * 节点右键菜单（新版 API，替代 monkey-patch getExtraMenuOptions）
-         * 在单个节点上右键时，提供翻译该节点的选项
+         * 只显示一个翻译入口，避免菜单混乱：
+         * - 右键的节点属于多选集（框选多个节点后右键其中之一）→ 仅显示"翻译选中节点"
+         * - 其余情况（单选 / 右键节点不在选中集内）→ 仅显示"翻译此节点"
          */
         getNodeMenuItems(node) {
             const items = [];
 
             if (node?.comfyClass) {
+                const classNames = getSelectedNodeClassNames();
+                const isMultiSelect = classNames.length > 1 && classNames.includes(node.comfyClass);
+
                 items.push(null); // 分隔线
-                items.push({
-                    content: tr("🌐 Translate This Node ({name})", { name: node.comfyClass }),
-                    callback: () => {
-                        // 单节点翻译：构造一个临时选中集
-                        // 先尝试把当前节点设为选中，然后调用统一流程
-                        translateSingleNode(node.comfyClass);
-                    },
-                });
+                if (isMultiSelect) {
+                    items.push({
+                        content: tr("🌐 Translate Selected Nodes ({n})", { n: classNames.length }),
+                        callback: () => {
+                            translateSelectedNodes();
+                        },
+                    });
+                } else {
+                    items.push({
+                        content: tr("🌐 Translate This Node ({name})", { name: node.comfyClass }),
+                        callback: () => {
+                            translateSingleNode(node.comfyClass);
+                        },
+                    });
+                }
             }
 
             return items;

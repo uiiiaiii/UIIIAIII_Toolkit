@@ -143,13 +143,21 @@ try:
             for plugin in plugins:
                 ast_count = 0
                 try:
-                    init_file = os.path.join(plugin["path"], "__init__.py")
+                    # 单文件型插件的 path 本身就是 .py 文件
+                    init_file = plugin["path"]
+                    if not init_file.endswith(".py"):
+                        init_file = os.path.join(plugin["path"], "__init__.py")
                     class_names = node_extractor._parse_node_class_mappings_from_ast(init_file)
                     ast_count = len(class_names)
                 except Exception:
                     ast_count = 0
                 runtime_count = runtime_counts.get(plugin["name"], 0)
                 plugin["node_count"] = max(ast_count, runtime_count)
+                # 是否有前端 JS（纯前端插件 node_count=0，但菜单文本可一键翻译）
+                try:
+                    plugin["has_web"] = node_extractor.plugin_has_web_js(plugin["path"])
+                except Exception:
+                    plugin["has_web"] = False
             return web.json_response({"plugins": plugins})
         except Exception as e:
             logger.error("列出插件失败：%s", e)

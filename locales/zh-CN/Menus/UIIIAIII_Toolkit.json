@@ -164,6 +164,7 @@
     "Extracting node {name} definition...": "正在提取节点 {name} 的定义...",
     "Extracted {n} nodes. Calling the translation API (this may take a while)...": "已提取 {n} 个节点。正在调用翻译 API（这可能需要一段时间）...",
     "Extracted {n} nodes, {m} menu texts. Calling the translation API (this may take a while)...": "已提取 {n} 个节点、{m} 条菜单文本。正在调用翻译 API（这可能需要一段时间）...",
+    "Extracted {m} menu texts. Calling the translation API (this may take a while)...": "已提取 {m} 条菜单文本。正在调用翻译 API（这可能需要一段时间）...",
     "No loaded nodes extracted from plugin {name}": "插件 {name} 没有提取到已加载的节点",
     "Node definition not found: {name}": "未找到节点定义：{name}",
     "Extract failed HTTP {code}": "提取失败 HTTP {code}",

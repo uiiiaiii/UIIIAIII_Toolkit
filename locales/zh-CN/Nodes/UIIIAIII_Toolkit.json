@@ -223,11 +223,11 @@
     "RandomNoiseSeed": {
         "title": "随机噪声种子",
         "outputs": {
-            "noise": "噪声"
+            "SEED": "种子"
         },
         "widgets": {
             "noise_seed": "随机种",
-            "Noise seed (-1 means random; used together with the button)": "噪声种子（-1 表示随机，配合按钮使用）"
+            "Seed value passed to the connected node's seed input (e.g. KSampler). -1 means random; used together with the Random/Last button": "输出到所连接节点种子输入端口的种子值（如 K 采样器）。-1 表示随机，配合随机/上次按钮使用"
         }
     }
 }

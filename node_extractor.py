@@ -321,7 +321,12 @@ def extract_selected_nodes(class_names: List[str]) -> Dict[str, Any]:
 
 def list_custom_plugins() -> List[Dict[str, Any]]:
     """
-    列出 custom_nodes 目录下所有插件
+    列出 custom_nodes 目录下所有插件（与 ComfyUI 的加载范围保持一致）
+
+    ComfyUI 会加载两种形态的自定义节点：
+    - 目录型：<dir>/__init__.py
+    - 单文件型：<name>.py（如 ComfyUI 自带的 websocket_image_save.py）
+    两种都会进入列表，保证"ComfyUI 能识别的插件"都可用一键翻译。
 
     Returns:
         [{"name": "UIIIAIII Toolkit", "path": "...", "node_count": 6}, ...]
@@ -335,21 +340,25 @@ def list_custom_plugins() -> List[Dict[str, Any]]:
             continue
         for entry in os.listdir(base_path):
             entry_path = os.path.join(base_path, entry)
-            if not os.path.isdir(entry_path):
-                continue
-            # 跳过隐藏目录和已知非插件目录
+            # 跳过隐藏项与已知非插件项
             if entry.startswith(".") or entry.startswith("__"):
                 continue
-            # 检查是否包含 __init__.py
-            init_file = os.path.join(entry_path, "__init__.py")
-            if not os.path.isfile(init_file):
-                continue
-
-            plugins.append({
-                "name": entry,
-                "path": entry_path,
-                "node_count": None,
-            })
+            if os.path.isdir(entry_path):
+                # 目录型：需包含 __init__.py
+                if not os.path.isfile(os.path.join(entry_path, "__init__.py")):
+                    continue
+                plugins.append({
+                    "name": entry,
+                    "path": entry_path,
+                    "node_count": None,
+                })
+            elif entry.endswith(".py"):
+                # 单文件型：ComfyUI 同样会加载
+                plugins.append({
+                    "name": entry[:-3],
+                    "path": entry_path,
+                    "node_count": None,
+                })
 
     return plugins
 
@@ -510,55 +519,47 @@ def _scan_runtime_nodes_for_plugin(plugin_name: str, node_mappings: Dict[str, An
 
 def get_runtime_nodes_by_plugin() -> Dict[str, List[str]]:
     """
-    运行时按插件目录统计/归类所有已加载节点（最可靠的归属方式）
+    归属所有已加载节点到插件目录（直接使用 ComfyUI 自身的注册信息）
 
-    原理：遍历 sys.modules，用每个模块 __file__ 的真实路径判断其所属的
-    custom_nodes 插件目录，再将 NODE_CLASS_MAPPINGS 中节点类的 __module__
-    归属到对应插件。
+    ComfyUI 加载自定义节点时，会给每一个注册进全局 NODE_CLASS_MAPPINGS 的节点类
+    写入 RELATIVE_PYTHON_MODULE = "custom_nodes.<插件目录名>"
+    （NODE_CLASS_MAPPINGS 与 V3 comfy_entrypoint 两种注册路径均会写入，
+    对编译实现 nodes.pyd 等同样有效）。
 
-    优势：不依赖模块名与插件目录名的字符串匹配，对以下情况均有效：
-    - 插件把子包目录加入 sys.path 后导入（如 ComfyUI-Easy-Use 的 py/ 模块）
-    - NODE_CLASS_MAPPINGS 在子模块中拼装（如 ComfyUI-KJNodes）
-    - 顶层模块名与目录名不一致
+    因此无需再做 __file__ 路径推断：没有该属性的类只可能是 ComfyUI 核心
+    节点（不属于任何插件目录），直接跳过即可。
 
     Returns:
         {插件目录名: [已加载的节点类名, ...]}
     """
     import nodes as comfy_nodes
 
-    # 比较时才做 normcase（Windows 会转小写），relpath 用原始路径以保留目录名的真实大小写
-    bases = []
+    # 插件名集合（用于 RELATIVE_PYTHON_MODULE 末段归属校验）：
+    # 目录型取目录名，单文件型取 .py 文件名（去掉扩展名）
+    plugin_dir_names = set()
     for b in folder_paths.get_folder_paths("custom_nodes"):
-        if os.path.isdir(b):
-            bases.append((os.path.normcase(b) + os.sep, os.path.abspath(b)))
-
-    # module_name -> 插件目录名
-    mod2plugin: Dict[str, str] = {}
-    for mod_name, mod in list(sys.modules.items()):
-        try:
-            f = getattr(mod, "__file__", None)
-            if not f:
-                continue
-            f_abs = os.path.abspath(f)
-            f_nc = os.path.normcase(f_abs)
-            for b_nc, b_orig in bases:
-                if f_nc.startswith(b_nc):
-                    rel = os.path.relpath(f_abs, b_orig)
-                    mod2plugin[mod_name] = rel.split(os.sep)[0]
-                    break
-        except Exception:
+        if not os.path.isdir(b):
             continue
+        try:
+            for entry in os.listdir(b):
+                if entry.startswith(".") or entry.startswith("__"):
+                    continue
+                if os.path.isdir(os.path.join(b, entry)):
+                    plugin_dir_names.add(entry)
+                elif entry.endswith(".py"):
+                    plugin_dir_names.add(entry[:-3])
+        except Exception:
+            pass
 
     by_plugin: Dict[str, List[str]] = {}
     for class_name, node_class in comfy_nodes.NODE_CLASS_MAPPINGS.items():
         try:
-            mod = getattr(node_class, "__module__", "") or ""
             rel_module = getattr(node_class, "RELATIVE_PYTHON_MODULE", "") or ""
-            plugin = mod2plugin.get(mod)
-            if not plugin and rel_module:
-                plugin = mod2plugin.get(rel_module)
-            if plugin:
-                by_plugin.setdefault(plugin, []).append(class_name)
+            if not rel_module.startswith("custom_nodes."):
+                continue  # ComfyUI 核心节点 / 非标准注册，无插件归属
+            cand = rel_module.rsplit(".", 1)[-1]
+            if cand in plugin_dir_names:
+                by_plugin.setdefault(cand, []).append(class_name)
         except Exception:
             continue
 
@@ -592,16 +593,24 @@ def extract_plugin_nodes(plugin_name: str) -> Dict[str, Any]:
         if os.path.isdir(candidate):
             plugin_path = candidate
             break
+        # 单文件型插件：<name>.py
+        if os.path.isfile(candidate + ".py"):
+            plugin_path = candidate + ".py"
+            break
 
     if not plugin_path:
         raise FileNotFoundError(f"Plugin directory not found: {plugin_name}")
 
-    init_file = os.path.join(plugin_path, "__init__.py")
-    if not os.path.isfile(init_file):
-        raise FileNotFoundError(f"Plugin __init__.py not found: {init_file}")
+    if plugin_path.endswith(".py"):
+        # 单文件型：直接解析该 .py 文件
+        source_file = plugin_path
+    else:
+        source_file = os.path.join(plugin_path, "__init__.py")
+        if not os.path.isfile(source_file):
+            raise FileNotFoundError(f"Plugin __init__.py not found: {source_file}")
 
     # AST 解析提取类名
-    ast_class_names = _parse_node_class_mappings_from_ast(init_file)
+    ast_class_names = _parse_node_class_mappings_from_ast(source_file)
 
     if not ast_class_names:
         logger.warning("插件 %s 未在 __init__.py 中找到 NODE_CLASS_MAPPINGS 字面量定义，降级到运行时扫描", plugin_name)
@@ -764,6 +773,45 @@ def _is_likely_menu_text(text: str) -> bool:
     return False
 
 
+def _resolve_plugin_web_dir(plugin_path: str) -> Optional[str]:
+    """
+    解析插件的前端目录
+
+    优先读 __init__.py 里声明的 WEB_DIRECTORY（如 "./js"），未声明或目录不存在时
+    回退默认的 "web/"。单文件插件无前端目录，返回 None。
+    """
+    if plugin_path.endswith(".py"):
+        return None
+    web_rel = "web"
+    try:
+        init_file = os.path.join(plugin_path, "__init__.py")
+        with open(init_file, "r", encoding="utf-8", errors="ignore") as f:
+            m = re.search(r'WEB_DIRECTORY\s*=\s*["\']([^"\']+)["\']', f.read())
+        if m and m.group(1).strip():
+            web_rel = m.group(1).strip("/\\") or "web"
+    except Exception:
+        pass
+    web_dir = os.path.join(plugin_path, web_rel)
+    if os.path.isdir(web_dir):
+        return web_dir
+    fallback = os.path.join(plugin_path, "web")
+    return fallback if os.path.isdir(fallback) else None
+
+
+def plugin_has_web_js(plugin_path: str) -> bool:
+    """插件是否包含前端 JS 文件（纯前端插件 node_count=0 但菜单文本可翻译）"""
+    web_dir = _resolve_plugin_web_dir(plugin_path)
+    if not web_dir:
+        return False
+    try:
+        for _root, _dirs, files in os.walk(web_dir):
+            if any(f.endswith(".js") or f.endswith(".mjs") for f in files):
+                return True
+    except Exception:
+        pass
+    return False
+
+
 def extract_plugin_menus(plugin_name: str) -> Dict[str, str]:
     """
     扫描插件 web/ 目录下的 JS 文件，提取可能的菜单/UI 文本
@@ -790,18 +838,20 @@ def extract_plugin_menus(plugin_name: str) -> Dict[str, str]:
         return {}
 
     menus: Dict[str, str] = {}
-    web_dir = os.path.join(plugin_path, "web")
 
-    # 扫描 web/ 目录下所有 JS 文件
+    # 解析插件声明的前端目录（WEB_DIRECTORY，如 "./js"；回退 web/）
+    web_dir = _resolve_plugin_web_dir(plugin_path)
+
+    # 扫描前端目录下所有 JS 文件
     js_files: List[str] = []
-    if os.path.isdir(web_dir):
+    if web_dir:
         for root, dirs, files in os.walk(web_dir):
             for f in files:
                 if f.endswith(".js") or f.endswith(".mjs"):
                     js_files.append(os.path.join(root, f))
 
     if not js_files:
-        logger.info("插件 %s 无 web/ 目录或 JS 文件，跳过菜单提取", plugin_name)
+        logger.info("插件 %s 无前端目录或 JS 文件，跳过菜单提取", plugin_name)
         return {}
 
     logger.info("扫描插件 %s 的 %d 个 JS 文件提取菜单文本", plugin_name, len(js_files))
@@ -815,6 +865,13 @@ def extract_plugin_menus(plugin_name: str) -> Dict[str, str]:
             for pattern in _JS_STRING_PATTERNS:
                 for match in pattern.finditer(content):
                     text = match.group(1).strip()
+                    # 跳过跨行匹配：菜单/UI 文本不会换行，
+                    # 模板字符串跨行匹配到的多是代码碎片
+                    if "\n" in text or "\r" in text:
+                        continue
+                    # 跳过以代码标点开头/结尾的片段（模板字符串内联代码残留）
+                    if re.match(r"^[,;)\]}=+*/>&|]+", text) or re.search(r"[,;(\[{=+*/<&|]$", text):
+                        continue
                     if not _is_likely_menu_text(text) or text in menus:
                         continue
                     # 跳过 console.* 调试输出的消息参数（非 UI 文本）

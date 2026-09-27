@@ -1706,12 +1706,12 @@ class BackgroundFill:
 
 class RandomNoiseSeed:
     """
-    随机噪种子节点：功能与 ComfyUI 官方 RandomNoise 一致。
+    随机种子节点：输出端口与 rgthree 的 Seed (rgthree) 一致（INT / SEED）。
 
-    通过 noise_seed 生成采样噪声。前端配合 JS 扩展提供
+    种子值可直接接入 K 采样器等节点的 seed 输入。前端配合 JS 扩展提供
     「🎲 随机 / ♻️ 上次」按钮（同 Efficient 插件的效率采样随机控制）：
 
-    - seed 为 -1 时表示"随机"：每次提交随机生成一个新种子；
+    - seed 为 -1 时表示"随机"：提交时由前端随机生成一个新种子；
     - 点击按钮可切换为"使用上次"（恢复上次使用的种子）。
     """
 
@@ -1725,21 +1725,21 @@ class RandomNoiseSeed:
                         "default": 0,
                         "min": 0,
                         "max": 0xFFFFFFFFFFFFFFFF,
-                        "tooltip": "Noise seed (-1 means random; used together with the button)",
+                        "tooltip": "Seed value passed to the connected node's seed input (e.g. KSampler). -1 means random; used together with the Random/Last button",
                     },
                 ),
             },
         }
 
-    RETURN_TYPES = ("NOISE",)
-    RETURN_NAMES = ("noise",)
-    FUNCTION = "get_noise"
+    RETURN_TYPES = ("INT",)
+    RETURN_NAMES = ("SEED",)
+    FUNCTION = "get_seed"
     CATEGORY = "UIIIAIII Toolkit/Tools"
 
-    def get_noise(self, noise_seed):
-        # 与官方 Noise_RandomNoise 一致
-        from comfy_extras.nodes_custom_sampler import Noise_RandomNoise
-        return (Noise_RandomNoise(noise_seed),)
+    def get_seed(self, noise_seed):
+        # 与 rgthree 的 Seed (rgthree) 一致：原样输出种子值，
+        # 随机化由前端按钮在提交时完成（serializeValue）
+        return (noise_seed,)
 
 
 # ============================================================
