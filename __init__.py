@@ -1,4 +1,4 @@
-"""
+﻿"""
 UIIIAIII Toolkit 自定义节点插件（由 ComfyUI-API 更名而来）
 
 将多个自定义 API 打包为 ComfyUI 节点：
@@ -43,7 +43,7 @@ from . import translation_writer
 from . import translation_service  # 注册 /translation_node/* 界面翻译端点
 
 # 插件版本
-__version__ = "1.3.2"
+__version__ = "1.3.3"
 
 # 插件信息
 PLUGIN_INFO = {
