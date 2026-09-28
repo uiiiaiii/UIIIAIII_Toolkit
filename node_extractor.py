@@ -37,6 +37,7 @@ import ast
 import json
 import logging
 import re
+import time
 from typing import Dict, Any, List, Optional
 
 import folder_paths
@@ -690,6 +691,502 @@ def extract_categories_from_nodes(nodes_data: Dict[str, Any]) -> Dict[str, str]:
 
 
 # ============================================================
+# 前端扩展能力识别（ComfyUI 注册信息 + JS 静态分析）
+# ============================================================
+
+# 设置面板 API 特征：app.ui.settings.addSetting({...}) / registerExtension({settings: [...]})
+_SETTINGS_API_PATTERNS = [
+    re.compile(r"\baddSetting\s*\("),
+    re.compile(r"\bsettings\s*:\s*\["),
+]
+
+# 菜单 API 特征：扩展钩子名 / addMenuItem 调用
+_MENU_API_PATTERNS = [
+    re.compile(r"\bgetCanvasMenuItems\b"),
+    re.compile(r"\bgetNodeMenuItems\b"),
+    re.compile(r"\bgetExtraMenuOptions\b"),
+    re.compile(r"\bgetCanvasMenuOptions\b"),
+    re.compile(r"\bgetNodeMenuOptions\b"),
+    re.compile(r"\baddMenuItem\s*\("),
+]
+
+# 命令/快捷键声明特征
+_COMMANDS_API_PATTERNS = [
+    re.compile(r"\bcommands\s*:\s*\["),
+    re.compile(r"\bkeybindings\s*:\s*\["),
+]
+
+# 扩展注册入口（几乎所有前端插件都有，仅用于说明性判断，不作为 UI 存在性依据）
+_EXT_REGISTER_PATTERN = re.compile(r"\bregisterExtension\s*\(")
+
+# ComfyUI 扩展菜单钩子名称清单（前端运行时采集与静态识别共用）
+MENU_HOOK_NAMES = [
+    "getCanvasMenuItems",
+    "getNodeMenuItems",
+    "getExtraMenuOptions",
+    "getCanvasMenuOptions",
+    "getNodeMenuOptions",
+]
+
+
+def _iter_js_files(web_dir: str) -> List[str]:
+    """列出 web 目录下所有 JS 文件（.js / .mjs）"""
+    js_files: List[str] = []
+    try:
+        for root, _dirs, files in os.walk(web_dir):
+            for f in files:
+                if f.endswith(".js") or f.endswith(".mjs"):
+                    js_files.append(os.path.join(root, f))
+    except Exception:
+        pass
+    return js_files
+
+
+def get_registered_extension_dirs() -> Dict[str, str]:
+    """
+    读取 ComfyUI 已注册的前端扩展目录（权威来源）
+
+    ComfyUI 加载自定义节点时会把声明的 web 目录注册进 nodes.EXTENSION_WEB_DIRS：
+    - pyproject.toml 的 [tool.comfy] web 字段 → key 为项目名（如 "comfyui-kjnodes"）
+    - __init__.py 的 WEB_DIRECTORY 属性 → key 为模块名（即插件目录名）
+    value 为 web 目录的绝对路径，可据此反查插件目录，无需依赖命名一致。
+
+    Returns:
+        {扩展注册名: web 目录绝对路径}
+    """
+    try:
+        import nodes as comfy_nodes
+        raw = getattr(comfy_nodes, "EXTENSION_WEB_DIRS", None) or {}
+        return {str(k): os.path.abspath(v) for k, v in raw.items()}
+    except Exception as e:
+        logger.warning("读取 EXTENSION_WEB_DIRS 失败：%s", e)
+        return {}
+
+
+def map_extensions_to_plugins(plugin_paths: List[str]) -> Dict[str, Dict[str, Any]]:
+    """
+    将 ComfyUI 注册的前端扩展归属到插件目录（用 web 目录路径反查，命名无关）
+
+    Args:
+        plugin_paths: 插件目录绝对路径列表（单文件插件传 .py 路径）
+
+    Returns:
+        {插件路径: {"registered": bool, "ext_names": [注册名...]}}
+    """
+    web_dirs = get_registered_extension_dirs()
+    result: Dict[str, Dict[str, Any]] = {}
+
+    for path in plugin_paths:
+        info: Dict[str, Any] = {"registered": False, "ext_names": []}
+        if path and not path.endswith(".py") and os.path.isdir(path):
+            plugin_abs = os.path.normcase(os.path.abspath(path))
+            for ext_name, web_dir in web_dirs.items():
+                web_abs = os.path.normcase(os.path.abspath(web_dir))
+                try:
+                    # web 目录位于插件目录内（ComfyUI 用 os.path.join(module_path, web_dir) 拼接）
+                    if os.path.commonpath([plugin_abs, web_abs]) == plugin_abs:
+                        info["ext_names"].append(ext_name)
+                except ValueError:
+                    continue
+            info["ext_names"].sort()
+            info["registered"] = bool(info["ext_names"])
+        result[path] = info
+
+    return result
+
+
+def analyze_plugin_ui(plugin_path: str, registered: bool = False) -> Dict[str, Any]:
+    """
+    静态识别插件的前端 UI 能力（设置面板 / 菜单 / 命令），只判存在性不提取文案
+
+    判定依据是 ComfyUI 扩展的已知 API 模式（非泛化字符串扫描）：
+    - has_settings: 命中 addSetting( 或 settings: [（设置面板声明）
+    - has_menu: 命中菜单钩子名或 addMenuItem(
+    - has_commands: 命中 commands: [ 或 keybindings: [
+
+    Args:
+        plugin_path: 插件目录路径（或单文件 .py 路径）
+        registered: ComfyUI 是否真实注册了该插件的前端扩展（EXTENSION_WEB_DIRS）
+
+    Returns:
+        {
+            "has_ui": bool,             # 是否声明了任何设置/菜单/命令 UI
+            "has_settings": bool,
+            "has_menu": bool,
+            "has_commands": bool,
+            "menu_hooks": [钩子名...],
+            "has_web_registered": bool, # ComfyUI 注册信息（权威）
+        }
+    """
+    has_settings = False
+    has_menu = False
+    has_commands = False
+    has_label_assign = False
+    menu_hooks: List[str] = []
+
+    web_dir = _resolve_plugin_web_dir(plugin_path)
+    if web_dir:
+        for js_file in _iter_js_files(web_dir):
+            try:
+                with open(js_file, "r", encoding="utf-8", errors="ignore") as f:
+                    content = f.read()
+            except Exception:
+                continue
+
+            if not has_settings and any(p.search(content) for p in _SETTINGS_API_PATTERNS):
+                has_settings = True
+            if not has_commands and any(p.search(content) for p in _COMMANDS_API_PATTERNS):
+                has_commands = True
+            if not has_label_assign and any(p.search(content) for p in _LABEL_ASSIGN_PATTERNS):
+                has_label_assign = True
+            for hook in MENU_HOOK_NAMES:
+                if hook not in menu_hooks and hook in content:
+                    menu_hooks.append(hook)
+            if not has_menu and (menu_hooks or any(p.search(content) for p in _MENU_API_PATTERNS)):
+                has_menu = True
+
+    return {
+        "has_ui": bool(has_settings or has_menu or has_commands or has_label_assign),
+        "has_settings": has_settings,
+        "has_menu": has_menu,
+        "has_commands": has_commands,
+        "has_label_assign": has_label_assign,
+        "menu_hooks": menu_hooks,
+        "has_web_registered": bool(registered),
+    }
+
+
+# ============================================================
+# 运行时扩展采集（前端上报）与插件归属匹配
+# ============================================================
+
+# 前端运行时采集的扩展声明缓存（POST /agnes-translate/runtime-ui 上报）
+_runtime_extensions: List[Dict[str, Any]] = []
+_runtime_sidebar_tabs: List[Dict[str, Any]] = []
+_runtime_node_widgets: List[Dict[str, Any]] = []
+_runtime_dom_texts: set = set()
+_runtime_updated_at: float = 0.0
+
+# 注册名匹配时的通用词（不参与核心词判定）
+_GENERIC_NAME_TOKENS = {"comfyui", "comfy", "custom", "node", "nodes", "extension", "extensions"}
+
+
+def update_runtime_extensions(
+    extensions: List[Dict[str, Any]],
+    sidebar_tabs: Optional[List[Dict[str, Any]]] = None,
+    node_widgets: Optional[List[Dict[str, Any]]] = None,
+    dom_texts: Optional[List[str]] = None,
+) -> int:
+    """
+    更新前端上报的运行时数据缓存
+
+    前端从 app.extensions / DOM 采集每个扩展真实声明与显示的 UI 信息：
+    - settings: 设置面板项（name/tooltip）
+    - settingsCategories: 设置面板分组路径（如 ["KJNodes","Performance"]）
+    - commands: 命令面板项（label）
+    - hooks: 菜单钩子（getCanvasMenuItems 等函数是否存在）
+    - menuTexts: 运行时捕获的真实菜单文案
+    - badgeTexts: 关于页徽章等不定结构字段的字符串
+    另有三个补充来源：
+    - sidebar_tabs: 侧边栏标签页 [{id, texts}]（按 id 归属插件）
+    - node_widgets: 画布节点上的控件文案 [{comfyClass, widgets}]（按 comfyClass 归属）
+    - dom_texts: 页面当前显示的全局文本集合（终极兜底，用于确认/豁免）
+
+    Args:
+        extensions: 扩展声明列表
+        sidebar_tabs: 侧边栏标签列表（可选）
+        node_widgets: 节点控件文案列表（可选）
+        dom_texts: DOM 全局文案列表（可选）
+
+    Returns:
+        收录的扩展数量
+    """
+    global _runtime_extensions, _runtime_sidebar_tabs, _runtime_node_widgets
+    global _runtime_dom_texts, _runtime_updated_at
+
+    cleaned: List[Dict[str, Any]] = []
+    for ext in extensions or []:
+        if not isinstance(ext, dict):
+            continue
+        name = str(ext.get("name") or "").strip()
+        if not name:
+            continue
+
+        settings: List[Dict[str, str]] = []
+        for s in (ext.get("settings") or []):
+            if isinstance(s, dict):
+                settings.append({
+                    "name": str(s.get("name") or "").strip(),
+                    "tooltip": str(s.get("tooltip") or "").strip(),
+                })
+
+        # 设置面板分组路径（设置面板中的分类层级，会显示在界面上）
+        settings_categories: List[str] = []
+        for c in (ext.get("settingsCategories") or []):
+            if isinstance(c, str):
+                cs = c.strip()
+                if cs and cs not in settings_categories:
+                    settings_categories.append(cs)
+
+        # 关于页徽章等不定结构字段的字符串
+        badge_texts: List[str] = []
+        for b in (ext.get("badgeTexts") or []):
+            if isinstance(b, str):
+                bs = b.strip()
+                if bs and bs not in badge_texts:
+                    badge_texts.append(bs)
+
+        commands: List[Dict[str, str]] = []
+        for c in (ext.get("commands") or []):
+            if isinstance(c, dict):
+                label = str(c.get("label") or "").strip()
+                if label:
+                    commands.append({"label": label})
+
+        hooks = [h for h in (ext.get("hooks") or []) if isinstance(h, str) and h in MENU_HOOK_NAMES]
+
+        # 运行时捕获的真实菜单文案（显示过才会存在）
+        menu_texts: List[str] = []
+        for t in (ext.get("menuTexts") or []):
+            if isinstance(t, str):
+                s = t.strip()
+                if s and len(s) <= 200 and s not in menu_texts:
+                    menu_texts.append(s)
+
+        # 只保留有 UI 价值的扩展
+        if (not settings and not commands and not hooks and not menu_texts
+                and not settings_categories and not badge_texts):
+            continue
+        cleaned.append({
+            "name": name, "settings": settings, "commands": commands,
+            "hooks": hooks, "menu_texts": menu_texts,
+            "settings_categories": settings_categories, "badge_texts": badge_texts,
+        })
+
+    # 侧边栏标签页
+    tabs_clean: List[Dict[str, Any]] = []
+    for t in sidebar_tabs or []:
+        if not isinstance(t, dict):
+            continue
+        tid = str(t.get("id") or "").strip()
+        if not tid:
+            continue
+        texts = [str(x).strip() for x in (t.get("texts") or [])
+                 if isinstance(x, str) and str(x).strip()]
+        if texts:
+            tabs_clean.append({"id": tid, "texts": texts})
+
+    # 画布节点控件文案
+    nw_clean: List[Dict[str, Any]] = []
+    for nw in node_widgets or []:
+        if not isinstance(nw, dict):
+            continue
+        cls = str(nw.get("comfyClass") or "").strip()
+        if not cls:
+            continue
+        widgets = [str(x).strip() for x in (nw.get("widgets") or [])
+                   if isinstance(x, str) and str(x).strip()]
+        if widgets:
+            nw_clean.append({"comfyClass": cls, "widgets": widgets})
+
+    # DOM 全局文案集合（兜底：真实显示过的文案）
+    dom_clean: set = set()
+    for t in dom_texts or []:
+        if isinstance(t, str):
+            s = t.strip()
+            if 2 <= len(s) <= 200 and len(dom_clean) < 5000:
+                dom_clean.add(s)
+
+    _runtime_extensions = cleaned
+    _runtime_sidebar_tabs = tabs_clean
+    _runtime_node_widgets = nw_clean
+    _runtime_dom_texts = dom_clean
+    _runtime_updated_at = time.time()
+    logger.info(
+        "运行时数据已更新：扩展 %d / 侧边栏 %d / 节点控件 %d / DOM 文案 %d",
+        len(cleaned), len(tabs_clean), len(nw_clean), len(dom_clean),
+    )
+    return len(cleaned)
+
+
+def _normalize_ident(text: str) -> str:
+    """归一化标识名：小写并去除分隔符（- _ . 空格）"""
+    return re.sub(r"[-_.\s]+", "", (text or "").lower())
+
+
+def _extension_matches_names(ext_name: str, registered_names: List[str]) -> bool:
+    """
+    运行时扩展名与插件注册名模糊匹配
+
+    运行时扩展的 name 由插件作者自定义（如 "KJNodes.CanvasBackground"），
+    与 ComfyUI 注册名（如 "comfyui-kjnodes"）命名习惯不同，采用多级宽松匹配：
+    ① 归一化后双向包含（"UIIIAIII Toolkit" ↔ "UIIIAIII_Toolkit"）
+    ② 注册名核心词（>=4 字符、去掉 comfyui/node 等通用词）全部出现在扩展名中
+       （"comfyui-kjnodes" 核心词 "kjnodes" ⊂ "kjnodescontextmenu"）
+    """
+    ext_norm = _normalize_ident(ext_name)
+    if not ext_norm:
+        return False
+
+    for reg_name in registered_names or []:
+        reg_norm = _normalize_ident(reg_name)
+        if not reg_norm:
+            continue
+        # ① 双向包含
+        if reg_norm in ext_norm or ext_norm in reg_norm:
+            return True
+        # ② 核心词匹配
+        core_tokens = [
+            p for p in re.split(r"[-_.\s]+", reg_name.lower())
+            if len(p) >= 4 and p not in _GENERIC_NAME_TOKENS
+        ]
+        if core_tokens and all(tok in ext_norm for tok in core_tokens):
+            return True
+
+    return False
+
+
+def _locate_plugin_path(plugin_name: str) -> Optional[str]:
+    """在 custom_nodes 路径中定位插件（目录型优先，其次单文件型）"""
+    for base_path in folder_paths.get_folder_paths("custom_nodes"):
+        candidate = os.path.join(base_path, plugin_name)
+        if os.path.isdir(candidate):
+            return candidate
+        if os.path.isfile(candidate + ".py"):
+            return candidate + ".py"
+    return None
+
+
+def _class_belongs_to_plugin(class_name: str, plugin_name: str) -> bool:
+    """节点类是否属于指定插件（ComfyUI 注册信息：RELATIVE_PYTHON_MODULE 末段即插件目录名）"""
+    try:
+        import nodes as comfy_nodes
+        node_class = comfy_nodes.NODE_CLASS_MAPPINGS.get(class_name)
+        if not node_class:
+            return False
+        rel = getattr(node_class, "RELATIVE_PYTHON_MODULE", "") or ""
+        return rel.rsplit(".", 1)[-1] == plugin_name
+    except Exception:
+        return False
+
+
+def get_runtime_ui_for_plugin(plugin_name: str) -> Dict[str, Any]:
+    """
+    汇总匹配到指定插件的运行时数据（供提取时补强 UI 识别与文案）
+
+    归属方式：
+    - 扩展声明/侧边栏：ComfyUI 注册名（EXTENSION_WEB_DIRS）与扩展名/tab id 模糊匹配
+    - 节点控件文案：按 comfyClass 的 RELATIVE_PYTHON_MODULE 直接归属（权威）
+    - DOM 全局文案：不归属，作为"真实显示过"的确认集合整体返回
+
+    Returns:
+        {
+            "matched": [运行时扩展名...],
+            "settings_texts": [设置项 name/tooltip...],
+            "settings_categories": [设置面板分组路径片段...],
+            "commands_texts": [命令 label...],
+            "menu_texts": [运行时捕获的菜单文案...],
+            "menu_hooks": [钩子名...],
+            "badge_texts": [关于页徽章文案...],
+            "sidebar_texts": [侧边栏标签文案...],
+            "node_widget_texts": [节点上显示的控件文案...],
+            "dom_texts": {DOM 全局文案集合},
+            "has_settings": bool,
+            "has_menu": bool,
+        }
+    """
+    result: Dict[str, Any] = {
+        "matched": [],
+        "settings_texts": [],
+        "settings_categories": [],
+        "commands_texts": [],
+        "menu_texts": [],
+        "menu_hooks": [],
+        "badge_texts": [],
+        "sidebar_texts": [],
+        "node_widget_texts": [],
+        "dom_texts": set(),
+        "has_settings": False,
+        "has_menu": False,
+    }
+
+    if not (_runtime_extensions or _runtime_sidebar_tabs or _runtime_node_widgets or _runtime_dom_texts):
+        return result
+
+    plugin_path = _locate_plugin_path(plugin_name)
+    if not plugin_path:
+        return result
+
+    registered_names = map_extensions_to_plugins([plugin_path]).get(plugin_path, {}).get("ext_names", [])
+
+    settings_texts: List[str] = []
+    settings_categories: List[str] = []
+    commands_texts: List[str] = []
+    menu_texts: List[str] = []
+    menu_hooks: List[str] = []
+    badge_texts: List[str] = []
+    sidebar_texts: List[str] = []
+    node_widget_texts: List[str] = []
+
+    # 扩展声明（需注册名匹配）
+    if registered_names:
+        for ext in _runtime_extensions:
+            if not _extension_matches_names(ext.get("name", ""), registered_names):
+                continue
+            result["matched"].append(ext["name"])
+            for s in ext.get("settings") or []:
+                for t in (s.get("name"), s.get("tooltip")):
+                    if t and t not in settings_texts:
+                        settings_texts.append(t)
+            for c in ext.get("settings_categories") or []:
+                if c and c not in settings_categories:
+                    settings_categories.append(c)
+            for c in ext.get("commands") or []:
+                label = c.get("label")
+                if label and label not in commands_texts:
+                    commands_texts.append(label)
+            for t in ext.get("menu_texts") or []:
+                if t and t not in menu_texts:
+                    menu_texts.append(t)
+            for h in ext.get("hooks") or []:
+                if h not in menu_hooks:
+                    menu_hooks.append(h)
+            for b in ext.get("badge_texts") or []:
+                if b and b not in badge_texts:
+                    badge_texts.append(b)
+
+    # 侧边栏标签（按 tab id 与注册名匹配；无注册名时退化为目录名）
+    tab_names = list(registered_names) if registered_names else [plugin_name]
+    for tab in _runtime_sidebar_tabs:
+        if not _extension_matches_names(tab.get("id", ""), tab_names):
+            continue
+        for t in tab.get("texts") or []:
+            if t and t not in sidebar_texts:
+                sidebar_texts.append(t)
+
+    # 节点控件文案（按 comfyClass 的 RELATIVE_PYTHON_MODULE 归属，权威）
+    for nw in _runtime_node_widgets:
+        if not _class_belongs_to_plugin(nw.get("comfyClass", ""), plugin_name):
+            continue
+        for w in nw.get("widgets") or []:
+            if w and w not in node_widget_texts:
+                node_widget_texts.append(w)
+
+    result["settings_texts"] = settings_texts
+    result["settings_categories"] = settings_categories
+    result["commands_texts"] = commands_texts
+    result["menu_texts"] = menu_texts
+    result["menu_hooks"] = menu_hooks
+    result["badge_texts"] = badge_texts
+    result["sidebar_texts"] = sidebar_texts
+    result["node_widget_texts"] = node_widget_texts
+    result["dom_texts"] = _runtime_dom_texts
+    result["has_settings"] = bool(settings_texts)
+    result["has_menu"] = bool(menu_hooks) or bool(commands_texts) or bool(menu_texts)
+    return result
+
+
+# ============================================================
 # 菜单文本提取（扫描插件前端 JS 文件）
 # ============================================================
 
@@ -704,20 +1201,174 @@ _JS_STRING_PATTERNS = [
 # 排除的模式：这些字符串不可能是菜单文本
 _EXCLUDE_PATTERNS = re.compile(
     r"^("
-    r"https?://|"           # URL
-    r"file://|"              # 文件路径
-    r"[.#/]"                 # CSS 选择器、路径
-    r")",
+    r"https?://|"              # URL
+    r"file://|"                # 文件路径
+    r"[.#/<]|"                 # CSS 选择器、路径、HTML 片段
+    r"[-+]\S|"                 # 以连字符/加号紧跟字符开头（如 -vertical、-0.125em）
+    r"@|"                      # CSS at 规则（如 @keyframes）
+    r"\d[\d\s.,]*\s*(px|rem|em|pt|vh|vw)\b"   # 样式数值（如 10px、0 8px、1.5rem）
+    r")"
+    r"|[A-Za-z_$][\w$]*(\.[A-Za-z_$][\w$]*)+$",   # 命名空间标识（如 KJNodes.helpPopup）
     re.IGNORECASE,
 )
 
+# CJK 字符（源文案已是中文/日文/韩文时无需翻译，避免"中→中"的无意义调用）
+_CJK_RE = re.compile(r"[\u4e00-\u9fff\u3040-\u30ff\uac00-\ud7af]")
 
-def _is_likely_menu_text(text: str) -> bool:
+# 字段级锚点：这些 UI 专用字段后紧跟的字符串字面量几乎必然是界面文案（高置信）
+_FIELD_LITERAL_PATTERNS = [
+    re.compile(r'\bcontent\s*:\s*"((?:[^"\\]|\\.)*)"'),
+    re.compile(r"\bcontent\s*:\s*'((?:[^'\\]|\\.)*)'"),
+    re.compile(r'\btooltip\s*:\s*"((?:[^"\\]|\\.)*)"'),
+    re.compile(r"\btooltip\s*:\s*'((?:[^'\\]|\\.)*)'"),
+    re.compile(r'\blabel\s*:\s*"((?:[^"\\]|\\.)*)"'),
+    re.compile(r"\blabel\s*:\s*'((?:[^'\\]|\\.)*)'"),
+    re.compile(r'\baddMenuItem\s*\(\s*"((?:[^"\\]|\\.)*)"'),
+    re.compile(r"\baddMenuItem\s*\(\s*'((?:[^'\\]|\\.)*)'"),
+    # DOM API 文案（属性赋值 / 对象字段，覆盖 placeholder / aria-label / textContent）
+    re.compile(r'\bplaceholder\s*[:=]\s*"((?:[^"\\]|\\.)*)"'),
+    re.compile(r"\bplaceholder\s*[:=]\s*'((?:[^'\\]|\\.)*)'"),
+    re.compile(r'\baria-label["\']?\s*[:=]\s*"((?:[^"\\]|\\.)*)"'),
+    re.compile(r"\baria-label['\"]?\s*[:=]\s*'((?:[^'\\]|\\.)*)'"),
+    re.compile(r'\btextContent\s*=\s*"((?:[^"\\]|\\.)*)"'),
+    re.compile(r"\btextContent\s*=\s*'((?:[^'\\]|\\.)*)'"),
+    # 翻译调用锚点（tr/i18n/translate/localize 的首参字符串）：
+    # 从调用处直接提取，不依赖全局引号配对
+    # （JS 文件中的未配对引号会让全量扫描错位、跳过真实字符串）
+    re.compile(r'\b(?:tr|i18n|translate|localize)\s*\(\s*"((?:[^"\\]|\\.)*)"'),
+    re.compile(r"\b(?:tr|i18n|translate|localize)\s*\(\s*'((?:[^'\\]|\\.)*)'"),
+    re.compile(r'\b(?:tr|i18n|translate|localize)\s*\(\s*`([^`$]*?)`'),
+]
+
+# 控件 label 赋值锚点：插件运行时改写的控件显示名（如 cw.label = "detector_confidence"）
+# 这类字符串是真实显示文案，可能是下划线命名，因此用宽松判定并入
+_LABEL_ASSIGN_PATTERNS = [
+    re.compile(r'\.label\s*=\s*"((?:[^"\\]|\\.)*)"'),
+    re.compile(r"\.label\s*=\s*'((?:[^'\\]|\\.)*)'"),
+]
+
+# 设置面板锚点：锚点后窗口内的 name 字段值（设置项标题，高置信）
+# 窗口法而非全局匹配 name:（name 在 JS 中过于通用）
+_SETTINGS_ANCHOR_RE = re.compile(r"\b(?:addSetting\s*\(|settings\s*:\s*\[)")
+_SETTINGS_WINDOW_SIZE = 3000
+_NAME_LITERAL_PATTERNS = [
+    re.compile(r'\bname\s*:\s*"((?:[^"\\]|\\.)*)"'),
+    re.compile(r"\bname\s*:\s*'((?:[^'\\]|\\.)*)'"),
+]
+
+# 设置项 combo 选项值（窗口内 options 数组：纯字符串项 或 {value, text} 对象的 text）
+_OPTIONS_ARRAY_RE = re.compile(r"\boptions\s*:\s*\[([^\]]*)\]")
+_OPTION_VALUE_RE = re.compile(
+    r'\btext\s*:\s*"([^"]{2,})"'
+    r"|\btext\s*:\s*'([^']{2,})'"
+    r'|"([^"]{2,})"'
+    r"|'([^']{2,})'"
+)
+
+# UI 上下文锚点：全量扫描候选的邻近过滤依据
+# 只有出现在菜单/设置代码附近（±300 字符）的字符串才可能是界面文案，
+# 远离任何 UI 代码的字符串（类型定义、日志、内部状态等）一律丢弃
+_UI_CONTEXT_RE = re.compile(
+    r"content\s*:|label\s*:|tooltip\s*:|MenuItems|MenuOptions|"
+    r"addMenuItem|menuItem|\btr\s*\("
+)
+_UI_CONTEXT_WINDOW = 300
+
+
+def _extract_field_level_texts(content: str) -> List[str]:
+    """
+    提取字段级 UI 文案（高置信）
+
+    只取 UI 专用字段后的字符串字面量：
+    - content: / tooltip: / label: / addMenuItem( 首参
+    - settings 声明锚点窗口内的 name:（设置项标题）与 options 选项值
+    """
+    texts: List[str] = []
+
+    for pat in _FIELD_LITERAL_PATTERNS:
+        for m in pat.finditer(content):
+            t = m.group(1).strip()
+            if t:
+                texts.append(t)
+
+    # 设置面板声明窗口内的设置项标题与选项值
+    for anchor in _SETTINGS_ANCHOR_RE.finditer(content):
+        window = content[anchor.end(): anchor.end() + _SETTINGS_WINDOW_SIZE]
+        for pat in _NAME_LITERAL_PATTERNS:
+            for m in pat.finditer(window):
+                t = m.group(1).strip()
+                if t:
+                    texts.append(t)
+        # combo 选项值（纯字符串项或 {value, text} 对象的 text）
+        for arr in _OPTIONS_ARRAY_RE.finditer(window):
+            for m in _OPTION_VALUE_RE.finditer(arr.group(1)):
+                t = (m.group(1) or m.group(2) or m.group(3) or m.group(4) or "").strip()
+                if t:
+                    texts.append(t)
+
+    return texts
+
+
+def _is_runtime_ui_text(text: str) -> bool:
+    """
+    运行时采集文案的判定（比静态判定宽松）
+
+    运行时来源（节点控件 label/name、设置项、侧边栏、菜单捕获等）都是
+    "真实显示在界面上"的文本：即使形如下划线命名的内部字段名
+    （如插件把控件显示名改写为 detector_confidence），也应纳入翻译。
+
+    仅排除：CJK 源文案、URL/路径/样式值、无字母或字母过少的字符串。
+    """
+    if not text or len(text) < 2 or len(text) > 500:
+        return False
+    if _CJK_RE.search(text):
+        return False
+    if _EXCLUDE_PATTERNS.match(text):
+        return False
+    if not re.search(r"[a-zA-Z]", text):
+        return False
+    if len(re.findall(r"[a-zA-Z]", text)) < 2:
+        return False
+    return True
+
+
+def _load_existing_menu_keys(plugin_name: str) -> set:
+    """
+    读取该插件已有翻译字典的英文 key（历史翻译过的界面文案）
+
+    这些条目已被验证是真实界面文案，作为"保护名单"：
+    即使邻近过滤判定为噪声也保留，避免重新翻译时丢失已有条目。
+    """
+    keys: set = set()
+    locales_root = os.path.join(os.path.dirname(os.path.abspath(__file__)), "locales")
+    if not os.path.isdir(locales_root):
+        return keys
+
+    candidates = {plugin_name, plugin_name.replace(" ", "_"), plugin_name.replace(" ", "-")}
+    for lang in os.listdir(locales_root):
+        menu_dir = os.path.join(locales_root, lang, "Menus")
+        if not os.path.isdir(menu_dir):
+            continue
+        for cand in candidates:
+            menu_file = os.path.join(menu_dir, f"{cand}.json")
+            if not os.path.isfile(menu_file):
+                continue
+            try:
+                with open(menu_file, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                if isinstance(data, dict):
+                    keys.update(data.keys())
+            except Exception:
+                continue
+    return keys
+
+
+def _is_likely_menu_text(text: str, max_len: int = 100, min_len: int = 3) -> bool:
     """
     判断字符串是否可能是菜单/UI 文本
 
     规则：
-    1. 长度 >= 3 且 <= 100
+    1. 长度在 [min_len, max_len] 内（字段级/tooltip 来源可放宽为 [2, 500]）
     2. 必须包含至少一个空格（菜单文本通常是短语，如 "Add Node"）
        或是单个有意义的英文单词（如 "Clone"、"Save"）
     3. 不以 . # / http 开头（排除 CSS 选择器、路径、URL）
@@ -728,23 +1379,57 @@ def _is_likely_menu_text(text: str) -> bool:
 
     Args:
         text: 待判断的字符串
+        max_len: 长度上限（默认 100；tooltip 等字段级来源可传 500）
+        min_len: 长度下限（默认 3；tr() 字段级来源可传 2，兼容 "OK"）
 
     Returns:
         True 表示可能是菜单文本
     """
-    if not text or len(text) < 3 or len(text) > 100:
+    if not text or len(text) < min_len or len(text) > max_len:
         return False
 
     # 排除 CSS 选择器、路径、URL
     if _EXCLUDE_PATTERNS.match(text):
         return False
 
+    # 含 CJK 字符（源文案已是中文/日文/韩文，无需翻译）
+    if _CJK_RE.search(text):
+        return False
+
+    # 无空格的短词若含引号/大括号/冒号/反斜杠 → JS 代码碎片（如 :{content:'）
+    if " " not in text.strip() and re.search(r"['\"{}:\\]", text):
+        return False
+
+    # CSS 语句特征：以 CSS 属性名开头并含分号（如 border-radius:3px;padding:6px 10px）
+    # 注意：句中含分号是合法文案（如 "Current: xxx; yyy"），不能用简单的 ";" 判断
+    if re.match(r"^[a-z-]+\s*:\s*[^;]{1,80};", text):
+        return False
+    # CSS 属性名冒号开头且值为数值（如 border-radius:3px 无分号形式）
+    if re.match(r"^[a-z][a-z-]{2,}\s*:\s*\d", text):
+        return False
+
+    # CSS 选择器特征（如 "label, [class*='label'], span"）
+    if "*=" in text or re.search(r"\[(class|id|data-|href|type)[^\]]*[=\]]", text):
+        return False
+
+    # 全小写连字符命名（CSS 类名，如 setting-item）
+    if re.match(r"^[a-z][a-z0-9]*(-[a-z0-9]+)+$", text):
+        return False
+
+    # JS Unicode 转义序列（如 \u9762\u79ef：源文案按转义写法书写，通常是中文等非拉丁文本）
+    if re.search(r"\\u[0-9a-fA-F]{4}", text):
+        return False
+
+    # CSS/代码块残留特征（如 ".p-badge {\n  display: inline-flex;\n ..."）
+    if "{\\n" in text or "{\\r" in text:
+        return False
+
     # 必须包含至少一个英文字母
     if not re.search(r"[a-zA-Z]", text):
         return False
 
-    # 不全是数字和特殊字符
-    if not re.search(r"[a-zA-Z]{2,}", text):
+    # 至少包含 2 个字母（排除纯数字/符号；不要求连续，兼容 "e.g. 2.0" 这类文案）
+    if len(re.findall(r"[a-zA-Z]", text)) < 2:
         return False
 
     # 含空格的短语 → 很可能是菜单文本
@@ -777,11 +1462,28 @@ def _resolve_plugin_web_dir(plugin_path: str) -> Optional[str]:
     """
     解析插件的前端目录
 
-    优先读 __init__.py 里声明的 WEB_DIRECTORY（如 "./js"），未声明或目录不存在时
-    回退默认的 "web/"。单文件插件无前端目录，返回 None。
+    优先级：
+    1. ComfyUI 注册信息（EXTENSION_WEB_DIRS，权威）——pyproject.toml 的
+       [tool.comfy] web 与 __init__.py 的 WEB_DIRECTORY 都会在这里落地，
+       通过 web 目录路径反查插件，命名无关；能覆盖只用 pyproject 声明的插件
+    2. __init__.py 里声明的 WEB_DIRECTORY（如 "./js"）
+    3. 回退默认的 "web/" 目录
+    单文件插件无前端目录，返回 None。
     """
     if plugin_path.endswith(".py"):
         return None
+
+    # 1) ComfyUI 注册信息（权威，路径反查）
+    plugin_abs = os.path.normcase(os.path.abspath(plugin_path))
+    for web_dir in get_registered_extension_dirs().values():
+        web_abs = os.path.normcase(os.path.abspath(web_dir))
+        try:
+            if os.path.commonpath([plugin_abs, web_abs]) == plugin_abs and os.path.isdir(web_abs):
+                return web_dir
+        except ValueError:
+            continue
+
+    # 2) __init__.py 的 WEB_DIRECTORY 声明
     web_rel = "web"
     try:
         init_file = os.path.join(plugin_path, "__init__.py")
@@ -794,6 +1496,8 @@ def _resolve_plugin_web_dir(plugin_path: str) -> Optional[str]:
     web_dir = os.path.join(plugin_path, web_rel)
     if os.path.isdir(web_dir):
         return web_dir
+
+    # 3) 默认 web/
     fallback = os.path.join(plugin_path, "web")
     return fallback if os.path.isdir(fallback) else None
 
@@ -812,56 +1516,95 @@ def plugin_has_web_js(plugin_path: str) -> bool:
     return False
 
 
-def extract_plugin_menus(plugin_name: str) -> Dict[str, str]:
+def extract_plugin_menus(plugin_name: str, runtime_ui: Optional[Dict[str, Any]] = None) -> Dict[str, str]:
     """
-    扫描插件 web/ 目录下的 JS 文件，提取可能的菜单/UI 文本
+    提取插件的菜单/设置类 UI 文案
 
-    菜单文本散落在前端 JS 代码中（如 "Add Node"、"Save"、"Clone" 等），
-    无法通过 Python 反射获取，因此用正则扫描 JS 文件中的字符串字面量。
+    分三步，先判存在性再提取，避免对没有 UI 的插件误提取：
+    1. 能力闸门：插件必须真实声明了设置面板/菜单/命令（静态 API 模式命中，
+       或运行时采集确认），否则直接返回空
+    2. 字段级提取（高置信）：content/tooltip/label/addMenuItem( 与设置项 name
+    3. 全量扫描（补充）：覆盖动态构造（变量引用、tr() 包装）的菜单文案
 
     Args:
         plugin_name: 插件目录名
+        runtime_ui: 前端运行时采集的该插件扩展信息（可选，来自 /agnes-translate/runtime-ui）：
+            {"settings_texts": [...], "menu_hooks": [...], "has_settings": bool, "has_menu": bool}
 
     Returns:
         {english_text: english_text}  待翻译的菜单文本字典
     """
-    custom_nodes_paths = folder_paths.get_folder_paths("custom_nodes")
-    plugin_path: Optional[str] = None
-
-    for base_path in custom_nodes_paths:
-        candidate = os.path.join(base_path, plugin_name)
-        if os.path.isdir(candidate):
-            plugin_path = candidate
-            break
-
+    plugin_path = _locate_plugin_path(plugin_name)
     if not plugin_path:
         return {}
 
-    menus: Dict[str, str] = {}
-
     # 解析插件声明的前端目录（WEB_DIRECTORY，如 "./js"；回退 web/）
     web_dir = _resolve_plugin_web_dir(plugin_path)
-
-    # 扫描前端目录下所有 JS 文件
-    js_files: List[str] = []
-    if web_dir:
-        for root, dirs, files in os.walk(web_dir):
-            for f in files:
-                if f.endswith(".js") or f.endswith(".mjs"):
-                    js_files.append(os.path.join(root, f))
+    js_files = _iter_js_files(web_dir) if web_dir else []
 
     if not js_files:
         logger.info("插件 %s 无前端目录或 JS 文件，跳过菜单提取", plugin_name)
         return {}
 
-    logger.info("扫描插件 %s 的 %d 个 JS 文件提取菜单文本", plugin_name, len(js_files))
+    # 能力闸门：静态 API 模式 + ComfyUI 注册信息 + 运行时确认
+    ext_info = map_extensions_to_plugins([plugin_path]).get(plugin_path, {})
+    caps = analyze_plugin_ui(plugin_path, registered=ext_info.get("registered", False))
+
+    runtime_ui = runtime_ui or {}
+    has_ui = (
+        caps["has_settings"] or caps["has_menu"] or caps["has_commands"]
+        or caps.get("has_label_assign")
+        or bool(runtime_ui.get("has_settings"))
+        or bool(runtime_ui.get("has_menu"))
+        or bool(runtime_ui.get("menu_hooks"))
+        or bool(runtime_ui.get("menu_texts"))
+        or bool(runtime_ui.get("sidebar_texts"))
+        or bool(runtime_ui.get("node_widget_texts"))
+        or bool(runtime_ui.get("badge_texts"))
+    )
+    if not has_ui:
+        logger.info(
+            "插件 %s 未声明设置面板/菜单/命令（静态与运行时均无特征），跳过菜单提取",
+            plugin_name,
+        )
+        return {}
+
+    logger.info(
+        "扫描插件 %s 的 %d 个 JS 文件（设置=%s 菜单=%s 命令=%s 已注册=%s）",
+        plugin_name, len(js_files),
+        caps["has_settings"], caps["has_menu"], caps["has_commands"],
+        caps["has_web_registered"],
+    )
+
+    # 已有字典条目作为保护名单（历史翻译过的真实界面文案，邻近过滤时豁免）
+    protected = _load_existing_menu_keys(plugin_name)
+
+    # 运行时扩展注册名（内部标识，不是界面文案，永不提取）
+    runtime_ext_names = {str(n).strip().lower() for n in (runtime_ui.get("matched") or [])}
+
+    # DOM 全局文案集合（真实显示过的文案：即使远离 UI 代码也保留）
+    dom_texts = runtime_ui.get("dom_texts") or set()
+
+    menus: Dict[str, str] = {}
+    field_texts: List[str] = []
+    label_texts: List[str] = []
 
     for js_file in js_files:
         try:
             with open(js_file, "r", encoding="utf-8", errors="ignore") as f:
                 content = f.read()
 
-            # 提取所有字符串字面量
+            # 1) 字段级提取（高置信，UI 专用字段后的字面量）
+            field_texts.extend(_extract_field_level_texts(content))
+
+            # 1b) 控件 label 赋值文案（运行时改写的显示名，如 detector_confidence）
+            for pat in _LABEL_ASSIGN_PATTERNS:
+                for m in pat.finditer(content):
+                    lt = m.group(1).strip()
+                    if lt:
+                        label_texts.append(lt)
+
+            # 2) 全量扫描（补充：变量引用 / tr() 包装等动态构造的菜单文案）
             for pattern in _JS_STRING_PATTERNS:
                 for match in pattern.finditer(content):
                     text = match.group(1).strip()
@@ -870,20 +1613,80 @@ def extract_plugin_menus(plugin_name: str) -> Dict[str, str]:
                     if "\n" in text or "\r" in text:
                         continue
                     # 跳过以代码标点开头/结尾的片段（模板字符串内联代码残留）
+                    # 注意：不含 ":" 与引号（它们是合法文案的常见结尾，如 "Target category:"）
                     if re.match(r"^[,;)\]}=+*/>&|]+", text) or re.search(r"[,;(\[{=+*/<&|]$", text):
                         continue
-                    if not _is_likely_menu_text(text) or text in menus:
+                    # tr()/i18n() 等翻译调用内的字符串是明确 UI 文案：长度上限放宽到 200
+                    ui_call = re.search(
+                        r"\b(?:tr|i18n|translate|localize)\s*\(\s*[\"'`]\s*$",
+                        content[max(0, match.start() - 40):match.start()],
+                    )
+                    if not _is_likely_menu_text(text, max_len=200 if ui_call else 100) or text in menus:
                         continue
                     # 跳过 console.* 调试输出的消息参数（非 UI 文本）
                     prefix = content[max(0, match.start() - 50):match.start()]
                     if re.search(r"console\.(error|warn|log|info)\s*\(\s*[`'\"\s]*$", prefix):
                         continue
+                    # 跳过 id: 字段值（设置项/命令的内部标识，非界面文案）
+                    if re.search(r"\bid\s*:\s*[\"'\s]*$", prefix):
+                        continue
+                    # 跳过运行时扩展注册名（内部标识）
+                    if text.lower() in runtime_ext_names:
+                        continue
                     # 跳过含模板插值 ${...} 的字符串（运行时消息，非界面常量文本）
                     if "${" in text:
+                        continue
+                    # 邻近 UI 上下文过滤：远离菜单/设置代码的字符串不是界面文案
+                    # 豁免：既有字典保护名单、DOM 中真实显示过的文案
+                    ctx = content[max(0, match.start() - _UI_CONTEXT_WINDOW):match.end() + _UI_CONTEXT_WINDOW]
+                    if (not _UI_CONTEXT_RE.search(ctx)
+                            and text not in protected
+                            and text not in dom_texts):
                         continue
                     menus[text] = text
         except Exception as e:
             logger.debug("扫描 JS 文件 %s 失败：%s", js_file, e)
 
-    logger.info("插件 %s 提取到 %d 条菜单文本候选", plugin_name, len(menus))
+    # 运行时确认的界面文案优先并入（设置面板/分组、命令、菜单、徽章、侧边栏、节点控件，最真实来源）
+    runtime_added = 0
+    runtime_texts = (
+        (runtime_ui.get("settings_texts") or [])
+        + (runtime_ui.get("settings_categories") or [])
+        + (runtime_ui.get("commands_texts") or [])
+        + (runtime_ui.get("menu_texts") or [])
+        + (runtime_ui.get("badge_texts") or [])
+        + (runtime_ui.get("sidebar_texts") or [])
+        + (runtime_ui.get("node_widget_texts") or [])
+    )
+    for text in runtime_texts:
+        t = str(text).strip()
+        if t and t not in menus and _is_runtime_ui_text(t):
+            menus[t] = t
+            runtime_added += 1
+
+    # 字段级文案并入
+    field_added = 0
+    for text in field_texts:
+        if text in menus:
+            continue
+        if "\n" in text or "\r" in text or "${" in text:
+            continue
+        if text.lower() in runtime_ext_names:
+            continue
+        if _is_likely_menu_text(text, max_len=500, min_len=2):
+            menus[text] = text
+            field_added += 1
+
+    # 控件 label 赋值文案并入（宽松判定：这类是真实显示的控件名，可以是下划线命名）
+    for text in label_texts:
+        if text in menus or text.lower() in runtime_ext_names:
+            continue
+        if _is_runtime_ui_text(text):
+            menus[text] = text
+            field_added += 1
+
+    logger.info(
+        "插件 %s 提取到 %d 条菜单文本候选（字段级 %d / 运行时确认 %d）",
+        plugin_name, len(menus), field_added, runtime_added,
+    )
     return menus

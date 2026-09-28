@@ -1,4 +1,4 @@
-﻿"""
+"""
 UIIIAIII Toolkit 自定义节点插件（由 ComfyUI-API 更名而来）
 
 将多个自定义 API 打包为 ComfyUI 节点：
@@ -43,7 +43,7 @@ from . import translation_writer
 from . import translation_service  # 注册 /translation_node/* 界面翻译端点
 
 # 插件版本
-__version__ = "1.3.3"
+__version__ = "1.3.4"
 
 # 插件信息
 PLUGIN_INFO = {
@@ -140,6 +140,12 @@ try:
                 logger.warning("运行时节点归属统计失败：%s", e)
             # 为每个插件解析节点数量：AST 静态解析 与 运行时归属 取较大值
             import os
+            # ComfyUI 注册的前端扩展归属（权威：EXTENSION_WEB_DIRS，用路径反查，命名无关）
+            ext_map: dict = {}
+            try:
+                ext_map = node_extractor.map_extensions_to_plugins([p["path"] for p in plugins])
+            except Exception as e:
+                logger.warning("解析前端扩展注册信息失败：%s", e)
             for plugin in plugins:
                 ast_count = 0
                 try:
@@ -153,11 +159,22 @@ try:
                     ast_count = 0
                 runtime_count = runtime_counts.get(plugin["name"], 0)
                 plugin["node_count"] = max(ast_count, runtime_count)
-                # 是否有前端 JS（纯前端插件 node_count=0，但菜单文本可一键翻译）
+                # 是否有前端 JS 文件（宽松：目录里存在 js 文件）
                 try:
                     plugin["has_web"] = node_extractor.plugin_has_web_js(plugin["path"])
                 except Exception:
                     plugin["has_web"] = False
+                # ComfyUI 是否真实注册了前端扩展（权威判定）及其注册名
+                info = ext_map.get(plugin["path"], {})
+                plugin["has_web_registered"] = bool(info.get("registered"))
+                plugin["ext_names"] = info.get("ext_names", [])
+                # 静态 UI 能力（设置面板/菜单/命令的存在性，非文案）
+                try:
+                    plugin["ui"] = node_extractor.analyze_plugin_ui(
+                        plugin["path"], registered=plugin["has_web_registered"]
+                    )
+                except Exception:
+                    plugin["ui"] = None
             return web.json_response({"plugins": plugins})
         except Exception as e:
             logger.error("列出插件失败：%s", e)
@@ -211,8 +228,25 @@ try:
             # 同时提取分类
             categories = node_extractor.extract_categories_from_nodes(result["nodes"])
 
-            # 同时提取菜单/UI 文本（扫描插件 web/ 目录下的 JS 文件）
-            menus = node_extractor.extract_plugin_menus(plugin_name)
+            # 运行时采集数据（前端已上报时）用于补强 UI 识别与文案
+            runtime_ui: dict = {}
+            try:
+                runtime_ui = node_extractor.get_runtime_ui_for_plugin(plugin_name)
+            except Exception as e:
+                logger.warning("读取运行时扩展数据失败：%s", e)
+
+            # 静态 UI 能力（设置面板/菜单/命令的存在性，非文案）
+            caps: dict = {}
+            try:
+                caps = node_extractor.analyze_plugin_ui(
+                    result["plugin_path"],
+                    registered=bool(runtime_ui.get("matched")),
+                )
+            except Exception:
+                caps = {}
+
+            # 同时提取菜单/UI 文本（存在性闸门 + 字段级提取 + 运行时补强）
+            menus = node_extractor.extract_plugin_menus(plugin_name, runtime_ui=runtime_ui)
 
             return web.json_response({
                 "plugin_name": result["plugin_name"],
@@ -223,11 +257,56 @@ try:
                 "menus": menus,
                 "node_count": len(result["nodes"]),
                 "menu_count": len(menus),
+                "ui_capabilities": {
+                    **(caps or {}),
+                    "runtime_matched": runtime_ui.get("matched", []),
+                    "runtime_settings_count": len(runtime_ui.get("settings_texts", [])),
+                    "runtime_menu_texts_count": len(runtime_ui.get("menu_texts", [])),
+                    "runtime_menu_hooks": runtime_ui.get("menu_hooks", []),
+                    "runtime_extra_counts": {
+                        "settings_categories": len(runtime_ui.get("settings_categories", [])),
+                        "badges": len(runtime_ui.get("badge_texts", [])),
+                        "sidebar": len(runtime_ui.get("sidebar_texts", [])),
+                        "node_widgets": len(runtime_ui.get("node_widget_texts", [])),
+                        "dom_texts": len(runtime_ui.get("dom_texts", [])),
+                    },
+                },
             })
         except FileNotFoundError as e:
             return web.json_response({"error": str(e)}, status=404)
         except Exception as e:
             logger.error("提取插件节点失败：%s", e)
+            return web.json_response({"error": str(e)}, status=500)
+
+    @PromptServer.instance.routes.post("/agnes-translate/runtime-ui")
+    async def runtime_ui(request):
+        """
+        接收前端运行时采集的扩展声明
+
+        前端遍历 app.extensions 采集每个扩展真实声明的设置面板/命令/菜单钩子，
+        用于准确识别插件是否有设置面板、菜单，并补全界面文案。
+
+        请求体 JSON：
+        {"extensions": [
+            {"name": "KJNodes.CanvasBackground",
+             "settings": [{"name": "...", "tooltip": "..."}],
+             "commands": [{"label": "..."}],
+             "hooks": ["getCanvasMenuItems", ...]},
+            ...
+        ]}
+        """
+        try:
+            data = await request.json()
+            extensions = data.get("extensions", [])
+            count = node_extractor.update_runtime_extensions(
+                extensions,
+                sidebar_tabs=data.get("sidebarTabs", []),
+                node_widgets=data.get("nodeWidgets", []),
+                dom_texts=data.get("domTexts", []),
+            )
+            return web.json_response({"status": "ok", "extension_count": count})
+        except Exception as e:
+            logger.error("接收运行时扩展数据失败：%s", e)
             return web.json_response({"error": str(e)}, status=500)
 
     @PromptServer.instance.routes.post("/agnes-translate/translate")

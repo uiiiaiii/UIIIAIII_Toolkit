@@ -290,5 +290,10 @@
     "Delete the translation files of {name}?\\nThis cannot be undone.": "删除 {name} 的翻译文件？\\n此操作无法撤销。",
     "plugin": "插件",
     "earth": "地球",
-    "locale": "区域设置"
+    "locale": "区域设置",
+    "Settings": "设置",
+    "Menu": "菜单",
+    "Commands": "命令",
+    "Frontend": "前端",
+    "Runtime UI report failed HTTP {code}": "运行时界面数据上报失败 HTTP {code}"
 }

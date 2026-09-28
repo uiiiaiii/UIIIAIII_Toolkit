@@ -26,6 +26,7 @@ const ENDPOINT_LIST_PLUGINS = "/agnes-translate/list-plugins";
 const ENDPOINT_EXTRACT_SELECTED = "/agnes-translate/extract-selected";
 const ENDPOINT_EXTRACT_PLUGIN = "/agnes-translate/extract-plugin";
 const ENDPOINT_TRANSLATE = "/agnes-translate/translate";
+const ENDPOINT_RUNTIME_UI = "/agnes-translate/runtime-ui";
 
 /**
  * 按翻译字典翻译动态文本（模板法）。
@@ -205,8 +206,347 @@ function registerTranslatorExtensionWhenReady(tries = 0) {
     }
 
     // ============================================================
+    // 运行时扩展采集（准确识别设置面板/菜单的存在与文案）
+    // ============================================================
+
+    // ComfyUI 扩展菜单钩子名称（与后端 MENU_HOOK_NAMES 一致）
+    const MENU_HOOKS = ["getCanvasMenuItems", "getNodeMenuItems", "getExtraMenuOptions", "getCanvasMenuOptions", "getNodeMenuOptions"];
+
+    // 运行时捕获的真实菜单文案（扩展名 -> Set<文案>）
+    // 来源：① 钩子包装（用户实际打开菜单时）② 主动探测（采集时调用钩子）
+    const capturedMenuTexts = new Map();
+
+    /**
+     * 递归提取任意结构中的字符串（用于结构不确定的字段，如 aboutPageBadges）
+     */
+    function harvestStrings(obj, out, depth = 0) {
+        if (depth > 3 || obj == null) return;
+        if (typeof obj === "string") {
+            const t = obj.trim();
+            if (t && t.length <= 200) out.add(t);
+            return;
+        }
+        if (Array.isArray(obj)) {
+            obj.forEach((v) => harvestStrings(v, out, depth + 1));
+            return;
+        }
+        if (typeof obj === "object") {
+            Object.values(obj).forEach((v) => harvestStrings(v, out, depth + 1));
+        }
+    }
+
+    /**
+     * 记录菜单项结构中的真实文案（content / label / title，含嵌套子菜单）
+     */
+    function recordMenuTexts(extName, items) {
+        if (!items) return;
+        const arr = Array.isArray(items) ? items : [items];
+        let set = capturedMenuTexts.get(extName);
+        if (!set) {
+            set = new Set();
+            capturedMenuTexts.set(extName, set);
+        }
+        const walk = (it) => {
+            if (!it || typeof it !== "object") return;
+            if (typeof it.content === "string" && it.content.trim()) set.add(it.content.trim());
+            if (typeof it.label === "string" && it.label.trim()) set.add(it.label.trim());
+            if (typeof it.title === "string" && it.title.trim()) set.add(it.title.trim());
+            if (Array.isArray(it.items)) it.items.forEach(walk);
+            if (Array.isArray(it.submenu)) it.submenu.forEach(walk);
+        };
+        arr.forEach(walk);
+    }
+
+    /**
+     * 包装所有扩展的菜单钩子（幂等、完全透明）：
+     * 用户实际打开菜单时捕获真实显示的文案，不影响菜单原有行为
+     */
+    function installMenuHooks() {
+        const exts = app?.extensions || [];
+        for (const e of exts) {
+            if (!e || !e.name) continue;
+            for (const h of MENU_HOOKS) {
+                const fn = e[h];
+                if (typeof fn !== "function" || fn.__uiiaiiiWrapped) continue;
+                const orig = fn;
+                const wrapped = function (...args) {
+                    const r = orig.apply(this, args);
+                    try {
+                        if (r && typeof r.then === "function") {
+                            return r.then((v) => {
+                                try { recordMenuTexts(e.name, v); } catch {}
+                                return v;
+                            });
+                        }
+                        recordMenuTexts(e.name, r);
+                    } catch {}
+                    return r;
+                };
+                wrapped.__uiiaiiiWrapped = true;
+                try { e[h] = wrapped; } catch {}
+            }
+        }
+    }
+
+    /**
+     * 主动探测：调用菜单钩子获取完整菜单文案
+     * 上下文不满足时静默跳过（try/catch），异步钩子交给被动捕获
+     */
+    function probeMenuTexts() {
+        const canvas = app?.canvas;
+        const nodes = app?.graph?._nodes || [];
+        // 取不同类型（comfyClass）的节点样本，最多 5 个，用于节点菜单探测
+        const samples = [];
+        const seen = new Set();
+        for (const n of nodes) {
+            const cls = n?.comfyClass || n?.type;
+            if (cls && !seen.has(cls)) {
+                seen.add(cls);
+                samples.push(n);
+                if (samples.length >= 5) break;
+            }
+        }
+
+        const exts = app?.extensions || [];
+        for (const e of exts) {
+            if (!e || !e.name) continue;
+            for (const h of MENU_HOOKS) {
+                const fn = e[h];
+                if (typeof fn !== "function") continue;
+                const tryCall = (args) => {
+                    try {
+                        const r = fn.apply(e, args);
+                        if (r && typeof r.then === "function") return; // 异步钩子跳过
+                        recordMenuTexts(e.name, r);
+                    } catch { /* 上下文不满足，跳过 */ }
+                };
+                if (h === "getCanvasMenuItems" || h === "getCanvasMenuOptions") {
+                    tryCall([canvas]);
+                } else if (h === "getNodeMenuItems" || h === "getNodeMenuOptions") {
+                    for (const s of samples) tryCall([s]);
+                } else {
+                    for (const s of samples) tryCall([canvas, s]);
+                }
+            }
+        }
+    }
+
+    /**
+     * 采集 app.extensions 中每个扩展真实声明的 UI 信息（运行时事实）
+     *
+     * 每个扩展对象保留了注册时的原始声明：
+     * - settings: 设置面板项（name/tooltip）
+     * - commands: 命令面板项（label）
+     * - 菜单钩子: getCanvasMenuItems 等函数是否存在
+     * - menuTexts: 运行时捕获的真实菜单文案（最准，一定显示过才存在）
+     *
+     * 只保留有 UI 价值的扩展，减少上报体积。
+     * @returns {Array}
+     */
+    function collectRuntimeExtensions() {
+        const exts = app?.extensions || [];
+        const out = [];
+        for (const e of exts) {
+            if (!e || !e.name) continue;
+            const settings = Array.isArray(e.settings)
+                ? e.settings
+                    .map((s) => ({
+                        name: String(s?.name || "").trim(),
+                        tooltip: String(s?.tooltip || "").trim(),
+                    }))
+                    .filter((s) => s.name || s.tooltip)
+                : [];
+            // 设置面板分组路径（如 ["KJNodes","Performance","管理"]，会显示在设置面板中）
+            const settingsCategories = [];
+            if (Array.isArray(e.settings)) {
+                for (const s of e.settings) {
+                    const cat = s?.category;
+                    const segs = Array.isArray(cat) ? cat : (typeof cat === "string" ? cat.split("/") : []);
+                    for (const seg of segs) {
+                        const t = String(seg || "").trim();
+                        if (t && !settingsCategories.includes(t)) settingsCategories.push(t);
+                    }
+                }
+            }
+            // 关于页徽章等结构不确定的字段（递归提取字符串）
+            const badgeTexts = [];
+            if (e.aboutPageBadges) {
+                const set = new Set();
+                harvestStrings(e.aboutPageBadges, set);
+                badgeTexts.push(...set);
+            }
+            const commands = Array.isArray(e.commands)
+                ? e.commands
+                    .map((c) => ({ label: String(c?.label || c?.menubarLabel || "").trim() }))
+                    .filter((c) => c.label)
+                : [];
+            const hooks = MENU_HOOKS.filter((h) => typeof e[h] === "function");
+            const menuTexts = Array.from(capturedMenuTexts.get(e.name) || [])
+                .map((t) => String(t).trim())
+                .filter((t) => t && t.length <= 200);
+            if (!settings.length && !commands.length && !hooks.length && !menuTexts.length
+                && !settingsCategories.length && !badgeTexts.length) continue;
+            out.push({
+                name: String(e.name), settings, commands, hooks, menuTexts,
+                settingsCategories, badgeTexts,
+            });
+        }
+        return out;
+    }
+
+    /**
+     * 采集侧边栏标签页标题（registerSidebarTab 声明，显示在 ComfyUI 侧边栏上）
+     * 结构：[{id, texts: [...]}]，归属由后端按 id 与插件注册名匹配
+     */
+    function collectSidebarTabs() {
+        try {
+            const tabs = app?.extensionManager?.getSidebarTabs?.() || [];
+            const out = [];
+            for (const t of tabs) {
+                const id = String(t?.id || "").trim();
+                if (!id) continue;
+                const set = new Set();
+                harvestStrings({
+                    title: t?.title,
+                    tooltip: t?.tooltip,
+                    label: t?.label,
+                    name: t?.name,
+                    icon: null,
+                }, set);
+                if (set.size) out.push({ id, texts: Array.from(set) });
+            }
+            return out;
+        } catch (e) {
+            return [];
+        }
+    }
+
+    /**
+     * 采集画布节点上实际显示的控件/按钮文案
+     * （前端动态 addWidget 创建的、后端 INPUT_TYPES 反射覆盖不到的，如节点按钮）
+     * 结构：[{comfyClass, widgets: [...]}]，归属由后端按 comfyClass 反查插件
+     */
+    function collectNodeWidgets() {
+        const nodes = app?.graph?._nodes || [];
+        const byClass = new Map();
+        for (const n of nodes) {
+            const cls = n?.comfyClass || n?.type;
+            if (!cls) continue;
+            const widgets = Array.isArray(n.widgets) ? n.widgets : [];
+            if (!widgets.length) continue;
+            let set = byClass.get(cls);
+            if (!set) {
+                set = new Set();
+                byClass.set(cls, set);
+            }
+            for (const w of widgets) {
+                const name = typeof w?.name === "string" ? w.name.trim() : "";
+                const label = typeof w?.label === "string" ? w.label.trim() : "";
+                const optLabel = typeof w?.options?.label === "string" ? w.options.label.trim() : "";
+                if (name && name.length <= 100) set.add(name);
+                if (label && label.length <= 100) set.add(label);
+                if (optLabel && optLabel.length <= 100) set.add(optLabel);
+            }
+        }
+        const out = [];
+        for (const [comfyClass, set] of byClass) {
+            const widgets = Array.from(set);
+            if (widgets.length) out.push({ comfyClass, widgets });
+        }
+        return out;
+    }
+
+    /**
+     * 扫描 DOM 中当前显示的所有文本（文本节点 + placeholder/aria-label/title 属性）
+     * 作为终极兜底来源：凡是在页面上真实出现过的文案都会进入集合
+     * （快照语义：只有用户当前打开过的界面才有数据；中文译文会被后端过滤）
+     */
+    function scanDomTexts() {
+        const texts = new Set();
+        try {
+            const MAX = 3000;
+            const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+            let node;
+            while ((node = walker.nextNode()) && texts.size < MAX) {
+                const t = (node.nodeValue || "").trim();
+                if (t && t.length >= 2 && t.length <= 100) texts.add(t);
+            }
+            for (const attr of ["placeholder", "aria-label", "title"]) {
+                if (texts.size >= MAX) break;
+                let els;
+                try {
+                    els = document.querySelectorAll(`[${attr}]`);
+                } catch {
+                    continue;
+                }
+                for (const el of els) {
+                    if (texts.size >= MAX) break;
+                    const v = (el.getAttribute(attr) || "").trim();
+                    if (v && v.length >= 2 && v.length <= 200) texts.add(v);
+                }
+            }
+        } catch (e) {
+            console.warn(`[${TRANSLATOR_NAMESPACE}] DOM 文案扫描失败：`, e);
+        }
+        return Array.from(texts);
+    }
+
+    /**
+     * 上报运行时扩展声明到后端（用于准确识别设置面板/菜单并补全界面文案）
+     */
+    async function reportRuntimeUi() {
+        // 先安装钩子包装并主动探测（捕获真实菜单文案；幂等，失败不影响流程）
+        try {
+            installMenuHooks();
+            probeMenuTexts();
+        } catch (e) {
+            console.warn(`[${TRANSLATOR_NAMESPACE}] 菜单文案采集失败（不影响翻译）：`, e);
+        }
+        const extensions = collectRuntimeExtensions();
+        // 补充来源：侧边栏标签、节点控件文案、DOM 全局文案（终极兜底）
+        let sidebarTabs = [];
+        let nodeWidgets = [];
+        let domTexts = [];
+        try {
+            sidebarTabs = collectSidebarTabs();
+            nodeWidgets = collectNodeWidgets();
+            domTexts = scanDomTexts();
+        } catch (e) {
+            console.warn(`[${TRANSLATOR_NAMESPACE}] 补充 UI 文案采集失败（不影响翻译）：`, e);
+        }
+        const resp = await api.fetchApi(ENDPOINT_RUNTIME_UI, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ extensions, sidebarTabs, nodeWidgets, domTexts }),
+        });
+        if (!resp.ok) {
+            throw new Error(tr("Runtime UI report failed HTTP {code}", { code: resp.status }));
+        }
+        console.log(`[${TRANSLATOR_NAMESPACE}] 运行时扩展声明已上报：${extensions.length} 个`);
+        return resp.json();
+    }
+
+    // ============================================================
     // 对话框：插件选择
     // ============================================================
+
+    /**
+     * 构建插件能力标签（ComfyUI 注册信息 + 静态 UI 识别结果）
+     * 例：["8 nodes", "Settings", "Menu"]
+     */
+    function buildPluginBadges(plugin) {
+        const badges = [];
+        const nodeCount = plugin.node_count ?? 0;
+        if (nodeCount > 0) badges.push(tr("{n} nodes", { n: nodeCount }));
+        const ui = plugin.ui || {};
+        if (ui.has_settings) badges.push(tr("Settings"));
+        if (ui.has_menu) badges.push(tr("Menu"));
+        if (ui.has_commands) badges.push(tr("Commands"));
+        if (badges.length === 0 && (plugin.has_web_registered || plugin.has_web)) {
+            badges.push(tr("Frontend"));
+        }
+        return badges;
+    }
 
     /**
      * 弹出插件选择对话框
@@ -241,7 +581,7 @@ function registerTranslatorExtensionWhenReady(tries = 0) {
                 nameSpan.textContent = plugin.name;
                 nameSpan.style.cssText = "font-weight:500;";
                 const countSpan = document.createElement("span");
-                countSpan.textContent = tr("{n} nodes", { n: plugin.node_count ?? 0 });
+                countSpan.textContent = buildPluginBadges(plugin).join(" · ");
                 countSpan.style.cssText = "color:#888;font-size:12px;";
                 item.appendChild(nameSpan);
                 item.appendChild(countSpan);
@@ -470,6 +810,13 @@ function registerTranslatorExtensionWhenReady(tries = 0) {
             return;
         }
 
+        // 先上报运行时扩展声明（准确识别设置面板/菜单的存在与文案；失败不阻塞流程）
+        try {
+            await reportRuntimeUi();
+        } catch (e) {
+            console.warn(`[${TRANSLATOR_NAMESPACE}] 上报运行时扩展数据失败（不影响翻译）：`, e);
+        }
+
         const progress = showProgressDialog();
         progress.update(tr("Loading plugin list..."));
 
@@ -480,9 +827,11 @@ function registerTranslatorExtensionWhenReady(tries = 0) {
                 throw new Error(tr("Loading plugin list failed HTTP {code}", { code: listResp.status }));
             }
             const listData = await listResp.json();
-            // 放行两类插件：有 Python 节点的；纯前端插件（node_count=0 但有前端 JS，
-            // 其菜单/设置文本可翻译，如 quick-connections）
-            const plugins = (listData.plugins || []).filter((p) => p.node_count > 0 || p.has_web);
+            // 放行有可翻译内容的插件：有 Python 节点 / 静态识别出设置面板或菜单 /
+            // ComfyUI 已注册前端扩展（纯前端插件 node_count=0，如 quick-connections）
+            const plugins = (listData.plugins || []).filter(
+                (p) => p.node_count > 0 || p.has_web_registered || (p.ui && p.ui.has_ui) || p.has_web
+            );
 
             if (plugins.length === 0) {
                 progress.close();
@@ -670,6 +1019,17 @@ function registerTranslatorExtensionWhenReady(tries = 0) {
                     tries++;
                 }, 100);
             }
+
+            // 包装菜单钩子：用户日常打开菜单时自动积累真实文案（幂等、透明）
+            try {
+                installMenuHooks();
+            } catch (e) {
+                console.warn(`[${TRANSLATOR_NAMESPACE}] 菜单钩子包装失败（不影响功能）：`, e);
+            }
+
+            // 说明：运行时采集只在"翻译整个插件"流程开始时执行（见 translatePlugin），
+            // 不翻译时不做任何后台采集；日常打开菜单时由钩子包装被动积累真实文案
+            // （installMenuHooks，零额外开销）
 
             console.log(`[${TRANSLATOR_NAMESPACE}] 扩展已加载`);
         },
