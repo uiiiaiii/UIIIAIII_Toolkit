@@ -103,6 +103,37 @@ export class TUtils {
     }
   }
 
+  /**
+   * 绘制前确保节点控件的显示名已翻译（成本极低：Set 查找 + 缓存）
+   *
+   * 覆盖场景：插件在运行时反复改写控件 label（如 cw.label = "detector_confidence"），
+   * 晚于 nodeCreated 的翻译时机；绘制前兜底可保证界面始终显示译文。
+   */
+  static translateNodeWidgetLabels(node) {
+    try {
+      if (!isTranslationEnabled()) return;
+      const widgets = node?.widgets;
+      if (!widgets || !widgets.length) return;
+      const menuT = this.T.Menu || {};
+      const nodesT = this.T.Nodes || {};
+      const classType = node.constructor?.comfyClass || node.constructor?.type;
+      const widgetDict = (classType && nodesT[classType]?.widgets) || {};
+      for (const w of widgets) {
+        if (!w) continue;
+        // 显示名优先 label，其次 name
+        const shown = (typeof w.label === "string" && w.label) ? w.label : w.name;
+        if (typeof shown !== "string" || !shown) continue;
+        if (w._uiiaiii_tl === shown) continue;   // 显示名未变，无需重复处理
+        w._uiiaiii_tl = shown;
+        if (isAlreadyTranslatedText(shown)) continue;   // 已是译文
+        const translated = widgetDict[shown] || menuT[shown];
+        if (translated && translated !== shown) {
+          w.label = translated;
+        }
+      }
+    } catch (e) { /* 忽略，不影响绘制 */ }
+  }
+
   static enhandeDrawNodeWidgets() {
     try {
       let drawNodeWidgets = LGraphCanvas.prototype.drawNodeWidgets;
@@ -110,6 +141,8 @@ export class TUtils {
         if (!node.widgets || !node.widgets.length) {
           return 0;
         }
+        // 绘制前兜底翻译控件显示名（覆盖插件运行时改写的 label）
+        TUtils.translateNodeWidgetLabels(node);
         const widgets = node.widgets.filter((w) => w.type === "slider");
         widgets.forEach((widget) => {
           widget._ori_label = widget.label;
@@ -254,22 +287,27 @@ export class TUtils {
         return;
       }
       
-      if (!nodesT || !nodesT.hasOwnProperty(class_type)) return;
-      
-      var t = nodesT[class_type];
-      if (!t) return;
+      // 即使该节点类型没有 Nodes 字典条目也继续：前端动态创建的控件文案可能只在 Menu 字典中
+      var t = (nodesT && nodesT[class_type]) || {};
       
       for (let key of keys) {
-        if (!t.hasOwnProperty(key)) continue;
         if (!node.hasOwnProperty(key)) continue;
         if (!node[key] || !Array.isArray(node[key])) continue;
         
+        const dict = t[key] || {};
         node[key].forEach((item) => {
           if (!item || !item.name) return;
-          if (item.name in t[key]) {
+          let translation = dict[item.name];
+          // widgets 额外查 Menu 字典：覆盖前端动态创建/改写的控件与按钮文案
+          // （如 addWidget("button", "Browse…")、运行时 label 赋值 detector_confidence）
+          if (!translation && key === "widgets") {
+            const menuT = this.T.Menu || {};
+            translation = menuT[item.name] || (item.label && menuT[item.label]) || null;
+          }
+          if (translation) {
             const hasNativeTranslation = item.label && isAlreadyTranslatedText(item.label) && !item._original_name;
             if (!hasNativeTranslation) {
-              this.safeApplyTranslation(item, t[key][item.name]);
+              this.safeApplyTranslation(item, translation);
             }
           }
         });
@@ -642,6 +680,13 @@ const ext = {
   nodeCreated(node, app) {
     try {
       TUtils.applyNodeTranslation(node);
+      // 部分插件会在自身钩子里动态创建控件（addWidget）或改写控件 label，
+      // 延迟再应用一次 widget 翻译，确保这些后写入的文案也被翻译
+      setTimeout(() => {
+        try {
+          TUtils.applyNodeTranslation(node);
+        } catch (e) { /* 忽略重试错误 */ }
+      }, 300);
     } catch (e) {
       error(`创建节点处理失败 (${node?.title || '未知'}):`, e);
     }

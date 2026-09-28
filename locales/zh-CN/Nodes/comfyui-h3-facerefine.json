@@ -1,0 +1,229 @@
+{
+    "H3FaceStitch": {
+        "title": "H3 人脸缝合回",
+        "description": "将 H3 精修的人脸裁剪合成回源帧。",
+        "inputs": {
+            "base_images": "基础图像",
+            "refined_crops": "精修裁剪",
+            "transform": "变换",
+            "masks": "遮罩",
+            "Optional per-frame paste masks in CANVAS space, e.g. from H3 Face Mask (SAM). Overrides paste_region. This is the FaceDetailer bbox+SAM path: the mask follows the actual face so the blend falls on the jaw and hairline instead of an arbitrary rectangle. With a SAM mask use a SMALL feather (4-8); a rectangle needs much more.": "可选的逐帧粘贴蒙版，位于画布空间，例如来自 H3 人脸蒙版（SAM）。覆盖 paste_region。这是 FaceDetailer 的 bbox+SAM 路径：蒙版跟随实际面部，因此混合会落在下颌和发际线上，而不是任意矩形。使用 SAM 蒙版时，请使用较小的羽化值（4-8）；矩形需要大得多的羽化值。"
+        },
+        "outputs": {
+            "images": "图片"
+        },
+        "widgets": {
+            "paste_region": "粘贴区域",
+            "WHAT gets composited back. face_only / face_ellipse paste just the detected face box (FaceDetailer's behaviour - the wider crop exists to give the sampler context, not to be pasted). full_crop pastes the whole crop including hair, shoulders and background, which risks a visible rectangle if H3 alters them.": "要合成回去的内容。face_only / face_ellipse 仅粘贴检测到的人脸框（FaceDetailer 的行为——更宽的裁剪是为了给采样器提供上下文，而不是为了粘贴）。full_crop 粘贴整个裁剪，包括头发、肩膀和背景，如果 H3 改变了它们，则可能出现可见的矩形。",
+            "mask_dilation": "蒙版扩张",
+            "Grow the face box before blurring, in canvas px. Impact Pack dilates the same way so the blur has room and the blend does not eat into the face itself.": "在模糊之前扩大人脸框，以画布像素为单位。Impact Pack 以相同方式扩张，以便模糊有空间，混合不会侵蚀面部本身。",
+            "feather": "羽化值",
+            "Gaussian blur radius on the paste mask, in SOURCE pixels. Measured against the final frame, not the canvas, so the blend is the same physical width whatever this frame's magnification happens to be.\n\nCanvas-relative feather is a trap: a 75px crop blown up to 512 makes a 40px canvas feather only ~6 source px, while a 720px crop makes it ~56. The blend ends up TIGHTEST exactly where the face is smallest and the composite needs the most help - which reads as a hard edge appearing as a shot zooms out.": "粘贴蒙版上的高斯模糊半径，以源像素为单位。相对于最终帧而非画布进行测量，因此无论此帧的放大倍数如何，混合的物理宽度都相同。\n\n相对于画布的羽化是一个陷阱：75px 的裁剪放大到 512 会使 40px 的画布羽化仅约 6 个源像素，而 720px 的裁剪则约为 56。混合在最需要帮助的地方（面部最小处）反而最紧——这表现为镜头拉远时出现硬边。",
+            "colour_match": "颜色匹配",
+            "Match the refined crop's per-channel mean/std to the region it replaces. The crop and the full frame went through independent passes, so without this the face can come back subtly brighter or differently tinted and read as pasted on.": "将精修裁剪的每通道均值/标准差与它所替换的区域进行匹配。裁剪和完整帧经过了独立的处理，因此如果没有此选项，面部可能会略微变亮或色调不同，看起来像是粘贴上去的。",
+            "blend": "混合",
+            "Global opacity of the refined face. Below 1.0 mixes back toward the original - useful to dial back over-sharpening.": "精修面部的全局不透明度。低于 1.0 会向原始图像混合——有助于回调过度锐化。",
+            "undetected_frames": "未检测到帧",
+            "What to do on frames where no FACE was found (turned away / occluded). ALL frames are still sent through H3 either way - that is what keeps it temporally consistent - this only controls whether the result is pasted back.\nfade_out: ramp the composite to zero across the gap (smooth, no pop, recommended).\nskip: hard cut - those frames keep original pixels exactly.\ncomposite_anyway: paste regardless. Risks H3 hallucinating a face onto the back of a head.": "在未找到人脸（转身/遮挡）的帧上如何处理。无论如何，所有帧仍会通过 H3 处理——这是保持时间一致性的关键——此选项仅控制结果是否被粘贴回去。\nfade_out：在间隙中逐渐将合成降至零（平滑，无跳变，推荐）。\nskip：硬切换——这些帧完全保留原始像素。\ncomposite_anyway：无论如何都粘贴。存在 H3 在后脑勺上产生幻觉人脸的风险。",
+            "feather_scales_with_crop": "羽化随裁剪缩放",
+            "Old behaviour: treat feather as CANVAS pixels, so the blend narrows as the crop shrinks. Leave off.": "旧行为：将羽化视为画布像素，因此混合会随着裁剪缩小而变窄。请保持关闭。"
+        }
+    },
+    "H3PerFrameDenoise": {
+        "title": "H3 逐帧降噪",
+        "description": "逐帧降噪强度，与面部大小成反比。",
+        "inputs": {
+            "model": "模型",
+            "The H3 model, on its way to the sampler. Required: making a per-frame mask behave takes two changes to the MODEL rather than to the latent. This node's video mask is kept out of H3's per-token timesteps, and the frames that mask holds back are re-noised to the step the sampler is on instead of being handed back nearly clean. Pass the returned model on to the guider.": "H3 模型，在通往采样器的路上。必需：要使逐帧蒙版生效，需要对模型进行两处修改，而不是对隐空间。此节点的视频蒙版被排除在 H3 的逐 token 时间步之外，蒙版保留的帧会被重新加噪到采样器当前所处的步骤，而不是以接近干净的状态返回。将返回的模型传递给引导器。",
+            "av_latent": "音视频隐空间",
+            "transform": "变换"
+        },
+        "outputs": {
+            "av_latent": "音视频隐空间",
+            "report": "报告",
+            "model": "模型"
+        },
+        "widgets": {
+            "denoise_multiplier_small_face": "小脸降噪倍数",
+            "MULTIPLIER on the denoise set on BasicScheduler, applied where the face is SMALLEST. Not a denoise value in itself: at 1.0 those frames get the full BasicScheduler denoise, at 0.8 they get 80% of it. Below 1.0 NO frame in the clip receives the FULL denoise you set, which makes the whole clip gentler.": "对 BasicScheduler 上设置的降噪强度的倍数，应用于面部最小的地方。本身不是降噪值：在 1.0 时，这些帧获得完整的 BasicScheduler 降噪，在 0.8 时获得其 80%。低于 1.0 时，片段中没有任何帧接收到您设置的完整降噪，这会使整个片段更柔和。",
+            "denoise_multiplier_large_face": "大脸降噪倍数",
+            "MULTIPLIER on the denoise set on BasicScheduler, applied where the face is LARGEST. Lower preserves the real detail those frames already have, since a big face needs less rebuilding than a distant one.": "对 BasicScheduler 上设置的降噪强度的倍数，应用于面部最大的地方。较低的值可以保留这些帧已有的真实细节，因为大脸比远处的脸需要更少的重建。",
+            "scale_mode": "缩放模式",
+            "absolute_px: strength is set by real face size in SOURCE pixels via face_px_small/large. Safe across a batch - a video that never has a small face gets the baseline throughout. relative_to_clip: normalise to this video's own min/max, so its smallest face always gets the full boost regardless of actual size. Use when tuning a single video to its extremes.": "absolute_px：强度由源像素中的真实人脸大小通过 face_px_small/large 设置。在批次中安全——从未出现小脸的视频在整个过程中获得基线强度。relative_to_clip：归一化到此视频自身的最小/最大，因此其最小的脸始终获得完整的增强，无论实际大小如何。在将单个视频调整到其极端情况时使用。",
+            "face_px_small": "小脸像素",
+            "Face height (SOURCE px) at or below which the full denoise_multiplier_small_face is applied. Genuinely tiny faces only.": "人脸高度（源像素）低于或等于此值时，应用完整的 denoise_multiplier_small_face。仅适用于真正微小的脸。",
+            "face_px_large": "大脸像素",
+            "Face height (SOURCE px) at or above which denoise_multiplier_large_face is applied. Calibrated so a video whose smallest face is ~90px gets only a mild boost - that size was already fine at the baseline denoise - and anything past 120px gets none.": "人脸高度（源像素）高于或等于此值时，应用 denoise_multiplier_large_face。经过校准，使得最小脸约为 90px 的视频仅获得温和的增强——该尺寸在基线降噪下已经很好——超过 120px 则不会获得增强。",
+            "gamma": "伽马值",
+            "Curve on the interpolation. >1 keeps strength high until the face is genuinely large; <1 drops it off early.": "插值曲线。>1 保持高强度直到脸真正变大；<1 则提前降低强度。",
+            "smooth_frames": "平滑帧数",
+            "Smooth the strength curve over time. An abrupt change in denoise between neighbouring frames is visible as a texture pop, so this wants to be generous.": "随时间平滑强度曲线。相邻帧之间降噪强度的突变会表现为纹理跳变，因此此值应设置得较大。"
+        }
+    },
+    "H3FaceTrackCrop": {
+        "title": "H3 人脸跟踪 + 裁剪",
+        "description": "逐帧人脸跟踪 -> 平滑、归一化的裁剪 -> 为 H3 生成恒定大小的批次，以及将结果粘贴回去所需的变换。",
+        "inputs": {
+            "images": "图片",
+            "identity_reference": "身份参考",
+            "A clear face image of the person to track. When supplied, the subject is chosen by FACE IDENTITY rather than by size, so a crowd scene locks onto the right person even when someone else is briefly larger or nearer.\n\nOPTIONAL on this node. identity_track works without it: the anchor is then built FROM THE CLIP, off frames where one face clearly dominates, which is usually the better anchor since a stylised reference sits in a different domain. Supply one only to name a specific person.\n\nRead only while identity_track is ON. With it off this input is ignored, and the report says so.\n\nWithout either, 'largest_face' has no notion of WHO it is following - it just takes the biggest box each frame, which switches subject whenever the framing changes.\n\nFOR MULTIPLE PEOPLE: run the pipeline once per subject, each with that person's reference here and their own refs on the H3 node, and chain them - feed run 1's stitched output in as run 2's base_images. The composites accumulate.": "要跟踪的人物的清晰面部图像。提供后，主体将根据面部身份而非大小来选择，因此在人群场景中，即使其他人暂时更大或更近，也能锁定正确的人。\n\n此节点上为可选。identity_track 在没有它的情况下也能工作：锚点将从视频本身构建，基于单张脸明显占主导地位的帧，这通常是更好的锚点，因为风格化的参考图像位于不同的域中。仅在需要指定特定人物时提供。\n\n仅在 identity_track 开启时读取。关闭时此输入被忽略，报告会说明这一点。\n\n如果两者都没有，'largest_face' 不知道它在跟踪谁——它只是每帧取最大的框，这会在构图变化时切换主体。\n\n多人处理：为每个主体运行一次流程，每个流程在此处使用该人物的参考，并在 H3 节点上使用他们自己的参考，然后将它们链接起来——将运行 1 的拼接输出作为运行 2 的 base_images。合成结果会累积。",
+            "identity_clip_vision": "身份CLIP视觉模型",
+            "A CLIP vision model from a CLIPVisionLoader, used only when identity_model is clip_vision. Any of the usual ComfyUI clip_vision checkpoints works; the bigger ViT-L/H models separate characters better than the small ones.": "来自 CLIPVisionLoader 的 CLIP 视觉模型，仅在 identity_model 为 clip_vision 时使用。任何常用的 ComfyUI clip_vision 检查点都可以；较大的 ViT-L/H 模型比小型模型能更好地区分角色。",
+            "face_pick": "人脸选择",
+            "The subject chosen upstream by H3 Load Video + Face Select.\nDecides who to follow, per shot, and carries the boxes and shot boundaries with it so this node does not detect the video again. select, select_index, cut_detection and cut_threshold are then unused, and detector and confidence are too unless a fallback_detector or a crop-based identity_model still needs them - they are then unused - the report names the detector that actually produced the boxes.": "由上游的 H3 加载视频 + 人脸选择选择的主体。\n决定每个镜头跟踪谁，并携带检测框和镜头边界，因此此节点不会再次检测视频。select、select_index、cut_detection 和 cut_threshold 随后不再使用，detector 和 confidence 也不再使用，除非 fallback_detector 或基于裁剪的 identity_model 仍然需要它们——它们随后不再使用——报告会说明实际产生检测框的检测器。"
+        },
+        "outputs": {
+            "crops": "裁剪后图像",
+            "transform": "变换",
+            "preview": "预览图象",
+            "report": "报告",
+            "canvas_w": "画布宽度",
+            "canvas_h": "画布高度",
+            "frame_count": "帧数"
+        },
+        "widgets": {
+            "detector": "检测器",
+            "confidence": "置信度",
+            "crop_factor": "裁剪系数",
+            "Crop side as a multiple of detected face HEIGHT. 2.5 puts the face at ~40% of the crop, comfortably inside H3's good regime. Bigger = more context so the seam lands in hair/background, but less magnification. 2.0-3.0 is the useful range.": "裁剪边长为检测到的人脸高度的倍数。2.5 将人脸置于裁剪的约 40% 处，舒适地处于 H3 的良好范围内。更大 = 更多上下文，因此接缝落在头发/背景中，但放大倍数更小。2.0-3.0 是有用的范围。",
+            "canvas_width": "画布宽度",
+            "Resolution H3 generates at. 768 is H3's native short edge and the default here; 512 is cheaper. In manual mode this is used exactly as typed, high or low. Ignored when canvas_mode is not 'manual', where the canvas comes from the crop instead and never falls below 512x512. Cost scales with area: 768 is 2.25x the latent tokens of 512.": "H3 生成的分辨率。768 是 H3 的原生短边，也是这里的默认值；512 更便宜。在手动模式下，完全按输入使用，无论高低。当 canvas_mode 不是 'manual' 时忽略，此时画布来自裁剪，且永远不会低于 512x512。成本随面积缩放：768 的隐空间 token 是 512 的 2.25 倍。",
+            "canvas_height": "画布高度",
+            "canvas_mode": "画布模式",
+            "manual: use canvas_width/height as given.\nauto_no_downscale: size the canvas from the LARGEST crop in the video so no frame is ever downscaled (magnification never drops below 1.0x). Can get expensive on videos that include close-ups.\nauto_capped_768: same, but clamped to 768 - H3's native short edge and a sane VRAM ceiling.\nBoth auto modes clamp UP to a minimum of 512x512, whatever the crop, so a small face in a low-resolution clip is still magnified. manual is not clamped - it uses canvas_width and canvas_height exactly as typed.": "manual：按给定的 canvas_width/height 使用。\nauto_no_downscale：根据视频中最大的裁剪来调整画布大小，这样任何帧都不会被缩小（放大倍数永远不会低于 1.0 倍）。对于包含特写镜头的视频，可能会很昂贵。\nauto_capped_768：相同，但限制为 768——H3 的原生短边和合理的显存上限。\n两种自动模式都会向上限制到最小 512x512，无论裁剪如何，因此低分辨率片段中的小脸仍会被放大。manual 不受限制——它完全按输入的 canvas_width 和 canvas_height 使用。",
+            "smooth_window": "平滑窗口",
+            "Frames of smoothing on the crop CENTRE. 21 at 24fps is ~0.9s. Raise if the box still shivers; lower if it lags behind fast head movement.": "裁剪中心的平滑帧数。24fps 下 21 帧约为 0.9 秒。如果框仍然抖动，则增加；如果跟不上快速的头部运动，则减少。",
+            "size_smooth_window": "尺寸平滑窗口",
+            "Frames of smoothing on the crop SIZE. Wants MORE than the centre: size jitter makes the crop breathe, which changes the resample factor every frame and reads as shimmer. Real zoom moves are slow, so heavy smoothing here costs nothing.": "裁剪尺寸的平滑帧数。需要比中心更多：尺寸抖动会使裁剪“呼吸”，从而改变每帧的重采样因子，并表现为闪烁。真实的变焦移动很慢，因此此处进行大量平滑不会造成损失。",
+            "smooth_method": "平滑方法",
+            "gaussian: best jitter rejection. savgol: preserves the shape of a push-in better at large windows. moving_average: the old boxcar, leaves residual jitter.": "gaussian：最佳的抖动抑制。savgol：在大窗口下能更好地保留推近镜头的形状。moving_average：旧的箱形滤波器，会留下残余抖动。",
+            "size_mode": "尺寸模式",
+            "per_frame: constant face-fraction in every crop (correct for push-ins). max_of_clip: one size for the whole video, only useful when the shot is genuinely static.": "per_frame：每个裁剪中保持恒定的人脸比例（适用于推近镜头）。max_of_clip：整个视频使用一个尺寸，仅在镜头真正静止时有用。",
+            "identity_track": "身份跟踪",
+            "Hold one subject through a crowd. Continuity (nearest box to the previous position) decides most frames; the face-identity embedding is consulted only when two candidates are similarly plausible or their boxes overlap - which is both the accurate and the cheap arrangement, since the embedding model then runs on a handful of frames instead of all of them. The anchor is taken FROM THE CLIP by default (frames where one face clearly dominates), because an external stylised reference sits in a different domain - measured similarity between an illustration and a render of the same character was only 0.305, where same-domain faces score 0.5-0.7.\n\nThis switch also gates identity_reference: with it OFF a connected reference is not read at all, and the subject is chosen by select instead. The report says so when that happens.": "在人群中保持一个主体。连续性（最接近前一位置的框）决定大多数帧；仅在两个候选者相似度相近或它们的框重叠时，才参考面部身份嵌入——这既准确又经济，因为嵌入模型只需在少数帧上运行，而不是所有帧。默认情况下，锚点取自视频本身（单张脸明显占主导地位的帧），因为外部风格化的参考图像位于不同的域中——插画与同一角色渲染之间的测量相似度仅为 0.305，而同域面孔的得分在 0.5-0.7 之间。\n\n此开关也控制 identity_reference：关闭时，连接的参考将完全不被读取，主体由 select 选择。发生这种情况时，报告会说明。",
+            "identity_threshold": "身份阈值",
+            "Minimum score to accept a face as the reference person. Below this the frame falls back to continuity (nearest to the previous position at a similar size), which is what carries tracking through profiles and partial occlusion where embeddings become unreliable.\nThe scale depends on identity_model. 0.28 suits insightface cosine; clip_vision sits much higher (~0.80) because its similarities are compressed; ccip scores 0.5 at its own published operating point.\nSET 0 to use whichever default the chosen model recommends. The report prints the scores actually seen, so it can be tuned from evidence rather than guessed.": "接受一张脸作为参考人物的最低分数。低于此分数时，该帧回退到连续性（最接近前一位置且大小相似），这能通过侧面和部分遮挡（此时嵌入变得不可靠）来维持跟踪。\n分数范围取决于 identity_model。0.28 适合 insightface 余弦相似度；clip_vision 要高得多（约 0.80），因为其相似度被压缩；ccip 在其发布的操作点得分为 0.5。\n设置为 0 以使用所选模型推荐的默认值。报告会打印实际看到的分数，因此可以根据证据进行调整，而不是猜测。",
+            "select": "选择",
+            "How the subject is chosen. It is chosen ONCE per shot, on the first frame that holds it, and continuity follows that same face from there - it is NOT re-ranked each frame. A subject who walks from the left of frame to the right while someone else crosses the other way is still tracked correctly.\n\nlargest_face / smallest_face: biggest or smallest face by height.\nleft_most / right_most / top_most / bottom_most: by the CENTRE of the face box.\ncentre_most: nearest the centre of the frame.\nclosest_to_xy: nearest the X, Y you give, measured on frame_index.\ndetector_score: the detection the detector is most confident about.\n\nAT A HARD CUT a rank means nothing across the join - everyone is renumbered. With cut_detection ON, each shot chooses again by this rule, so a cut can land on a different person. With it OFF the video counts as one shot and continuity runs straight through a real cut onto whichever face is nearest the last position, which may be anyone.\n\nTo hold one person across cuts, wire identity_reference, or choose the face in H3 Load Video + Face Select.\n\nUsed only when no identity_reference is connected.": "如何选择主体。它在每个镜头的第一帧选择一次，之后连续性跟踪同一张脸——不会在每一帧重新排序。一个主体从画面左侧走到右侧，而另一个人从对面穿过，仍然会被正确跟踪。\n\nlargest_face / smallest_face：按高度最大或最小的脸。\nleft_most / right_most / top_most / bottom_most：按人脸框的中心位置。\ncentre_most：最接近画面中心。\nclosest_to_xy：最接近您给定的 X、Y 坐标，在 frame_index 上测量。\ndetector_score：检测器最自信的检测结果。\n\n在硬切换处，排名在切换点没有意义——所有人都会重新编号。启用 cut_detection 后，每个镜头都会根据此规则重新选择，因此切换可能会落在不同的人身上。关闭时，视频被视为一个镜头，连续性会直接穿过真实的切换点，落在最接近最后位置的面孔上，可能是任何人。\n\n要在切换点保持同一个人，请连接 identity_reference，或在 H3 加载视频 + 人脸选择中选择面孔。\n\n仅在未连接 identity_reference 时使用。",
+            "fallback_detector": "回退检测器",
+            "Used only on frames where the FACE detector finds nothing (subject turned away). A person/body model such as segm\\person_yolov8m-seg.pt gives a real head position from the top of the body box, which beats interpolating blindly between the last and next face. Set 'none' to interpolate instead.": "仅在人脸检测器未找到任何内容的帧上使用（主体转身）。诸如 segm\\person_yolov8m-seg.pt 这样的人体/身体模型可以从身体框的顶部给出真实的头部位置，这比在最后一张脸和下一张脸之间盲目插值要好。设置为 'none' 则改为插值。",
+            "fallback_head_frac": "回退头部比例",
+            "Head centre as a multiple of face height below the top of the person box. 0.5 puts it half a face-height down, which is about right for a head seen from behind.": "头部中心位于人体框顶部下方，为人脸高度的倍数。0.5 表示向下半个脸高，这对于从背后看到的头部来说大致正确。",
+            "select_index": "选择编号",
+            "Which face in that ranking to track. 0 is the first, 1 the second, and so on.\nThe subject is locked on the first frame that actually contains this index, so a video that opens on one face and only later shows a crowd still finds face 1. Frames before that lock-on are interpolated from it and faded out of the composite, the same as a detection dropout; the report counts them. Clamped, with a warning in the report, if the video never shows that many faces at once. Ignored entirely when identity_reference is connected.\nH3 Load Video + Face Select shows the faces numbered, if you need to see which number is who.": "在该排名中要跟踪哪张脸。0 是第一张，1 是第二张，依此类推。\n主体会在实际包含此索引的第一帧上锁定，因此即使视频开头只有一张脸，稍后才出现人群，也能找到脸 1。锁定之前的帧会从该帧插值，并在合成中淡出，与检测丢失相同；报告会统计这些帧。如果视频从未同时显示那么多张脸，则会进行限制，并在报告中发出警告。当连接了 identity_reference 时，此选项完全忽略。\nH3 加载视频 + 人脸选择会显示编号的面孔，如果您需要查看哪个编号对应哪个人。",
+            "identity_model": "身份模型",
+            "Which model decides that two faces are the same person.\ninsightface: ArcFace/buffalo_l. Photographed human faces. It reaches faces through its OWN detector, which does not fire on illustration - so on anime it finds no candidates at all and tracking quietly falls back to continuity.\nclip_vision: ComfyUI's CLIP vision, wired into identity_clip_vision from a CLIPVisionLoader. No extra install, works on any domain - anime, 3D, stylised - but it describes appearance rather than identity, so two characters with a similar palette can collide.\nccip: the illustration counterpart of ArcFace, purpose-built for 'same anime character?'. Best on anime. Needs 'pip install dghs-imgutils', which this pack deliberately does not install for you - it pins numpy<2 and pulls opencv-contrib-python.\nThe last two embed the boxes YOUR detector found, so pair them with an anime face model in the detector slot.": "哪个模型决定两张脸是同一个人。\ninsightface：ArcFace/buffalo_l。适用于照片中的人脸。它通过自己的检测器找到人脸，该检测器在插画上不会触发——因此在动漫上找不到任何候选，跟踪会静默回退到连续性。\nclip_vision：ComfyUI 的 CLIP 视觉，通过 CLIPVisionLoader 连接到 identity_clip_vision。无需额外安装，适用于任何领域——动漫、3D、风格化——但它描述的是外观而非身份，因此调色板相似的两个角色可能会冲突。\nccip：ArcFace 的插画对应物，专为“同一动漫角色？”而构建。在动漫上效果最佳。需要 'pip install dghs-imgutils'，此包特意不为您安装——它固定 numpy<2 并拉取 opencv-contrib-python。\n后两者嵌入您的检测器找到的框，因此请将它们与检测器槽中的动漫人脸模型配对。",
+            "cut_detection": "切换检测",
+            "Hard-cut detection, so the crop is not smoothed ACROSS a cut.\nnone: off. Correct for single-shot videos, which is what H3 generates.\nauto: split at the cuts and treat each shot as its own window for the smoothing, interpolation and composite fade. The canvas is still sized once for the whole video.": "硬切换检测，以避免裁剪在切换点被平滑。\nnone：关闭。适用于单镜头视频，这正是 H3 生成的。\nauto：在切换点分割，并将每个镜头视为平滑、插值和合成淡入淡出的独立窗口。画布仍为整个视频调整一次大小。",
+            "cut_threshold": "切换阈值",
+            "How far a frame has to stand out from its NEIGHBOURS to count as a cut. 3.0 is PySceneDetect's adaptive default.\nLower catches more and risks splitting a continuous shot, which costs smoothing on both sides. Higher takes only unambiguous cuts.\nOnly used when cut detection is on. The report says how many cuts were found and where, so tune it from that.": "一帧与其相邻帧的差异程度达到多少才被视为切换。3.0 是 PySceneDetect 的自适应默认值。\n较低的值会捕获更多切换，并有可能分割连续镜头，这会影响两侧的平滑。较高的值只捕获明确的切换。\n仅在切换检测开启时使用。报告会说明找到多少个切换及其位置，因此可以根据报告进行调整。",
+            "absent_shots": "缺席镜头",
+            "Find shots the subject is not in, so they are not rendered at all.\nby_identity: a shot where no sampled face matches the identity anchor above identity_threshold is treated as not containing the subject. Its frames keep their original pixels and drop out of the batch. Needs identity matching to be working - it does nothing without an anchor.\nSampled, not exhaustive, so a brief appearance can be missed. The report names every shot it drops and the score it saw.": "查找主体不在其中的镜头，以便完全不渲染它们。\nby_identity：如果某个镜头中采样的面孔与身份锚点的匹配度低于 identity_threshold，则该镜头被视为不包含主体。其帧保留原始像素并从批次中移除。需要身份匹配正常工作——没有锚点则不起作用。\n采样而非穷尽，因此短暂出现可能会被遗漏。报告会列出它丢弃的每个镜头及其看到的分数。",
+            "X": "X轴",
+            "Only used by select=closest_to_xy.\n\nHorizontal position in PIXELS of the source video frame, measured from the TOP-LEFT corner, increasing to the right. On a 960x544 clip, 0 is the left edge, 960 the right, 480 the middle.\n\nThe point does not have to sit on a face: the nearest face CENTRE wins, however far away it is.": "仅用于 select=closest_to_xy。\n\n源视频帧的水平位置（以像素为单位），从左上角开始测量，向右增加。在 960x544 的片段中，0 是左边缘，960 是右边缘，480 是中间。\n\n该点不必位于面孔上：最近的面孔中心获胜，无论距离多远。",
+            "Y": "Y轴",
+            "Only used by select=closest_to_xy.\n\nVertical position in PIXELS of the source video frame, measured from the TOP-LEFT corner, increasing DOWNWARD. On a 960x544 clip, 0 is the top edge, 544 the bottom, 272 the middle.": "仅用于 select=closest_to_xy。\n\n源视频帧的垂直位置（以像素为单位），从左上角开始测量，向下增加。在 960x544 的片段中，0 是顶部边缘，544 是底部，272 是中间。",
+            "frame_index": "帧编号",
+            "Only used by select=closest_to_xy.\n\nThe frame the X, Y measurement is taken on, counting from 0 for the FIRST frame. It counts the frames this node loaded, so with skip_first_frames or select_every_nth set it counts from the first frame kept, not the first frame of the file.\n\nThe face found there is followed forwards and backwards through its shot, so pick a frame where the subject is clearly visible rather than one the detector may miss them on.": "仅用于 select=closest_to_xy。\n\n进行 X、Y 测量的帧，从第一帧开始计数为 0。它计算此节点加载的帧，因此如果设置了 skip_first_frames 或 select_every_nth，则从保留的第一帧开始计数，而不是文件的第一帧。\n\n在该帧找到的面孔会在其镜头中向前和向后跟踪，因此请选择一个主体清晰可见的帧，而不是检测器可能漏检的帧。"
+        }
+    },
+    "H3InjectVideoLatent": {
+        "title": "H3 注入视频隐空间 (img2img)",
+        "description": "将真实帧编码到 H3 联合音视频隐空间的视频流中。",
+        "inputs": {
+            "av_latent": "音视频隐空间",
+            "images": "图片",
+            "vae": "Vae"
+        },
+        "outputs": {
+            "av_latent": "音视频隐空间",
+            "report": "报告"
+        }
+    },
+    "H3FaceTransformInfo": {
+        "title": "H3 人脸变换信息",
+        "inputs": {
+            "transform": "变换"
+        },
+        "outputs": {
+            "info": "信息"
+        },
+        "widgets": {
+            "max_rows": "最大行数"
+        }
+    },
+    "H3FaceSelect": {
+        "title": "H3 加载视频 + 人脸选择",
+        "description": "加载视频，检测每张脸，并在图运行前决定哪一个是主体。将 `face_pick` 连接到 H3 人脸跟踪 + 裁剪，它将跟踪该人物，而无需再次检测视频。",
+        "inputs": {
+            "identity_reference": "身份参考",
+            "A picture of the person to refine. Each shot picks the face that matches this, so the same person is followed across a cut without hand-picking. A frame of the clip works; so does a portrait.\n\nREQUIRED when select is identity_reference - that mode has no other way to decide, so the node stops with an error if nothing is wired here. Ignored by every other select mode.\n\nThis differs from H3 Face Track + Crop, where a reference is optional and identity tracking falls back to an anchor taken from the clip itself.": "待精修人物的图片。每个镜头都会选择与此匹配的脸，因此无需手动挑选即可在剪辑切换时持续跟踪同一个人。视频的一帧或一张肖像都可以。\n\n当选择模式为 identity_reference 时必填——该模式没有其他判断方式，因此如果此处未连接任何内容，节点将报错停止。其他选择模式会忽略此输入。\n\n这与 H3 人脸跟踪 + 裁剪不同，后者参考是可选的，身份跟踪会回退到从视频本身获取的锚点。",
+            "identity_clip_vision": "身份CLIP视觉模型",
+            "Only for identity_model=clip_vision. Add a CLIPVisionLoader and wire it in.": "仅用于 identity_model=clip_vision 时。添加一个 CLIPVisionLoader 并连接进来。"
+        },
+        "outputs": {
+            "images": "图片",
+            "audio": "音频",
+            "face_pick": "人脸选择",
+            "preview": "预览图象",
+            "report": "报告",
+            "frame_count": "帧数",
+            "fps": "帧率"
+        },
+        "widgets": {
+            "video": "视频",
+            "Path to the source video. Use Browse to pick one out of ComfyUI's input folder, or paste any path - source footage usually lives somewhere else. Surrounding quotes are stripped, so a path copied from Explorer works as pasted.": "源视频路径。使用“浏览”从 ComfyUI 的输入文件夹中选择一个，或粘贴任意路径——源素材通常存放在其他位置。周围的引号会被去除，因此从资源管理器复制的路径可以直接粘贴使用。",
+            "detector": "检测器",
+            "Face detector, same list the tracker uses. THIS node owns detection when it is wired in - it detects once, here, and hands the boxes downstream so the tracker does not repeat the pass. Use an anime face model for illustration; a photographic one finds nothing there.": "人脸检测器，与跟踪器使用的列表相同。当连接此节点时，检测由本节点负责——它在此处检测一次，并将检测框传递给下游，这样跟踪器就不会重复检测。对于插画，请使用动漫人脸模型；照片模型在插画中找不到任何内容。",
+            "confidence": "置信度",
+            "Detector confidence floor. Lower finds more faces including profiles and small ones, at the cost of false positives that then appear as selectable indices.": "检测器置信度下限。降低此值会找到更多面孔，包括侧面和小尺寸面孔，但代价是误报会增加，这些误报会作为可选择的索引出现。",
+            "select": "选择",
+            "Which of the detected faces is the subject. Detection itself is always automatic; this is only the choice between what it found.\n\nmanual: review them and choose. Faces are numbered left to right, and the answer lives in confirmed_pick, one index per shot.\nidentity_reference: each shot picks the face matching the reference image wired into identity_reference.\n\nEverything else is a rule, with select_index picking out of it. The subject is chosen ONCE per shot and continuity follows that same face from there - it is NOT re-ranked each frame, so a subject who crosses the frame past someone else is still tracked correctly.\n\nlargest_face / smallest_face: biggest or smallest by height.\nleft_most / right_most / top_most / bottom_most: by the CENTRE of the face box.\ncentre_most: nearest the centre of the frame.\nclosest_to_xy: nearest the X, Y you give, on frame_index.\ndetector_score: the most confident detection.\n\nAT A HARD CUT a rank means nothing across the join - everyone is renumbered. With cut_detection ON each shot chooses again by the rule, so a cut can land on a different person. With it OFF the video counts as one shot and continuity runs straight through a real cut onto whichever face is nearest the last position, which may be anyone.\n\nTo hold one person across cuts, use identity_reference or manual.": "在检测到的面孔中，哪一个是主体。检测本身始终是自动的；这只是对检测结果的选择。\n\nmanual：查看并选择。面孔从左到右编号，答案保存在 confirmed_pick 中，每个镜头一个索引。\nidentity_reference：每个镜头选择与连接到 identity_reference 的参考图像匹配的面孔。\n\n其他选项都是规则，通过 select_index 从中选择。主体在每个镜头中只选择一次，之后连续性跟踪同一张脸——不会在每一帧重新排序，因此即使主体从其他人身边经过，也能正确跟踪。\n\nlargest_face / smallest_face：按高度最大或最小。\nleft_most / right_most / top_most / bottom_most：按人脸框的中心位置。\ncentre_most：最接近画面中心。\nclosest_to_xy：最接近您在 frame_index 上给定的 X、Y 坐标。\ndetector_score：检测器最自信的检测结果。\n\n在硬切换处，排名在切换点没有意义——所有人都会重新编号。启用 cut_detection 后，每个镜头都会根据规则重新选择，因此切换可能会落在不同的人身上。关闭时，视频被视为一个镜头，连续性会直接穿过真实的切换点，落在最接近最后位置的面孔上，可能是任何人。\n\n要在切换点保持同一个人，请使用 identity_reference 或 manual。",
+            "select_index": "选择编号",
+            "Which face in that ranking is the subject. Connect `preview` to a PreviewImage to see which number is who - every detected face is outlined and numbered there.": "在该排名中，哪张脸是主体。将 `preview` 连接到 PreviewImage 以查看哪个编号对应哪个人——每个检测到的面孔都会在那里被勾勒并编号。",
+            "confirmed_pick": "已确认选择",
+            "Used when select is manual: the chosen face, one index per shot, comma separated - 0,1,1. Written by Pick faces and saved with the workflow, so it survives restarts. Clear it to be asked again. Ignored while select is one of the automatic rules.": "当选择模式为 manual 时使用：所选的面孔，每个镜头一个索引，用逗号分隔 - 例如 0,1,1。由“选择面孔”写入并随工作流保存，因此重启后仍然有效。清除后会被再次询问。当选择模式为自动规则之一时忽略。",
+            "cut_detection": "切换检测",
+            "Hard-cut detection. A cut renumbers every face, so the subject is chosen once PER SHOT rather than once for the video. Also travels downstream so the tracker does not smooth the crop across a cut.": "硬切换检测。切换会重新编号所有面孔，因此主体是每个镜头选择一次，而不是整个视频选择一次。此信息也会传递到下游，以便跟踪器不会在切换点平滑裁剪。",
+            "cut_threshold": "切换阈值",
+            "How far a frame has to stand out from its neighbours to count as a cut. 3.0 is PySceneDetect's adaptive default. Only used when cut detection is on; the report says how many shots were found.": "一帧与其相邻帧的差异程度达到多少才被视为切换。3.0 是 PySceneDetect 的自适应默认值。仅在切换检测开启时使用；报告会说明找到了多少个镜头。",
+            "skip_first_frames": "跳过前几帧",
+            "Drop this many frames from the start. The audio is cut to match, so lipsync stays aligned.": "从开头丢弃这么多帧。音频会相应裁剪，以保持口型同步。",
+            "frame_load_cap": "帧加载上限",
+            "Stop after this many frames. 0 loads everything. Remember H3 wants a count on its 17k+5 grid - 5, 22, 39 ... 226, 362.": "在此帧数后停止。0 表示加载全部。请记住 H3 需要在其 17k+5 网格上的计数 - 5, 22, 39 ... 226, 362。",
+            "select_every_nth": "每隔第 n 帧选择",
+            "Keep every nth frame. Above 1 this changes the effective frame rate, and the reported fps changes with it.": "每隔 n 帧保留一帧。大于 1 时，这会改变有效帧率，报告的 fps 也会随之改变。",
+            "identity_model": "身份模型",
+            "How a face is compared to identity_reference. insightface for photographic faces; clip_vision or ccip for illustration, where face recognition trained on photographs does poorly.": "如何将面孔与 identity_reference 进行比较。对于照片人脸，使用 insightface；对于插画，使用 clip_vision 或 ccip，因为基于照片训练的人脸识别在插画上效果不佳。",
+            "identity_threshold": "身份阈值",
+            "How close a match has to be to count as the same person. A shot where nothing reaches this is marked as not containing them, and is dropped from the render.": "匹配度达到多少才被视为同一个人。如果某个镜头中没有达到此阈值的匹配，则该镜头被标记为不包含该人物，并从渲染中丢弃。",
+            "X": "X轴",
+            "Only used by select=closest_to_xy.\n\nHorizontal position in PIXELS of the source video frame, measured from the TOP-LEFT corner, increasing to the right. On a 960x544 clip, 0 is the left edge, 960 the right, 480 the middle.\n\nThe point does not have to sit on a face: the nearest face CENTRE wins, however far away it is.": "仅用于 select=closest_to_xy。\n\n源视频帧的水平位置（以像素为单位），从左上角开始测量，向右增加。在 960x544 的片段中，0 是左边缘，960 是右边缘，480 是中间。\n\n该点不必位于面孔上：最近的面孔中心获胜，无论距离多远。",
+            "Y": "Y轴",
+            "Only used by select=closest_to_xy.\n\nVertical position in PIXELS of the source video frame, measured from the TOP-LEFT corner, increasing DOWNWARD. On a 960x544 clip, 0 is the top edge, 544 the bottom, 272 the middle.": "仅用于 select=closest_to_xy。\n\n源视频帧的垂直位置（以像素为单位），从左上角开始测量，向下增加。在 960x544 的片段中，0 是顶部边缘，544 是底部，272 是中间。",
+            "frame_index": "帧编号",
+            "Only used by select=closest_to_xy.\n\nThe frame the X, Y measurement is taken on, counting from 0 for the FIRST frame. It counts the frames this node loaded, so with skip_first_frames or select_every_nth set it counts from the first frame kept, not the first frame of the file.\n\nThe face found there is followed forwards and backwards through its shot, so pick a frame where the subject is clearly visible.": "仅用于 select=closest_to_xy。\n\n进行 X、Y 测量的帧，从第一帧开始计数为 0。它计算此节点加载的帧，因此如果设置了 skip_first_frames 或 select_every_nth，则从保留的第一帧开始计数，而不是文件的第一帧。\n\n在该帧找到的面孔会在其镜头中向前和向后跟踪，因此请选择一个主体清晰可见的帧。"
+        }
+    },
+    "H3FaceMaskSAM": {
+        "title": "H3 人脸蒙版 (SAM)",
+        "description": "在稳定裁剪上生成逐帧 SAM 人脸蒙版，并进行时间平滑。",
+        "inputs": {
+            "crops": "裁剪后图像",
+            "Wire the INPUT crops here - the 'crops' output of H3 Face Track + Crop - NOT the refined/decoded result.\n\nThis matches FaceDetailer: make_sam_mask() runs on the SOURCE image and the resulting mask is what the enhanced patch is later pasted through. Generation never feeds back into the mask.\n\nMasking the generated result instead is actively wrong: if the model nudges the face inward, the mask traces the NEW, smaller silhouette and the ORIGINAL face pokes out past it - most visibly the nose on profile shots. Masking the input covers where the face actually is in the footage being replaced.\n\nIt is also cheaper: no dependency on the sampler, so SAM need not be resident alongside the video model.": "在此处连接输入裁剪——H3 人脸跟踪 + 裁剪的“crops”输出——而不是精修/解码后的结果。\n\n这与 FaceDetailer 一致：make_sam_mask() 在源图像上运行，生成的蒙版是后续增强补丁粘贴时使用的。生成过程永远不会反馈到蒙版中。\n\n对生成结果进行蒙版处理反而是错误的：如果模型将脸向内移动，蒙版会追踪新的、更小的轮廓，原始脸会从蒙版边缘露出——在侧面镜头中尤其明显的是鼻子。对输入进行蒙版处理覆盖了被替换素材中脸实际所在的位置。\n\n这也更经济：不依赖采样器，因此 SAM 无需与视频模型同时驻留。",
+            "sam_model": "SAM模型",
+            "transform": "变换"
+        },
+        "outputs": {
+            "masks": "遮罩",
+            "report": "报告"
+        },
+        "widgets": {
+            "threshold": "阈值",
+            "dilation": "膨胀值",
+            "Mirrors FaceDetailer's sam_dilation default of 0. SAM masks are accurate, so they rarely need growing.": "与 FaceDetailer 的 sam_dilation 默认值 0 一致。SAM 蒙版很准确，因此很少需要扩张。",
+            "temporal_smooth": "时间平滑",
+            "Frames of averaging across the mask stack. 1 disables it and you will likely see the mask edge shimmer.": "蒙版堆栈上的平均帧数。1 表示禁用，您可能会看到蒙版边缘闪烁。"
+        }
+    }
+}

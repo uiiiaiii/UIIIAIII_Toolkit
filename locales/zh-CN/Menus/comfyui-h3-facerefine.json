@@ -1,0 +1,21 @@
+{
+    "style": "样式",
+    "confidence": "置信度",
+    "select": "选择",
+    "video": "视频",
+    "feather": "羽化值",
+    "blend": "混合",
+    "shot": "镜头类型",
+    "Click to choose the subject": "点击选择主体",
+    "No video. Use Browse to choose one, or paste a path into video.": "没有视频。使用“浏览”选择一个，或将路径粘贴到视频中。",
+    "detector": "检测器",
+    "Browse…": "浏览…",
+    "Pick faces": "选择人脸",
+    "Preview coordinates": "预览坐标",
+    "Cannot preview this file. Check the path.": "无法预览此文件。请检查路径。",
+    "The result is reused until the video or the detection settings": "结果会一直复用，直到视频或检测设置发生变化",
+    "Request failed:": "请求失败：",
+    "Shot": "镜头",
+    "div": "分割",
+    "detector_confidence": "检测器置信度"
+}
