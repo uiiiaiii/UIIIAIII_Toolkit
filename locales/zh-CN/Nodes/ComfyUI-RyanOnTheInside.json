@@ -2311,8 +2311,8 @@
     "FlexLatentBase": {
         "title": "Flex Latent基础⚡🅡🅞🅣🅘",
         "inputs": {
-            "latents": "潜在空间组",
-            "latent": "潜在空间",
+            "latents": "潜空间组",
+            "latent": "潜空间",
             "feature_value": "特征值",
             "strength": "强度",
             "feature_threshold": "特征阈值",
@@ -2340,9 +2340,9 @@
             "freq_range": "频率范围",
             "feature_values": "特征值",
             "transform_type": "变换类型",
-            "latent": "潜在空间",
-            "latent1": "潜在空间_1",
-            "latent2": "潜在空间_2",
+            "latent": "潜空间",
+            "latent1": "潜空间_1",
+            "latent2": "潜空间_2",
             "t": "时间"
         },
         "outputs": {
@@ -3751,7 +3751,7 @@
         "title": "ACE重绘引导⚡🅡🅞🅣🅘",
         "inputs": {
             "model": "模型",
-            "positive": "正向提示词",
+            "positive": "正面提示词",
             "negative": "负面提示词",
             "source_latents": "Latent来源",
             "latents": "Latent"
@@ -3773,7 +3773,7 @@
         "title": "ACE步数延长引导⚡🅡🅞🅣🅘",
         "inputs": {
             "model": "模型",
-            "positive": "正向提示词",
+            "positive": "正面提示词",
             "negative": "负面提示词",
             "source_latents": "Latent来源",
             "latents": "Latent"
@@ -3795,7 +3795,7 @@
         "title": "ACE步数混合引导⚡🅡🅞🅣🅘",
         "inputs": {
             "model": "模型",
-            "positive": "正向提示词",
+            "positive": "正面提示词",
             "negative": "负面提示词",
             "source_latents": "Latent来源",
             "latents": "Latent"
@@ -3866,8 +3866,8 @@
         "title": "翻唱引导器 ACE-Step 1.5 ⚡🅡🅞🅣🅘",
         "inputs": {
             "model": "模型",
-            "positive": "正向提示词",
-            "negative": "反向提示词",
+            "positive": "正面提示词",
+            "negative": "负面提示词",
             "source_latents": "源音频数据",
             "semantic_hints": "语义引导",
             "reference_latent": "风格参考"
@@ -3877,8 +3877,8 @@
         "title": "编辑引导器 ACE-Step 1.5（扩充/重绘） ⚡🅡🅞🅣🅘",
         "inputs": {
             "model": "模型",
-            "positive": "正向提示词",
-            "negative": "负向提示词",
+            "positive": "正面提示词",
+            "negative": "负面提示词",
             "source_latents": "源音频数据",
             "reference_latent": "风格参考"
         },

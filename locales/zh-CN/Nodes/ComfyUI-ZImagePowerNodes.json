@@ -29,7 +29,7 @@
     "ZSamplerTurbo //ZImagePowerNodes": {
         "inputs": {
             "model": "模型",
-            "positive": "正向条件",
+            "positive": "正面条件",
             "latent_input": "Latent输入"
         },
         "widgets": {
@@ -46,7 +46,7 @@
     "ZSamplerTurboAdvanced //ZImagePowerNodes": {
         "inputs": {
             "model": "模型",
-            "positive": "正向条件",
+            "positive": "正面条件",
             "latent_input": "Latent输入"
         },
         "widgets": {

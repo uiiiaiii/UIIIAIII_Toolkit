@@ -156,9 +156,10 @@ def build_system_prompt(target_lang: str = "zh-CN") -> str:
 - 一切英文原文的 value（标题、描述、tooltip 说明、字段名）都必须给出{lang_name}翻译，严禁原样返回英文
 - JSON 的 key 永远保持英文原文不变，只翻译 value；翻译后 value 不得与 key 相同
 
-### 术语规范（参考，按目标语言习惯调整）
+### 术语规范（参考，按目标语言习惯调整；与 ComfyUI 官方中文译法保持一致）
 - prompt → 提示词
-- negative_prompt → 反向提示词
+- positive / positive_prompt → 正面 / 正面提示词
+- negative / negative_prompt → 负面 / 负面提示词（不要用"正向/反向/负向"）
 - seed → 种子
 - steps → 步数
 - guidance/cfg → 引导系数
@@ -170,8 +171,8 @@ def build_system_prompt(target_lang: str = "zh-CN") -> str:
 - strength → 强度
 - image → 图像
 - video → 视频
-- mask → 蒙版
-- latent → 隐空间
+- mask → 遮罩（不要用"蒙版""掩码"）
+- latent → 潜空间（不要用"隐空间""潜在空间"）
 - model → 模型
 - Add Node → 新建节点
 - Save → 保存

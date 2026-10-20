@@ -1704,13 +1704,43 @@ class BackgroundFill:
 
 
 
+class _SeededNoise(int):
+    """
+    种子 / 噪声二合一对象（单个输出端口即可适配两类输入）。
+
+    同时具备两种身份：
+    - 种子值：本身是 int（python 侧 isinstance(x, int) 成立，可直接用于
+      torch.manual_seed、算术运算、JSON 序列化等），供 K 采样器 seed、
+      SamplerCustom noise_seed 等 INT 输入端使用；
+    - 噪声源：带 generate_noise() 方法，行为与内置「随机噪波」(RandomNoise)
+      完全一致（同种子生成同噪声），供「自定义采样器（高级）」等
+      NOISE 输入端使用。
+
+    因此输出类型声明为 "*"（Any），一个端口就能直连两类输入。
+    """
+
+    def __new__(cls, seed):
+        return super().__new__(cls, int(seed))
+
+    def generate_noise(self, input_latent):
+        import comfy.sample
+        latent_image = input_latent["samples"]
+        batch_inds = input_latent["batch_index"] if "batch_index" in input_latent else None
+        return comfy.sample.prepare_noise(latent_image, int(self), batch_inds)
+
+
 class RandomNoiseSeed:
     """
-    随机种子节点：输出端口与 rgthree 的 Seed (rgthree) 一致（INT / SEED）。
+    随机种子节点：单个输出端口，可直连两类输入（无需额外中转节点）。
 
-    种子值可直接接入 K 采样器等节点的 seed 输入。前端配合 JS 扩展提供
-    「🎲 随机 / ♻️ 上次」按钮（同 Efficient 插件的效率采样随机控制）：
+    - 接到 K 采样器「种子」、SamplerCustom「noise_seed」等 INT 输入：输出种子值；
+    - 接到「自定义采样器（高级）」的「噪波」等 NOISE 输入：输出由同一种子生成的
+      噪声对象（与内置「随机噪波」节点等价）。
 
+    实现方式：输出类型为 "*"（Any），返回值是 int 的子类且带 generate_noise()，
+    故两类消费者都能正确使用同一个值。
+
+    前端配合 JS 扩展提供「🎲 随机 / ♻️ 上次」按钮（同 Efficient 插件的效率采样随机控制）：
     - seed 为 -1 时表示"随机"：提交时由前端随机生成一个新种子；
     - 点击按钮可切换为"使用上次"（恢复上次使用的种子）。
     """
@@ -1731,15 +1761,17 @@ class RandomNoiseSeed:
             },
         }
 
-    RETURN_TYPES = ("INT",)
-    RETURN_NAMES = ("SEED",)
+    RETURN_TYPES = ("*",)
+    RETURN_NAMES = ("SEED / NOISE",)
+    OUTPUT_TOOLTIPS = ("Connects to both sampler seed inputs (INT, e.g. KSampler) and custom sampler noise inputs (NOISE, e.g. SamplerCustomAdvanced) - both come from the same seed",)
     FUNCTION = "get_seed"
     CATEGORY = "UIIIAIII Toolkit/Tools"
 
     def get_seed(self, noise_seed):
         # 与 rgthree 的 Seed (rgthree) 一致：原样输出种子值，
-        # 随机化由前端按钮在提交时完成（serializeValue）
-        return (noise_seed,)
+        # 随机化由前端按钮在提交时完成（serializeValue）；
+        # 返回值同时可作为 NOISE 使用（int 子类 + generate_noise）。
+        return (_SeededNoise(noise_seed),)
 
 
 # ============================================================

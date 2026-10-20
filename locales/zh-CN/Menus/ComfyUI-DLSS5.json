@@ -1,0 +1,16 @@
+{
+    "text": "文本",
+    "operation": "操作",
+    "scale": "缩放",
+    "quality": "质量",
+    "effect_strength": "特效强度",
+    "style": "样式",
+    "intensity": "强度",
+    "auto_mask": "自动蒙版",
+    "scenario": "场景",
+    "look": "外观",
+    "style_strength": "风格强度",
+    "local_structure": "局部结构",
+    "skin_structure": "皮肤结构",
+    "depth_inverted": "深度反转"
+}

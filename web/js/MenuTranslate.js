@@ -9,14 +9,81 @@ import {
   error
 } from "./utils.js";
 
+/**
+ * 节点库树的英文分类名集合（来自后端 /object_info 的原始 category）。
+ *
+ * 不能从 LiteGraph.registered_node_types 取：那里的 category 已被翻译成中文，
+ * 无法用于判断树上的英文分类名。前端 i18n / 本插件都可能改写它，
+ * 只有后端数据是语言无关的权威来源。
+ */
+let _rawCategorySegments = null;
+let _catSegmentsLoading = false;
+
+async function loadCategorySegments() {
+  if (_rawCategorySegments || _catSegmentsLoading) return;
+  _catSegmentsLoading = true;
+  try {
+    const resp = await fetch("./object_info");
+    if (!resp.ok) return;
+    const info = await resp.json();
+    const set = new Set();
+    for (const cls in info) {
+      const category = info[cls]?.category;
+      if (typeof category !== "string" || !category) continue;
+      category.replace(/\\/g, "/").split("/").forEach((seg) => {
+        const s = seg.trim();
+        if (s) set.add(s);
+      });
+    }
+    if (!set.size) return;
+    _rawCategorySegments = set;
+    // 集合就绪后重扫节点库树：修正此前因缺少集合而沿用的节点显示名
+    document.querySelectorAll(".tree-node, [role='treeitem']").forEach((el) => texe.replaceText(el));
+  } catch (e) {
+    error("加载分类名出错:", e);
+  } finally {
+    _catSegmentsLoading = false;
+  }
+}
+
 class TExe {
   static T = null;
-
   MT(txt) {
     if (isAlreadyTranslatedText(txt)) {
       return null;
     }
     return this.T?.Menu?.[txt] || this.T?.Menu?.[txt?.trim?.()];
+  }
+
+  /**
+   * 节点库树（分类 + 节点名）专用翻译。
+   *
+   * 不能用 MT（Menu 字典混杂了菜单词条，会把分类名 "sd" 命成 AlekPet 的语言代码
+   * "信德语"）。这里按语义分级：
+   *   1. 分类段 → 只认 NodeCategory 字典
+   *   2. 已知分类但字典无条目 → 保持英文原文，禁止回落到 Menu
+   *   3. 节点名 → Nodes[类名].title，其次 Menu（节点显示名）
+   */
+  MTTree(txt) {
+    if (!txt || isAlreadyTranslatedText(txt)) return null;
+    const T = this.T;
+    if (!T) return null;
+    const key = txt.trim();
+    if (!key) return null;
+
+    // 1) 分类：只认 NodeCategory 字典
+    const catT = T.NodeCategory || {};
+    if (catT[key]) return catT[key];
+
+    // 2) 已知分类但字典无条目 → 保持英文原文，禁止回落到 Menu
+    if (_rawCategorySegments?.has(key)) return null;
+
+    // 3) 节点名：优先 Nodes 字典里该类名的标题
+    const nodeTitle = T.Nodes?.[key]?.title;
+    if (nodeTitle) return nodeTitle;
+
+    // 4) 节点显示名 → Menu；分类集合未就绪时先不回落，避免把分类误译
+    return _rawCategorySegments ? this.MT(key) : null;
   }
 
   constructor() {
@@ -41,6 +108,18 @@ class TExe {
       const el = node.nodeType === Node.TEXT_NODE ? node.parentElement : node;
       if (!el || typeof el.closest !== 'function') return false;
       return this.excludeClass.some((cls) => el.closest(`.${cls}`));
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /**
+   * 目标是否位于节点库树内（分类行/节点行）
+   */
+  inTreeContext(node) {
+    try {
+      const el = node.nodeType === Node.TEXT_NODE ? node.parentElement : node;
+      return !!el?.closest?.(".tree-node, [role='treeitem']");
     } catch (e) {
       return false;
     }
@@ -105,6 +184,10 @@ class TExe {
       if (!target) return;
       if (!this.T) return;
       if (this.tSkip(target)) return;
+
+      // 节点库树内的文本按“分类/节点名”语义翻译，不能走全局 Menu 词典
+      const inTree = this.inTreeContext(target);
+      const translate = inTree ? (t) => this.MTTree(t) : (t) => this.MT(t);
       
       if (target.textContent && nativeTranslatedSettings.includes(target.textContent)) {
         return;
@@ -125,14 +208,14 @@ class TExe {
       
       if (target.nodeType === Node.TEXT_NODE) {
         if (target.nodeValue && !isAlreadyTranslatedText(target.nodeValue)) {
-          const translated = this.MT(target.nodeValue);
+          const translated = translate(target.nodeValue);
           if (translated) {
             target.nodeValue = translated;
           }
         }
       } else if (target.nodeType === Node.ELEMENT_NODE) {
         if (target.title && !isAlreadyTranslatedText(target.title)) {
-          const titleTranslated = this.MT(target.title);
+          const titleTranslated = translate(target.title);
           if (titleTranslated) {
             target.title = titleTranslated;
           }
@@ -140,7 +223,7 @@ class TExe {
 
         if (target.nodeName === "INPUT" && target.type === "button" && 
             !isAlreadyTranslatedText(target.value)) {
-          const valueTranslated = this.MT(target.value);
+          const valueTranslated = translate(target.value);
           if (valueTranslated) {
             target.value = valueTranslated;
           }
@@ -148,7 +231,7 @@ class TExe {
 
         if (target.innerText && !isAlreadyTranslatedText(target.innerText) &&
             (!target.children || target.children.length === 0)) {
-          const innerTextTranslated = this.MT(target.innerText);
+          const innerTextTranslated = translate(target.innerText);
           if (innerTextTranslated) {
             target.innerText = innerTextTranslated;
           }
@@ -224,6 +307,7 @@ export function applyMenuTranslation(T) {
   try {
     texe.cleanupObservers();
     texe.T = T;
+    loadCategorySegments();
     
     texe.translateAllText(document.querySelector(".litegraph"));
     
@@ -574,7 +658,7 @@ function translateTreeLabels(treeRoot) {
       const txt = textNode.textContent?.trim();
       if (!txt) continue;
       if (isAlreadyTranslatedText(txt)) continue;
-      const translated = texe.MT(txt);
+      const translated = texe.MTTree(txt);
       if (translated && translated !== txt) {
         textNode.textContent = textNode.textContent.replace(txt, translated);
       }

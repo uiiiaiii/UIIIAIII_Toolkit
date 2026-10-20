@@ -427,7 +427,7 @@
         },
         "outputs": {
             "pipe": "节点束",
-            "latent": "隐空间",
+            "latent": "潜空间",
             "sigma": "Sigma"
         },
         "widgets": {
@@ -451,7 +451,7 @@
         },
         "outputs": {
             "pipe": "节点束",
-            "latent": "隐空间",
+            "latent": "潜空间",
             "conditioning": "条件"
         },
         "widgets": {
@@ -464,7 +464,7 @@
         "inputs": {
             "pipe_to_noise": "噪波节点束",
             "image_to_latent": "图像转Latent",
-            "latent": "隐空间",
+            "latent": "潜空间",
             "noise": "噪声",
             "mask": "遮罩图像"
         },
@@ -545,7 +545,7 @@
         "outputs": {
             "pipe": "节点束",
             "image": "图像",
-            "latent": "隐空间"
+            "latent": "潜空间"
         },
         "widgets": {
             "model_name": "模型名称",
@@ -1137,7 +1137,7 @@
         "title": "应用Fooocus局部重绘",
         "inputs": {
             "model": "模型",
-            "latent": "隐空间"
+            "latent": "潜空间"
         },
         "outputs": {
             "model": "模型"
@@ -1226,10 +1226,10 @@
             "clip": "CLIP",
             "positive": "积极情感",
             "negative": "消极情感",
-            "latent": "隐空间"
+            "latent": "潜空间"
         },
         "widgets": {
-            "The number of latent images in the batch.": "批次中隐空间图像的数量。",
+            "The number of latent images in the batch.": "批次中潜空间图像的数量。",
             "ckpt_name": "模型名称",
             "config_name": "配置名称",
             "vae_name": "VAE",
@@ -1262,7 +1262,7 @@
             "vae": "Vae"
         },
         "widgets": {
-            "The number of latent images in the batch.": "批次中隐空间图像的数量。",
+            "The number of latent images in the batch.": "批次中潜空间图像的数量。",
             "ckpt_name": "模型名称",
             "vae_name": "VAE",
             "clip_skip": "CLIP Skip",
@@ -1290,7 +1290,7 @@
             "vae": "Vae"
         },
         "widgets": {
-            "The number of latent images in the batch.": "批次中隐空间图像的数量。",
+            "The number of latent images in the batch.": "批次中潜空间图像的数量。",
             "ckpt_name": "模型名称",
             "vae_name": "VAE",
             "clip_skip": "CLIP Skip",
@@ -1522,7 +1522,7 @@
             "vae": "Vae"
         },
         "widgets": {
-            "The number of latent images in the batch.": "批次中隐空间图像的数量。",
+            "The number of latent images in the batch.": "批次中潜空间图像的数量。",
             "ckpt_name": "模型名称",
             "vae_name": "VAE",
             "positive": "积极情感",
@@ -2308,7 +2308,7 @@
             "model": "模型",
             "pos": "正面条件",
             "neg": "负值",
-            "latent": "隐空间",
+            "latent": "潜空间",
             "vae": "Vae",
             "clip": "CLIP",
             "image": "图像",
@@ -2328,7 +2328,7 @@
             "model": "模型",
             "pos": "正面条件",
             "neg": "负值",
-            "latent": "隐空间",
+            "latent": "潜空间",
             "vae": "Vae",
             "clip": "CLIP",
             "image": "图像",
@@ -2342,7 +2342,7 @@
             "model": "模型",
             "pos": "正面条件",
             "neg": "负值",
-            "latent": "隐空间",
+            "latent": "潜空间",
             "vae": "Vae",
             "clip": "CLIP",
             "image": "图像"
@@ -2352,7 +2352,7 @@
             "model": "模型",
             "pos": "正面条件",
             "neg": "负值",
-            "latent": "隐空间",
+            "latent": "潜空间",
             "vae": "Vae",
             "clip": "CLIP",
             "image": "图像"
@@ -2449,7 +2449,7 @@
         "inputs": {
             "pipe": "节点束",
             "image_to_latent": "图像转Latent",
-            "latent": "隐空间"
+            "latent": "潜空间"
         },
         "outputs": {
             "pipe": "节点束"
@@ -2468,7 +2468,7 @@
         "inputs": {
             "pipe": "节点束",
             "image_to_latent": "图像转Latent",
-            "latent": "隐空间"
+            "latent": "潜空间"
         },
         "outputs": {
             "pipe": "节点束"
@@ -2510,7 +2510,7 @@
         "inputs": {
             "pipe": "节点束",
             "image_to_latent": "图像转Latent",
-            "latent": "隐空间",
+            "latent": "潜空间",
             "optional_sampler": "采样器(可选)",
             "optional_sigmas": "Sigmas(可选)"
         },
@@ -2518,7 +2518,7 @@
             "pipe": "节点束"
         },
         "widgets": {
-            "cfg_negative": "反向引导系数",
+            "cfg_negative": "负面引导系数",
             "coeff": "系数",
             "guider": "引导器",
             "cfg": "CFG",
@@ -2626,7 +2626,7 @@
         "inputs": {
             "pipe": "节点束",
             "image_to_latent": "图像转Latent",
-            "latent": "隐空间"
+            "latent": "潜空间"
         },
         "outputs": {
             "pipe": "节点束"
@@ -2847,7 +2847,7 @@
             "model": "模型",
             "positive": "积极情感",
             "negative": "消极情感",
-            "latent": "隐空间",
+            "latent": "潜空间",
             "vae": "Vae",
             "clip": "CLIP",
             "xyPlot": "xy图表",
@@ -2859,7 +2859,7 @@
             "model": "模型",
             "positive": "积极情感",
             "negative": "消极情感",
-            "latent": "隐空间",
+            "latent": "潜空间",
             "vae": "Vae",
             "clip": "CLIP",
             "seed": "随机种子"
@@ -3059,7 +3059,7 @@
         },
         "outputs": {
             "pipe": "节点束",
-            "latent": "隐空间"
+            "latent": "潜空间"
         },
         "widgets": {
             "steps": "步进",
@@ -3297,7 +3297,7 @@
         }
     },
     "easy XYInputs: PositiveCond": {
-        "title": "XY 输入：正向条件 //简易使用",
+        "title": "XY 输入：正面条件 //简易使用",
         "inputs": {
             "positive_1": "正面条件1",
             "positive_2": "正面条件2",
@@ -3309,7 +3309,7 @@
         }
     },
     "easy XYInputs: NegativeCond": {
-        "title": "XY 输入：反向条件 //简易使用",
+        "title": "XY 输入：负面条件 //简易使用",
         "inputs": {
             "negative_1": "负面条件_1",
             "negative_2": "负面条件_2",
@@ -3506,7 +3506,7 @@
         }
     },
     "easy XYInputs: PositiveCondList": {
-        "title": "XY 输入：正向条件列表 //简易使用",
+        "title": "XY 输入：正面条件列表 //简易使用",
         "inputs": {
             "positive": "积极情感"
         },
@@ -3515,7 +3515,7 @@
         }
     },
     "easy XYInputs: NegativeCondList": {
-        "title": "XY 输入：反向条件列表 //简易使用",
+        "title": "XY 输入：负面条件列表 //简易使用",
         "inputs": {
             "negative": "消极情感"
         },

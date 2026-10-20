@@ -186,10 +186,7 @@
             "🔄 refresh from Temp": "🔄 从临时目录刷新",
             "🔄 refresh from Output": "🔄 从输出目录刷新"
         },
-        "outputs": {
-            "图像": "处理后图像",
-            "遮罩": "遮罩数据"
-        }
+        "outputs": {}
     },
     "LG_Noise": {
         "title": "🎈LG_噪点",

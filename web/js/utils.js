@@ -7,8 +7,11 @@ export function error(...args) {
     console.error("[Translation-node]", ...args);
 }
 
+// 初始默认值必须为 false：真实值由 initConfig() 异步从服务端读取。
+// 若默认 true，配置尚未加载完成时 setup() 会误判为"已启用"而提前安装翻译钩子，
+// 造成切换开关后界面状态与配置不一致。
 export let currentConfig = {
-    translation_enabled: true,
+    translation_enabled: false,
     locale: "zh-CN",
     button_style: "plain",
     disabled_plugins: [],

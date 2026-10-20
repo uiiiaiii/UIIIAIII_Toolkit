@@ -31,52 +31,51 @@ export class TUtils {
   static async syncTranslation(OnFinished = () => {}) {
     try {
       translatedValueSet.clear();
-      
-      if (!isTranslationEnabled()) {
-        TUtils.T = { Menu: {}, Nodes: {}, NodeCategory: {} };
-        OnFinished();
-        return;
-      }
-      
+      const enabled = isTranslationEnabled();
+
+      // 无论开关状态都要拉取字典：
+      //  - 开启：用于应用译文
+      //  - 关闭：用于识别界面/工作流中残留的旧译文并还原为英文原文
+      //    （历史版本会把译文 label 写进工作流 JSON，关闭后需要据此清理）
+      const dict = { Menu: {}, Nodes: {}, NodeCategory: {} };
+
       try {
         const response = await fetch("./translation_node/get_translation", {
           method: "POST",
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
           body: `locale=${currentConfig.locale}`
         });
-        
+
         if (!response.ok) {
           throw new Error(`请求翻译数据失败: ${response.status} ${response.statusText}`);
         }
-        
+
         const resp = await response.json();
-        for (var key in TUtils.T) {
-          if (key in resp) TUtils.T[key] = resp[key];
-          else TUtils.T[key] = {};
+        for (var key in dict) {
+          dict[key] = (resp && resp[key]) || {};
         }
 
         // 合并分类到菜单中
-        TUtils.T.Menu = Object.assign(TUtils.T.Menu || {}, TUtils.T.NodeCategory || {});
-        
+        dict.Menu = Object.assign(dict.Menu || {}, dict.NodeCategory || {});
+
         // 提取 Node 中 key 到 Menu
-        for (let key in TUtils.T.Nodes) {
-          let node = TUtils.T.Nodes[key];
+        for (let key in dict.Nodes) {
+          let node = dict.Nodes[key];
           if(node && node["title"]) {
-            TUtils.T.Menu = TUtils.T.Menu || {};
-            TUtils.T.Menu[key] = node["title"] || key;
+            dict.Menu[key] = node["title"] || key;
           }
         }
-        
+
         // ---- 构建判断用的 Set，提取所有字典内容 ----
-        for (const dict of [TUtils.T.Menu, TUtils.T.NodeCategory]) {
-          if (!dict) continue;
-          for (const [key, val] of Object.entries(dict)) {
+        for (const d of [dict.Menu, dict.NodeCategory]) {
+          if (!d) continue;
+          for (const [key, val] of Object.entries(d)) {
             // 跳过 value==key：英文原样不算翻译，避免该英文词被判为"已翻译"而永远跳过
             if (val && typeof val === 'string' && key !== val) translatedValueSet.add(val);
           }
         }
-        for (const nodeKey in TUtils.T.Nodes) {
-          const nodeDict = TUtils.T.Nodes[nodeKey];
+        for (const nodeKey in dict.Nodes) {
+          const nodeDict = dict.Nodes[nodeKey];
           if (!nodeDict) continue;
           if (nodeDict.title && typeof nodeDict.title === 'string' && nodeDict.title !== nodeKey) translatedValueSet.add(nodeDict.title);
           for (const cat of ['inputs', 'outputs', 'widgets']) {
@@ -88,10 +87,14 @@ export class TUtils {
             }
           }
         }
-        
+
       } catch (e) {
         error("获取翻译数据失败:", e);
       }
+
+      // 关闭状态下字典对外不可用（TUtils.T 置空），避免误应用；
+      // 但 translatedValueSet 已保留，供还原逻辑识别残留译文。
+      TUtils.T = enabled ? dict : { Menu: {}, Nodes: {}, NodeCategory: {} };
 
       // 暴露当前翻译字典给其他模块（顶部按钮等按字典显示译文）
       window.__UiTranslated = TUtils.T;
@@ -111,9 +114,21 @@ export class TUtils {
    */
   static translateNodeWidgetLabels(node) {
     try {
-      if (!isTranslationEnabled()) return;
       const widgets = node?.widgets;
       if (!widgets || !widgets.length) return;
+
+      if (!isTranslationEnabled()) {
+        // 关闭翻译：还原先前被改写的控件显示名（label 可能来自运行时改写，需原样回退）
+        for (const w of widgets) {
+          if (!w || w._uiiaiii_tl_orig === undefined) continue;
+          if (w._uiiaiii_tl_orig === null) delete w.label;
+          else w.label = w._uiiaiii_tl_orig;
+          delete w._uiiaiii_tl_orig;
+          delete w._uiiaiii_tl;
+        }
+        return;
+      }
+
       const menuT = this.T.Menu || {};
       const nodesT = this.T.Nodes || {};
       const classType = node.constructor?.comfyClass || node.constructor?.type;
@@ -128,6 +143,10 @@ export class TUtils {
         if (isAlreadyTranslatedText(shown)) continue;   // 已是译文
         const translated = widgetDict[shown] || menuT[shown];
         if (translated && translated !== shown) {
+          // 仅首次改写时记录原文（null 表示原本没有 label，显示名取 name）
+          if (w._uiiaiii_tl_orig === undefined) {
+            w._uiiaiii_tl_orig = (typeof w.label === "string" && w.label) ? w.label : null;
+          }
           w.label = translated;
         }
       }
@@ -170,13 +189,25 @@ export class TUtils {
       let nodesT = this.T.Nodes;
       var nodeType = LiteGraph.registered_node_types[nodeName];
       if (!nodeType) return;
-      
+
       let class_type = nodeType.comfyClass ? nodeType.comfyClass : nodeType.type;
-      if (nodesT.hasOwnProperty(class_type)) {
-        const hasNativeTranslation = nodeType.title && isAlreadyTranslatedText(nodeType.title);
-        if (!hasNativeTranslation && nodesT[class_type]["title"]) {
-          nodeType.title = nodesT[class_type]["title"];
+
+      // 记录原型层英文原文标题（仅一次），供关闭翻译时还原
+      if (nodeType._uiiaiii_orig_title === undefined) {
+        nodeType._uiiaiii_orig_title = nodeType.title;
+      }
+      const origTitle = nodeType._uiiaiii_orig_title;
+
+      if (!isTranslationEnabled()) {
+        if (origTitle !== undefined && nodeType.title !== origTitle) {
+          nodeType.title = origTitle;
         }
+        return;
+      }
+
+      const zhTitle = nodesT.hasOwnProperty(class_type) ? nodesT[class_type]["title"] : null;
+      if (zhTitle && nodeType.title !== zhTitle) {
+        nodeType.title = zhTitle;
       }
     } catch (e) {
       error(`为节点类型 ${nodeName} 应用翻译失败:`, e);
@@ -217,7 +248,7 @@ export class TUtils {
 
   static applyNodeTypeTranslation(app) {
     try {
-      if (!isTranslationEnabled()) return;
+      // 不在此判断开关：由 applyNodeTypeTranslationEx 内部按开关应用或还原
       for (let nodeName in LiteGraph.registered_node_types) {
         this.applyNodeTypeTranslationEx(nodeName);
       }
@@ -258,6 +289,24 @@ export class TUtils {
     }
   }
 
+  /**
+   * 应用端口（inputs/outputs）显示名译文。
+   *
+   * 关键原则：译文只写入自定义属性 _uiiaiii_label，**绝不写 slot.label**。
+   * LiteGraph 序列化会把 slot.label 写进工作流 JSON，一旦改写就会持久污染
+   * （关闭翻译后重新加载工作流仍显示中文）。显示层的译文由 patchNodeDrawing()
+   * 在绘制瞬间临时映射到 label，序列化数据始终只含英文原名。
+   * （widgets 的 label 不参与序列化，故仍可照常改写。）
+   */
+  static applySlotTranslation(item, translation) {
+    if (!item || !translation || translation === item.name) return;
+    // 历史污染：label 曾是被写进工作流的译文 → 内存中恢复英文原名，改由 _uiiaiii_label 承担显示
+    if (typeof item.label === "string" && item.label !== item.name && isAlreadyTranslatedText(item.label)) {
+      item.label = item.name;
+    }
+    item._uiiaiii_label = translation;
+  }
+
   static applyNodeTranslation(node) {
     try {
       if (!node || !node.constructor) return;
@@ -273,17 +322,26 @@ export class TUtils {
           if (!node.hasOwnProperty(key)) continue;
           if (!node[key] || !Array.isArray(node[key])) continue;
           node[key].forEach((item) => {
+            if (!item) return;
+            delete item._uiiaiii_label;   // 撤销显示层译文（序列化数据本就不受影响）
             if (item._original_name) {
               this.restoreOriginalTranslation(item);
+            } else if (typeof item.label === "string" && item.label !== item.name && isAlreadyTranslatedText(item.label)) {
+              // 无原文记录、但 label 是已知译文（工作流里残留的旧译文）→ 回退为英文原名
+              item.label = item.name;
             }
           });
         }
-        
-        if (node._original_title && !node._translation_custom_title) {
-          node.title = node._original_title;
-          node.constructor.title = node._original_title;
-          delete node._original_title;
+
+        // 标题还原：撤销显示层译文；若工作流里残留的是旧译文标题，一并回退为英文原名
+        delete node._uiiaiii_title;
+        if (!node._translation_custom_title && node.title && isAlreadyTranslatedText(node.title)) {
+          node.title = node._original_title
+            || node.constructor._uiiaiii_orig_title
+            || node.constructor.comfyClass
+            || node.constructor.type;
         }
+        delete node._original_title;
         return;
       }
       
@@ -305,25 +363,27 @@ export class TUtils {
             translation = menuT[item.name] || (item.label && menuT[item.label]) || null;
           }
           if (translation) {
-            const hasNativeTranslation = item.label && isAlreadyTranslatedText(item.label) && !item._original_name;
-            if (!hasNativeTranslation) {
-              this.safeApplyTranslation(item, translation);
+            if (key === "widgets") {
+              // widgets 的 label 不参与序列化，可直接改写
+              const hasNativeTranslation = item.label && isAlreadyTranslatedText(item.label) && !item._original_name;
+              if (!hasNativeTranslation) {
+                this.safeApplyTranslation(item, translation);
+              }
+            } else {
+              // inputs/outputs：译文只存自定义属性 _uiiaiii_label，绝不写 slot.label，
+              // 否则会被 LiteGraph 序列化进工作流 JSON 造成持久污染
+              this.applySlotTranslation(item, translation);
             }
           }
         });
       }
       
       if (t.hasOwnProperty("title")) {
-        const hasNativeTranslation = node.title && isAlreadyTranslatedText(node.title);
-        const isCustomizedTitle = node._translation_custom_title || 
-          (node.title && node.title !== (node.constructor.comfyClass || node.constructor.type) && node.title !== t["title"]);
-        
-        if (!isCustomizedTitle && !hasNativeTranslation) {
-          if (!node._original_title) {
-            node._original_title = node.constructor.comfyClass || node.constructor.type;
-          }
-          node.title = t["title"];
-          node.constructor.title = t["title"];
+        // 仅当用户在界面上显式改过标题时才跳过翻译（由 setTitle/loadedGraphNode 标记），
+        // 不再用"标题不等于类名"之类的启发式判断：那会把英文显示名误判为自定义标题，导致标题永不翻译
+        // 译文同样只写自定义属性 _uiiaiii_title：node.title 会被序列化进工作流，不能改写
+        if (!node._translation_custom_title) {
+          node._uiiaiii_title = t["title"];
         }
       }
       
@@ -338,7 +398,7 @@ export class TUtils {
           this.inputs.forEach((i) => {
             if (oldInputs.includes(i.name)) return;
             if (t["widgets"] && i.widget?.name in t["widgets"]) {
-              TUtils.safeApplyTranslation(i, t["widgets"][i.widget?.name]);
+              TUtils.applySlotTranslation(i, t["widgets"][i.widget?.name]);
             }
           });
         }
@@ -354,7 +414,7 @@ export class TUtils {
         let t = TUtils.T.Nodes[this.comfyClass];
         if (t?.["widgets"] && slot.name in t["widgets"]) {
           if (TUtils.needsTranslation(slot)) {
-            slot.localized_name = t["widgets"][slot.name];
+            TUtils.applySlotTranslation(slot, t["widgets"][slot.name]);
           }
         }
         return res;
@@ -609,6 +669,52 @@ export class TUtils {
       error("添加节点标题监听失败:", e);
     }
   }
+
+  /**
+   * 绘制前把显示层译文映射到 LiteGraph 真正读取的字段（slot.label / node.title），绘制后立刻还原。
+   *
+   * 为什么需要：本插件把译文存放在自定义属性 _uiiaiii_label / _uiiaiii_title 中，
+   * 而 LiteGraph 绘制端口名与节点标题时读取的是 slot.label / node.title。
+   * 在绘制瞬间临时映射，界面即可显示译文，同时 label / title 在任何时刻都保持英文原文，
+   * 从结构上杜绝译文被序列化进工作流——无需拦截序列化，也无需事后清理。
+   */
+  static patchNodeDrawing() {
+    try {
+      if (typeof LGraphCanvas === "undefined" || LGraphCanvas.prototype._uiiaiii_draw_patched) return;
+      const origDrawNode = LGraphCanvas.prototype.drawNode;
+      if (typeof origDrawNode !== "function") return;
+
+      LGraphCanvas.prototype.drawNode = function (node) {
+        if (!node) return origDrawNode.apply(this, arguments);
+        const restore = [];
+
+        if (node._uiiaiii_title !== undefined) {
+          restore.push([node, "title", node.title]);
+          node.title = node._uiiaiii_title;
+        }
+
+        const applySlot = (slot) => {
+          if (slot && slot._uiiaiii_label !== undefined) {
+            restore.push([slot, "label", slot.label]);
+            slot.label = slot._uiiaiii_label;
+          }
+        };
+        if (Array.isArray(node.inputs)) node.inputs.forEach(applySlot);
+        if (Array.isArray(node.outputs)) node.outputs.forEach(applySlot);
+
+        try {
+          return origDrawNode.apply(this, arguments);
+        } finally {
+          for (const [obj, key, val] of restore) {
+            obj[key] = val;
+          }
+        }
+      };
+      LGraphCanvas.prototype._uiiaiii_draw_patched = true;
+    } catch (e) {
+      error("拦截节点绘制失败:", e);
+    }
+  }
 }
 
 const ext = {
@@ -629,14 +735,18 @@ const ext = {
   async setup(app) {
     try {      
       TUtils.addNodeTitleMonitoring(app);
-      
-      if (isTranslationEnabled()) {
-        TUtils.applyNodeTypeTranslation(app);
-        TUtils.applyContextMenuTranslation(app);
-        TUtils.applyMenuTranslation(app);
-        TUtils.addRegisterNodeDefCB(app);
-      }
-      
+
+      // 绘制瞬间把译文映射到 label / title（绘制后还原），译文本身永不写入这些会被序列化的字段
+      TUtils.patchNodeDrawing();
+
+      // 节点标题按开关应用或还原（函数内部自行判断开关）
+      TUtils.applyNodeTypeTranslation(app);
+
+      // 以下函数均按开关决定是否安装翻译钩子（关闭时内部提前返回，不做任何改写）
+      TUtils.applyContextMenuTranslation(app);
+      TUtils.applyMenuTranslation(app);
+      TUtils.addRegisterNodeDefCB(app);
+
       addPanelButtons(app);
       setupPluginManager();
     } catch (e) {
@@ -664,11 +774,13 @@ const ext = {
   
   loadedGraphNode(node, app) {
     try {
-      const originalTitle = node.constructor.comfyClass || node.constructor.type;
-      const nodeT = TUtils.T.Nodes[originalTitle];
+      // 英文原文标题取原型层记录值（由 applyNodeTypeTranslationEx 保存）。
+      // 未记录时不做自定义判断：避免把英文显示名误判为用户自定义标题而阻断翻译。
+      const origTitle = node.constructor._uiiaiii_orig_title;
+      const nodeT = TUtils.T.Nodes[node.constructor.comfyClass || node.constructor.type];
       const translatedTitle = nodeT?.title;
-      
-      if (node.title && node.title !== originalTitle && node.title !== translatedTitle) {
+
+      if (origTitle !== undefined && node.title && node.title !== origTitle && node.title !== translatedTitle) {
         node._translation_custom_title = true;
       }
       TUtils.applyNodeTranslation(node);

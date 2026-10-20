@@ -17,8 +17,8 @@
         "inputs": {
             "sam3_model": "SAM3 模型",
             "images": "图像",
-            "coordinates_positive": "正向点坐标",
-            "coordinates_negative": "负向点坐标",
+            "coordinates_positive": "正面点坐标",
+            "coordinates_negative": "负面点坐标",
             "bboxes": "边界框",
             "mask": "遮罩"
         },
@@ -44,8 +44,8 @@
             "video_frames": "视频帧",
             "session_id": "会话 ID",
             "extra_config": "SAM3 模型配置",
-            "positive_coords": "正向坐标",
-            "negative_coords": "负向坐标",
+            "positive_coords": "正面坐标",
+            "negative_coords": "负面坐标",
             "bbox": "边界框"
         },
         "widgets": {
@@ -155,8 +155,8 @@
             "preview_rescale": "预览缩放"
         },
         "outputs": {
-            "positive_coords": "正向坐标",
-            "negative_coords": "负向坐标",
+            "positive_coords": "正面坐标",
+            "negative_coords": "负面坐标",
             "bboxes": "边界框",
             "frame_index": "帧索引"
         }

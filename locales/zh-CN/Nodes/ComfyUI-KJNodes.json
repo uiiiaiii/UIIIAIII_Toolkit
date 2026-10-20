@@ -2037,8 +2037,8 @@
         "description": "https://github.com/NUS-HPC-AI-Lab/Enhance-A-Video",
         "inputs": {
             "model": "模型",
-            "latent": "隐空间",
-            "Only used to get the latent count": "仅用于获取隐空间数量"
+            "latent": "潜空间",
+            "Only used to get the latent count": "仅用于获取潜空间数量"
         },
         "outputs": {
             "model": "模型"
@@ -2060,11 +2060,11 @@
         },
         "widgets": {
             "nag_scale": "NAG缩放",
-            "Strength of negative guidance effect": "反向引导效果的强度",
+            "Strength of negative guidance effect": "负面引导效果的强度",
             "nag_alpha": "网络_alpha",
-            "Mixing coefficient in that controls the balance between the normalized guided representation and the original positive representation.": "控制归一化引导表示与原始正向表示之间平衡的混合系数。",
+            "Mixing coefficient in that controls the balance between the normalized guided representation and the original positive representation.": "控制归一化引导表示与原始正面表示之间平衡的混合系数。",
             "nag_tau": "网络_tau",
-            "Clipping threshold that controls how much the guided attention can deviate from the positive attention.": "控制引导注意力与正向注意力偏差程度的裁剪阈值。",
+            "Clipping threshold that controls how much the guided attention can deviate from the positive attention.": "控制引导注意力与正面注意力偏差程度的裁剪阈值。",
             "input_type": "输入类型",
             "Type of the model input": "模型输入类型",
             "inplace": "原地操作",
@@ -2185,7 +2185,7 @@
     },
     "GetLatentsFromBatchIndexed": {
         "title": "按索引获取Latent",
-        "description": "选择并返回指定索引处的隐空间，作为隐空间批次。",
+        "description": "选择并返回指定索引处的潜空间，作为潜空间批次。",
         "inputs": {
             "latents": "Latents"
         },
@@ -2596,7 +2596,7 @@
         "outputs": {
             "positive": "积极情感",
             "negative": "消极情感",
-            "latent": "隐空间"
+            "latent": "潜空间"
         },
         "widgets": {
             "width": "宽度",
@@ -2618,7 +2618,7 @@
         "outputs": {
             "positive": "积极情感",
             "negative": "消极情感",
-            "latent": "隐空间"
+            "latent": "潜空间"
         },
         "widgets": {
             "width": "宽度",
@@ -2883,8 +2883,8 @@
         "description": "Extends the potential frame count of HunyuanVideo using this method: https://github.com/thu-ml/RIFLEx",
         "inputs": {
             "model": "模型",
-            "latent": "隐空间",
-            "Only used to get the latent count": "仅用于获取隐空间数量"
+            "latent": "潜空间",
+            "Only used to get the latent count": "仅用于获取潜空间数量"
         },
         "outputs": {
             "MODEL": "模型"
@@ -2899,8 +2899,8 @@
         "description": "Extends the potential frame count of HunyuanVideo using this method: https://github.com/thu-ml/RIFLEx",
         "inputs": {
             "model": "模型",
-            "latent": "隐空间",
-            "Only used to get the latent count": "仅用于获取隐空间数量"
+            "latent": "潜空间",
+            "Only used to get the latent count": "仅用于获取潜空间数量"
         },
         "outputs": {
             "MODEL": "模型"
@@ -3007,14 +3007,14 @@
         "title": "Leapfusion Hunyuan I2V 修补器",
         "inputs": {
             "model": "模型",
-            "latent": "隐空间"
+            "latent": "潜空间"
         },
         "outputs": {
             "MODEL": "模型"
         },
         "widgets": {
             "index": "索引",
-            "The index of the latent to be replaced. 0 for first frame and -1 for last": "要替换的隐空间索引。0 表示第一帧，-1 表示最后一帧",
+            "The index of the latent to be replaced. 0 for first frame and -1 for last": "要替换的潜空间索引。0 表示第一帧，-1 表示最后一帧",
             "start_percent": "起始百分比",
             "The start percentage of steps to apply": "应用步数的起始百分比",
             "end_percent": "结束百分比",
@@ -3114,10 +3114,10 @@
         "title": "获取Latent大小及数量",
         "description": "Returns latent tensor dimensions,  \nand passes the latent through unchanged.",
         "inputs": {
-            "latent": "隐空间"
+            "latent": "潜空间"
         },
         "outputs": {
-            "latent": "隐空间",
+            "latent": "潜空间",
             "batch_size": "批次大小",
             "channels": "通道",
             "frames": "分帧",
@@ -3169,7 +3169,7 @@
             "model": "模型",
             "positive": "积极情感",
             "negative": "消极情感",
-            "latent": "隐空间"
+            "latent": "潜空间"
         },
         "widgets": {
             "num_frames": "帧数",
@@ -3235,8 +3235,8 @@
         "description": "https://github.com/NUS-HPC-AI-Lab/Enhance-A-Video",
         "inputs": {
             "model": "模型",
-            "latent": "隐空间",
-            "Only used to get the latent count": "仅用于获取隐空间数量"
+            "latent": "潜空间",
+            "Only used to get the latent count": "仅用于获取潜空间数量"
         },
         "outputs": {
             "model": "模型"
@@ -3319,11 +3319,11 @@
         },
         "widgets": {
             "nag_scale": "NAG缩放",
-            "Strength of negative guidance effect": "反向引导效果的强度",
+            "Strength of negative guidance effect": "负面引导效果的强度",
             "nag_alpha": "网络_alpha",
-            "Mixing coefficient in that controls the balance between the normalized guided representation and the original positive representation.": "控制归一化引导表示与原始正向表示之间平衡的混合系数。",
+            "Mixing coefficient in that controls the balance between the normalized guided representation and the original positive representation.": "控制归一化引导表示与原始正面表示之间平衡的混合系数。",
             "nag_tau": "网络_tau",
-            "Clipping threshold that controls how much the guided attention can deviate from the positive attention.": "控制引导注意力与正向注意力偏差程度的裁剪阈值。",
+            "Clipping threshold that controls how much the guided attention can deviate from the positive attention.": "控制引导注意力与正面注意力偏差程度的裁剪阈值。",
             "inplace": "原地操作",
             "If true, modifies tensors in place to save memory. Leads to different numerical results which may change the output slightly.": "如果为 true，则原地修改张量以节省内存。会导致不同的数值结果，可能略微改变输出。"
         }
@@ -3372,7 +3372,7 @@
             "Interpolation method for resizing.": "调整大小使用的插值方法。"
         },
         "outputs": {
-            "latent": "隐空间",
+            "latent": "潜空间",
             "audio": "音频",
             "fps": "帧率",
             "frame_count": "帧数",
@@ -3400,16 +3400,16 @@
         "description": "Video latent VAE decoding to fix artifacts on loop seams.",
         "inputs": {
             "samples": "Latent",
-            "The latent to be decoded.": "要解码的隐空间。",
+            "The latent to be decoded.": "要解码的潜空间。",
             "vae": "Vae",
-            "The VAE model used for decoding the latent.": "用于解码隐空间的 VAE 模型。"
+            "The VAE model used for decoding the latent.": "用于解码潜空间的 VAE 模型。"
         },
         "outputs": {
             "IMAGE": "图像",
             "The decoded images.": "解码后的图像。"
         },
         "widgets": {
-            "overlap_latent_frames": "重叠隐空间帧数",
+            "overlap_latent_frames": "重叠潜空间帧数",
             "Number of frames to blend for seamless loop, for Wan 2 works and HunyuanVideo 1.5 should use 4": "用于无缝循环混合的帧数，对于 Wan 2 有效，HunyuanVideo 1.5 应使用 4"
         }
     },
@@ -3463,19 +3463,19 @@
     },
     "LTXVAddGuidesFromBatch": {
         "title": "LTXV 从批次添加引导",
-        "description": "从批次中向隐空间添加多个引导图像，并对应帧索引。批次中的非黑色图像用作引导。",
+        "description": "从批次中向潜空间添加多个引导图像，并对应帧索引。批次中的非黑色图像用作引导。",
         "inputs": {
             "positive": "积极情感",
             "negative": "消极情感",
             "vae": "Vae",
-            "latent": "隐空间",
+            "latent": "潜空间",
             "images": "图片",
             "Batch of images - non-black images will be used as guides": "图像批次 - 非黑色图像将用作引导"
         },
         "outputs": {
             "positive": "积极情感",
             "negative": "消极情感",
-            "latent": "隐空间"
+            "latent": "潜空间"
         },
         "widgets": {
             "strength": "强度",
@@ -3522,12 +3522,12 @@
         }
     },
     "LatentInpaintTTM": {
-        "title": "隐空间修复 TTM",
+        "title": "潜空间修复 TTM",
         "description": "https://github.com/time-to-move/TTM",
         "inputs": {
             "model": "模型",
             "mask": "遮罩图像",
-            "Latent mask where white (1.0) is the area to inpaint and black (0.0) is the area to keep unchanged.": "隐空间蒙版，其中白色 (1.0) 为要修复的区域，黑色 (0.0) 为保持不变的区域。"
+            "Latent mask where white (1.0) is the area to inpaint and black (0.0) is the area to keep unchanged.": "潜空间蒙版，其中白色 (1.0) 为要修复的区域，黑色 (0.0) 为保持不变的区域。"
         },
         "outputs": {
             "MODEL": "模型"
@@ -3545,10 +3545,10 @@
             "The model to add preview override to.": "要添加预览覆盖的模型。",
             "preview_rate": "预览帧率",
             "Preview frame rate.": "预览帧率。",
-            "latent_upscale_model": "隐空间放大模型",
+            "latent_upscale_model": "潜空间放大模型",
             "Optional upscale model to use for higher resolution previews.": "可选，用于更高分辨率预览的放大模型。",
             "vae": "Vae",
-            "VAE model to use normalizing the latents for the upscale model.": "用于为放大模型归一化隐空间的 VAE 模型。"
+            "VAE model to use normalizing the latents for the upscale model.": "用于为放大模型归一化潜空间的 VAE 模型。"
         },
         "outputs": {
             "MODEL": "模型",
@@ -3800,8 +3800,8 @@
         "description": "实验性节点，用于将注意力模式修补为视频模型使用 NABLA 稀疏注意力，目前仅适用于 Kadinsky5",
         "inputs": {
             "model": "模型",
-            "latent": "隐空间",
-            "Only used to get the latent shape": "仅用于获取隐空间形状"
+            "latent": "潜空间",
+            "Only used to get the latent shape": "仅用于获取潜空间形状"
         },
         "outputs": {
             "MODEL": "模型"
@@ -3819,16 +3819,16 @@
     },
     "LTXVImgToVideoInplaceKJ": {
         "title": "LTXV 图像转视频（原地）KJ",
-        "description": "用编码后的输入图像替换视频隐空间帧，使用 DynamicCombo，需要 ComfyUI 0.8.1 和前端 1.33.4 或更高版本。",
+        "description": "用编码后的输入图像替换视频潜空间帧，使用 DynamicCombo，需要 ComfyUI 0.8.1 和前端 1.33.4 或更高版本。",
         "inputs": {
             "vae": "Vae",
             "Video VAE used to encode the images": "用于编码图像的视频 VAE",
-            "latent": "隐空间",
-            "Video latent to insert images into": "要插入图像的视频隐空间"
+            "latent": "潜空间",
+            "Video latent to insert images into": "要插入图像的视频潜空间"
         },
         "outputs": {
-            "latent": "隐空间",
-            "The video latent with the images inserted and latent noise mask updated.": "已插入图像并更新了隐空间噪声蒙版的视频隐空间。"
+            "latent": "潜空间",
+            "The video latent with the images inserted and latent noise mask updated.": "已插入图像并更新了潜空间噪声蒙版的视频潜空间。"
         },
         "widgets": {
             "num_images": "生成图像数量",
@@ -3836,121 +3836,121 @@
             "strength_1": "强度_1",
             "Strength for image 1.": "图像 1 的强度。",
             "image_1": "图像1",
-            "Image 1 to insert into the video latent.": "要插入视频隐空间的图像 1。",
+            "Image 1 to insert into the video latent.": "要插入视频潜空间的图像 1。",
             "index_1": "索引 1",
             "Frame index for image 1 (in pixel space).": "图像 1 的帧索引（像素空间）。",
             "strength_2": "强度_2",
             "Strength for image 2.": "图像 2 的强度。",
             "image_2": "图像2",
-            "Image 2 to insert into the video latent.": "要插入视频隐空间的图像 2。",
+            "Image 2 to insert into the video latent.": "要插入视频潜空间的图像 2。",
             "index_2": "索引 2",
             "Frame index for image 2 (in pixel space).": "图像 2 的帧索引（像素空间）。",
             "strength_3": "强度_3",
             "Strength for image 3.": "图像 3 的强度。",
             "image_3": "图像_3",
-            "Image 3 to insert into the video latent.": "要插入视频隐空间的图像 3。",
+            "Image 3 to insert into the video latent.": "要插入视频潜空间的图像 3。",
             "index_3": "索引 3",
             "Frame index for image 3 (in pixel space).": "图像 3 的帧索引（像素空间）。",
             "strength_4": "强度_4",
             "Strength for image 4.": "图像 4 的强度。",
             "image_4": "图像_4",
-            "Image 4 to insert into the video latent.": "要插入视频隐空间的图像 4。",
+            "Image 4 to insert into the video latent.": "要插入视频潜空间的图像 4。",
             "index_4": "索引 4",
             "Frame index for image 4 (in pixel space).": "图像 4 的帧索引（像素空间）。",
             "strength_5": "强度 5",
             "Strength for image 5.": "图像 5 的强度。",
             "image_5": "图像_5",
-            "Image 5 to insert into the video latent.": "要插入视频隐空间的图像 5。",
+            "Image 5 to insert into the video latent.": "要插入视频潜空间的图像 5。",
             "index_5": "索引 5",
             "Frame index for image 5 (in pixel space).": "图像 5 的帧索引（像素空间）。",
             "strength_6": "强度 6",
             "Strength for image 6.": "图像 6 的强度。",
             "image_6": "图像_6",
-            "Image 6 to insert into the video latent.": "要插入视频隐空间的图像 6。",
+            "Image 6 to insert into the video latent.": "要插入视频潜空间的图像 6。",
             "index_6": "索引 6",
             "Frame index for image 6 (in pixel space).": "图像 6 的帧索引（像素空间）。",
             "strength_7": "强度 7",
             "Strength for image 7.": "图像 7 的强度。",
             "image_7": "图像_7",
-            "Image 7 to insert into the video latent.": "要插入视频隐空间的图像 7。",
+            "Image 7 to insert into the video latent.": "要插入视频潜空间的图像 7。",
             "index_7": "索引 7",
             "Frame index for image 7 (in pixel space).": "图像 7 的帧索引（像素空间）。",
             "strength_8": "强度 8",
             "Strength for image 8.": "图像 8 的强度。",
             "image_8": "图像_8",
-            "Image 8 to insert into the video latent.": "要插入视频隐空间的图像 8。",
+            "Image 8 to insert into the video latent.": "要插入视频潜空间的图像 8。",
             "index_8": "索引 8",
             "Frame index for image 8 (in pixel space).": "图像 8 的帧索引（像素空间）。",
             "strength_9": "强度 9",
             "Strength for image 9.": "图像 9 的强度。",
             "image_9": "图像_9",
-            "Image 9 to insert into the video latent.": "要插入视频隐空间的图像 9。",
+            "Image 9 to insert into the video latent.": "要插入视频潜空间的图像 9。",
             "index_9": "索引 9",
             "Frame index for image 9 (in pixel space).": "图像 9 的帧索引（像素空间）。",
             "strength_10": "强度 10",
             "Strength for image 10.": "图像 10 的强度。",
             "image_10": "图像_10",
-            "Image 10 to insert into the video latent.": "要插入视频隐空间的图像 10。",
+            "Image 10 to insert into the video latent.": "要插入视频潜空间的图像 10。",
             "index_10": "索引 10",
             "Frame index for image 10 (in pixel space).": "图像 10 的帧索引（像素空间）。",
             "strength_11": "强度 11",
             "Strength for image 11.": "图像 11 的强度。",
             "image_11": "图像 11",
-            "Image 11 to insert into the video latent.": "要插入视频隐空间的图像 11。",
+            "Image 11 to insert into the video latent.": "要插入视频潜空间的图像 11。",
             "index_11": "索引 11",
             "Frame index for image 11 (in pixel space).": "图像 11 的帧索引（像素空间）。",
             "strength_12": "强度 12",
             "Strength for image 12.": "图像 12 的强度。",
             "image_12": "图像 12",
-            "Image 12 to insert into the video latent.": "要插入视频隐空间的图像 12。",
+            "Image 12 to insert into the video latent.": "要插入视频潜空间的图像 12。",
             "index_12": "索引 12",
             "Frame index for image 12 (in pixel space).": "图像 12 的帧索引（像素空间）。",
             "strength_13": "强度 13",
             "Strength for image 13.": "图像 13 的强度。",
             "image_13": "图像 13",
-            "Image 13 to insert into the video latent.": "要插入视频隐空间的图像 13。",
+            "Image 13 to insert into the video latent.": "要插入视频潜空间的图像 13。",
             "index_13": "索引 13",
             "Frame index for image 13 (in pixel space).": "图像 13 的帧索引（像素空间）。",
             "strength_14": "强度 14",
             "Strength for image 14.": "图像 14 的强度。",
             "image_14": "图像 14",
-            "Image 14 to insert into the video latent.": "要插入视频隐空间的图像 14。",
+            "Image 14 to insert into the video latent.": "要插入视频潜空间的图像 14。",
             "index_14": "索引 14",
             "Frame index for image 14 (in pixel space).": "图像 14 的帧索引（像素空间）。",
             "strength_15": "强度 15",
             "Strength for image 15.": "图像 15 的强度。",
             "image_15": "图像 15",
-            "Image 15 to insert into the video latent.": "要插入视频隐空间的图像 15。",
+            "Image 15 to insert into the video latent.": "要插入视频潜空间的图像 15。",
             "index_15": "索引 15",
             "Frame index for image 15 (in pixel space).": "图像 15 的帧索引（像素空间）。",
             "strength_16": "强度 16",
             "Strength for image 16.": "图像 16 的强度。",
             "image_16": "图像 16",
-            "Image 16 to insert into the video latent.": "要插入视频隐空间的图像 16。",
+            "Image 16 to insert into the video latent.": "要插入视频潜空间的图像 16。",
             "index_16": "索引 16",
             "Frame index for image 16 (in pixel space).": "图像 16 的帧索引（像素空间）。",
             "strength_17": "强度 17",
             "Strength for image 17.": "图像 17 的强度。",
             "image_17": "图像 17",
-            "Image 17 to insert into the video latent.": "要插入视频隐空间的图像 17。",
+            "Image 17 to insert into the video latent.": "要插入视频潜空间的图像 17。",
             "index_17": "索引 17",
             "Frame index for image 17 (in pixel space).": "图像 17 的帧索引（像素空间）。",
             "strength_18": "强度 18",
             "Strength for image 18.": "图像 18 的强度。",
             "image_18": "图像 18",
-            "Image 18 to insert into the video latent.": "要插入视频隐空间的图像 18。",
+            "Image 18 to insert into the video latent.": "要插入视频潜空间的图像 18。",
             "index_18": "索引 18",
             "Frame index for image 18 (in pixel space).": "图像 18 的帧索引（像素空间）。",
             "strength_19": "强度 19",
             "Strength for image 19.": "图像 19 的强度。",
             "image_19": "图像 19",
-            "Image 19 to insert into the video latent.": "要插入视频隐空间的图像 19。",
+            "Image 19 to insert into the video latent.": "要插入视频潜空间的图像 19。",
             "index_19": "索引 19",
             "Frame index for image 19 (in pixel space).": "图像 19 的帧索引（像素空间）。",
             "strength_20": "强度 20",
             "Strength for image 20.": "图像 20 的强度。",
             "image_20": "图像 20",
-            "Image 20 to insert into the video latent.": "要插入视频隐空间的图像 20。",
+            "Image 20 to insert into the video latent.": "要插入视频潜空间的图像 20。",
             "index_20": "索引 20",
             "Frame index for image 20 (in pixel space).": "图像 20 的帧索引（像素空间）。"
         }
@@ -3982,15 +3982,15 @@
         }
     },
     "LTX2AudioLatentNormalizingSampling": {
-        "title": "LTX2 音频隐空间归一化采样",
-        "description": "通过在指定的采样步骤归一化音频隐空间来提高 LTX2 生成的音频质量。",
+        "title": "LTX2 音频潜空间归一化采样",
+        "description": "通过在指定的采样步骤归一化音频潜空间来提高 LTX2 生成的音频质量。",
         "inputs": {
             "model": "模型",
             "The model to add preview override to.": "要添加预览覆盖的模型。"
         },
         "outputs": {
             "MODEL": "模型",
-            "The model with Audio Latent Normalizing Sampling.": "带有音频隐空间归一化采样的模型。"
+            "The model with Audio Latent Normalizing Sampling.": "带有音频潜空间归一化采样的模型。"
         },
         "widgets": {
             "audio_normalization_factors": "音频归一化因子",
@@ -4012,7 +4012,7 @@
         "description": "ComfyUI 上下文窗口的交互式可视化：窗口位置、重叠、融合权重和逐帧混合，实时更新。可选地将设置应用于模型，类似于核心的“上下文窗口（手动）”节点。",
         "inputs": {
             "frame_units": "帧单位",
-            "Units for the frame counts below. 'pixel' converts to latent via ((n - 1) // temporal_downscale) + 1.": "以下帧计数的单位。'pixel' 通过 ((n - 1) // temporal_downscale) + 1 转换为隐空间。",
+            "Units for the frame counts below. 'pixel' converts to latent via ((n - 1) // temporal_downscale) + 1.": "以下帧计数的单位。'pixel' 通过 ((n - 1) // temporal_downscale) + 1 转换为潜空间。",
             "context_schedule": "上下文调度",
             "Window placement. standard_static_balanced: static with windows spread evenly (uniform seams, any frame count). batched_shifted: zero-overlap windows whose seams roll each step (~1.0x compute, pairs with freenoise). Uniform schedules also shift per step.": "窗口放置方式。standard_static_balanced：静态，窗口均匀分布（均匀接缝，任意帧数）。batched_shifted：零重叠窗口，其接缝每步滚动（约 1.0 倍计算量，与 freenoise 搭配）。均匀调度也会每步移动。",
             "fuse_method": "融合方法",
@@ -4026,11 +4026,11 @@
         },
         "widgets": {
             "dim": "维度",
-            "Latent temporal dimension: 2 for WAN-like, 0 for AnimateDiff-style. Model path only.": "隐空间时间维度：WAN 类为 2，AnimateDiff 风格为 0。仅模型路径。",
+            "Latent temporal dimension: 2 for WAN-like, 0 for AnimateDiff-style. Model path only.": "潜空间时间维度：WAN 类为 2，AnimateDiff 风格为 0。仅模型路径。",
             "temporal_downscale": "时间下采样",
-            "VAE temporal compression for pixel->latent. WAN/Hunyuan/CogVideoX=4, Mochi=6, LTXV=8.": "像素到隐空间的 VAE 时间压缩。WAN/Hunyuan/CogVideoX=4，Mochi=6，LTXV=8。",
+            "VAE temporal compression for pixel->latent. WAN/Hunyuan/CogVideoX=4, Mochi=6, LTXV=8.": "像素到潜空间的 VAE 时间压缩。WAN/Hunyuan/CogVideoX=4，Mochi=6，LTXV=8。",
             "num_frames": "帧数",
-            "Total frames to visualize. Ignored on the model path (the real latent length is used).": "要可视化的总帧数。在模型路径上忽略（使用实际的隐空间长度）。",
+            "Total frames to visualize. Ignored on the model path (the real latent length is used).": "要可视化的总帧数。在模型路径上忽略（使用实际的潜空间长度）。",
             "context_length": "上下文长度",
             "Window length.": "窗口长度。",
             "context_overlap": "上下文重叠",
@@ -4049,18 +4049,18 @@
     },
     "LTXVAudioVideoMask": {
         "title": "LTXV 音频视频蒙版",
-        "description": "根据指定的时间范围为视频和音频隐空间创建噪声蒙版。新内容将在这些蒙版区域内生成。",
+        "description": "根据指定的时间范围为视频和音频潜空间创建噪声蒙版。新内容将在这些蒙版区域内生成。",
         "inputs": {
             "max_length": "最大长度",
-            "'truncate': cut latent to end_time length. 'pad': extend latent to end_time. 'partial': mask range within existing latent.": "'truncate'：将隐空间裁剪到 end_time 长度。'pad'：将隐空间扩展到 end_time。'partial'：在现有隐空间内遮罩范围。",
-            "video_latent": "视频隐空间",
-            "audio_latent": "音频隐空间",
+            "'truncate': cut latent to end_time length. 'pad': extend latent to end_time. 'partial': mask range within existing latent.": "'truncate'：将潜空间裁剪到 end_time 长度。'pad'：将潜空间扩展到 end_time。'partial'：在现有潜空间内遮罩范围。",
+            "video_latent": "视频潜空间",
+            "audio_latent": "音频潜空间",
             "existing_mask_mode": "现有蒙版模式",
             "How to combine with existing noise masks if present. 'add' will take the max of existing and new mask, 'overwrite' will replace with new mask. 'subtract' will set the masked region to 0 instead of 1, effectively unmasking it.": "如果存在现有噪声蒙版，如何与之组合。'add' 将取现有蒙版和新蒙版的最大值，'overwrite' 将用新蒙版替换，'subtract' 将遮罩区域设置为 0 而不是 1，从而有效地取消遮罩。"
         },
         "outputs": {
-            "video_latent": "视频隐空间",
-            "audio_latent": "音频隐空间"
+            "video_latent": "视频潜空间",
+            "audio_latent": "音频潜空间"
         },
         "widgets": {
             "video_fps": "视频帧率",
@@ -4164,7 +4164,7 @@
         "title": "模型预览覆盖 KJ",
         "description": "在此节点上添加专用的实时预览帧，并支持覆盖最大分辨率。默认的ComfyUI预览限制为512像素；此节点将其自身的预览直接发送到节点上的DOM组件，因此像素空间模型（如Chroma Radiance、ZImage、HiDream-O1等）可以在完整的采样器分辨率下进行预览。",
         "inputs": {
-            "Optional audio VAE for audio+video models (MiniMax H3). With preview_frames > 1 the audio latent is decoded each step, muxed into the animated preview played back in real time (preview_fps is ignored), and its spectrogram is drawn under the graphs.": "用于音频+视频模型（MiniMax H3）的可选音频VAE。当预览帧数大于1时，每一步都会解码音频隐空间，混入实时播放的动画预览中（此时预览帧率被忽略），并在图形下方绘制其频谱图。",
+            "Optional audio VAE for audio+video models (MiniMax H3). With preview_frames > 1 the audio latent is decoded each step, muxed into the animated preview played back in real time (preview_fps is ignored), and its spectrogram is drawn under the graphs.": "用于音频+视频模型（MiniMax H3）的可选音频VAE。当预览帧数大于1时，每一步都会解码音频潜空间，混入实时播放的动画预览中（此时预览帧率被忽略），并在图形下方绘制其频谱图。",
             "model": "模型",
             "Model to attach the preview override to.": "要附加预览覆盖的模型。",
             "vae": "Vae",
@@ -4186,7 +4186,7 @@
             "suppress_default_preview": "抑制默认预览",
             "Suppress the standard sampler-node preview overlay while sampling, so only this node's frame updates. Progress bar still advances normally.": "采样时抑制标准采样器节点的预览覆盖，仅更新此节点的帧。进度条仍正常前进。",
             "preview_frames": "预览帧数",
-            "Frames to sample from each video step's latent for animated preview. 1 = single frame (current behavior, fastest). >1 = animated WebP playing back at preview_fps. Only applies to video models (5D latents); ignored for image models.": "每个视频步骤的隐空间采样的帧数，用于动画预览。1 = 单帧（当前行为，最快）。>1 = 以preview_fps播放的动画WebP。仅适用于视频模型（5D隐空间）；图像模型忽略。",
+            "Frames to sample from each video step's latent for animated preview. 1 = single frame (current behavior, fastest). >1 = animated WebP playing back at preview_fps. Only applies to video models (5D latents); ignored for image models.": "每个视频步骤的潜空间采样的帧数，用于动画预览。1 = 单帧（当前行为，最快）。>1 = 以preview_fps播放的动画WebP。仅适用于视频模型（5D潜空间）；图像模型忽略。",
             "preview_fps": "预览帧率"
         }
     },
@@ -4288,27 +4288,27 @@
         "outputs": {
             "positive": "积极情感",
             "negative": "消极情感",
-            "latent": "隐空间"
+            "latent": "潜空间"
         },
         "widgets": {
             "length": "长度",
-            "motion_latent_count": "运动隐空间数量"
+            "motion_latent_count": "运动潜空间数量"
         }
     },
     "DecodeAndSaveVideo": {
         "title": "解码并保存视频",
-        "description": "从隐空间表示解码视频帧和音频，组合它们并保存为视频文件，而无需在内存中保留中间图像。",
+        "description": "从潜空间表示解码视频帧和音频，组合它们并保存为视频文件，而无需在内存中保留中间图像。",
         "inputs": {
-            "video_latent": "视频隐空间",
-            "The latent representation of the video frames.": "视频帧的隐空间表示。",
+            "video_latent": "视频潜空间",
+            "The latent representation of the video frames.": "视频帧的潜空间表示。",
             "format": "格式转换",
             "The format to save the video as.": "保存视频的格式。",
             "codec": "编码格式",
             "The codec to use for the video.": "用于视频的编解码器。",
             "video_vae": "视频VAE",
             "The VAE model to use for encoding.": "用于编码的VAE模型。",
-            "audio_latent": "音频隐空间",
-            "The latent representation of the audio frames.": "音频帧的隐空间表示。",
+            "audio_latent": "音频潜空间",
+            "The latent representation of the audio frames.": "音频帧的潜空间表示。",
             "audio_vae": "音频VAE",
             "The VAE model to use for decoding audio.": "用于解码音频的VAE模型。"
         },
@@ -4358,10 +4358,10 @@
         }
     },
     "PreviewLatentNoiseMask": {
-        "title": "预览隐空间噪声蒙版",
+        "title": "预览潜空间噪声蒙版",
         "description": "Previews the latent noise mask",
         "inputs": {
-            "latent": "隐空间"
+            "latent": "潜空间"
         },
         "outputs": {
             "mask": "遮罩图像"
@@ -4372,19 +4372,19 @@
         "description": "在指定的帧索引处添加多个引导图像并设置强度，使用 DynamicCombo，需要 ComfyUI 0.8.1 和前端 1.33.4 或更高版本。",
         "inputs": {
             "positive": "积极情感",
-            "Positive conditioning to which guide keyframe info will be added": "将添加引导关键帧信息的正向条件",
+            "Positive conditioning to which guide keyframe info will be added": "将添加引导关键帧信息的正面条件",
             "negative": "消极情感",
-            "Negative conditioning to which guide keyframe info will be added": "将添加引导关键帧信息的反向条件",
+            "Negative conditioning to which guide keyframe info will be added": "将添加引导关键帧信息的负面条件",
             "vae": "Vae",
             "Video VAE used to encode the guide images": "用于编码引导图像的视频 VAE",
-            "latent": "隐空间",
-            "Video latent, guides are added to the end of this latent": "视频隐空间，引导将添加到该隐空间的末尾"
+            "latent": "潜空间",
+            "Video latent, guides are added to the end of this latent": "视频潜空间，引导将添加到该潜空间的末尾"
         },
         "outputs": {
             "positive": "积极情感",
             "negative": "消极情感",
-            "latent": "隐空间",
-            "Video latent with added guides": "添加了引导的视频隐空间"
+            "latent": "潜空间",
+            "Video latent with added guides": "添加了引导的视频潜空间"
         },
         "widgets": {
             "num_guides": "引导数量",
@@ -4495,8 +4495,8 @@
         "title": "采样器 自细化视频",
         "description": "尝试实现 https://github.com/agwmon/self-refine-video，仅供测试，可能无法按预期工作。",
         "inputs": {
-            "latent": "隐空间",
-            "Optional latent input to get input shape for LTX2 audio/video separation": "可选的隐空间输入，用于获取 LTX2 音频/视频分离的输入形状"
+            "latent": "潜空间",
+            "Optional latent input to get input shape for LTX2 audio/video separation": "可选的潜空间输入，用于获取 LTX2 音频/视频分离的输入形状"
         },
         "outputs": {
             "SAMPLER": "采样器"
@@ -4613,15 +4613,15 @@
     },
     "MiniMaxH3TokenCounter": {
         "title": "MiniMax H3 令牌计数器",
-        "description": "在不进行采样的情况下，计算 MiniMax H3 生成将运行的打包序列长度。根据 AV 隐空间和条件（包括文本长度、关键帧和参考块）构建与模型使用的相同的 [文本 | 关键帧/参考 | 音频 | 视频] 布局。",
+        "description": "在不进行采样的情况下，计算 MiniMax H3 生成将运行的打包序列长度。根据 AV 潜空间和条件（包括文本长度、关键帧和参考块）构建与模型使用的相同的 [文本 | 关键帧/参考 | 音频 | 视频] 布局。",
         "inputs": {
-            "The AV latent that would be sampled (video+audio pair from the H3 latent nodes).": "将要采样的 AV 隐空间（来自 H3 隐空间节点的视频+音频对）。",
-            "Positive conditioning; text length and any keyframe/reference blocks are read from it.": "正向条件；文本长度以及任何关键帧/参考块都从中读取。",
+            "The AV latent that would be sampled (video+audio pair from the H3 latent nodes).": "将要采样的 AV 潜空间（来自 H3 潜空间节点的视频+音频对）。",
+            "Positive conditioning; text length and any keyframe/reference blocks are read from it.": "正面条件；文本长度以及任何关键帧/参考块都从中读取。",
             "samples": "Latent",
             "conditioning": "条件"
         },
         "outputs": {
-            "The input latent, unchanged.": "输入的隐空间，保持不变。",
+            "The input latent, unchanged.": "输入的潜空间，保持不变。",
             "The input conditioning, unchanged.": "输入的条件，保持不变。",
             "samples": "Latent",
             "conditioning": "条件",

@@ -552,8 +552,8 @@
             "train_text_encoder": "训练文本编码器（默认disabled）",
             "clip_l_lr": "CLIP-L学习率（默认0.0，范围0.0-10.0，步长0.000001，文本编码器学习率）",
             "clip_g_lr": "CLIP-G学习率（默认0.0，范围0.0-10.0，步长0.000001，文本编码器学习率）",
-            "sample_prompts_pos": "正向采样提示词（默认illustration of a kitten | photograph of a turtle，多提示词用`|`分隔）",
-            "sample_prompts_neg": "负向采样提示词（默认空，多提示词用`|`分隔）",
+            "sample_prompts_pos": "正面采样提示词（默认illustration of a kitten | photograph of a turtle，多提示词用`|`分隔）",
+            "sample_prompts_neg": "负面采样提示词（默认空，多提示词用`|`分隔）",
             "gradient_checkpointing": "梯度检查点模式（默认enabled）",
             "additional_args": "额外参数（可选，传递给训练命令的额外参数，多行输入）"
         },

@@ -229,7 +229,7 @@
         "title": "☁️BizyAir K采样器",
         "inputs": {
             "model": "模型",
-            "positive": "正向条件",
+            "positive": "正面条件",
             "negative": "负面条件",
             "latent_image": "latent图像"
         },
@@ -249,7 +249,7 @@
         "title": "☁️BizyAir K采样器（高级）",
         "inputs": {
             "model": "模型",
-            "positive": "正向条件",
+            "positive": "正面条件",
             "negative": "负面条件",
             "latent_image": "latent图像"
         },
@@ -470,20 +470,20 @@
     "BizyAir_InpaintModelConditioning": {
         "title": "☁️BizyAir 内补模型条件",
         "inputs": {
-            "positive": "正向条件",
+            "positive": "正面条件",
             "negative": "负面条件",
             "pixels": "像素图像",
             "mask": "遮罩"
         },
         "outputs": {
-            "positive": "正向条件",
+            "positive": "正面条件",
             "negative": "负面条件"
         }
     },
     "BizyAir_InpaintModelConditioning_v2": {
         "title": "☁️BizyAir 内补模型条件v2",
         "inputs": {
-            "positive": "正向条件",
+            "positive": "正面条件",
             "negative": "负面条件",
             "pixels": "像素图像",
             "mask": "遮罩"
@@ -492,14 +492,14 @@
             "noise_mask": "噪声遮罩"
         },
         "outputs": {
-            "positive": "正向条件",
+            "positive": "正面条件",
             "negative": "负面条件"
         }
     },
     "BizyAir_ControlNetApplyAdvanced": {
         "title": "☁️BizyAir ControlNet高级应用",
         "inputs": {
-            "positive": "正向条件",
+            "positive": "正面条件",
             "negative": "负面条件",
             "control_net": "Control_Net",
             "image": "控制图像"
@@ -510,7 +510,7 @@
             "end_percent": "结束百分比"
         },
         "outputs": {
-            "positive": "正向条件",
+            "positive": "正面条件",
             "negative": "负面条件"
         }
     },
@@ -623,7 +623,7 @@
     "BizyAir_WanImageToVideo": {
         "title": "☁️BizyAir Wan图像到视频",
         "inputs": {
-            "positive": "正向条件",
+            "positive": "正面条件",
             "negative": "负面条件",
             "camera_conditions": "相机条件",
             "clip_vision_output": "CLIP视觉输出",
@@ -637,7 +637,7 @@
             "batch_size": "批大小"
         },
         "outputs": {
-            "positive": "正向条件",
+            "positive": "正面条件",
             "negative": "负面条件",
             "latent": "Latent"
         }
@@ -1197,7 +1197,7 @@
             "control_net": "Control_Net",
             "image": "参考图像",
             "model": "基础模型",
-            "positive": "正向条件",
+            "positive": "正面条件",
             "negative": "负面条件",
             "image_kps": "人脸关键点",
             "mask": "区域遮罩"
@@ -1209,7 +1209,7 @@
         },
         "outputs": {
             "MODEL": "模型",
-            "positive": "正向条件",
+            "positive": "正面条件",
             "negative": "负面条件"
         }
     },
@@ -1221,7 +1221,7 @@
             "control_net": "Control_Net",
             "image": "参考图像",
             "model": "基础模型",
-            "positive": "正向条件",
+            "positive": "正面条件",
             "negative": "负面条件",
             "image_kps": "人脸关键点",
             "mask": "区域遮罩"
@@ -1237,7 +1237,7 @@
         },
         "outputs": {
             "MODEL": "模型",
-            "positive": "正向条件",
+            "positive": "正面条件",
             "negative": "负面条件"
         }
     },
@@ -1422,7 +1422,7 @@
     "BizyAir_ControlNetInpaintingAliMamaApply": {
         "title": "☁️BizyAir_阿里妈妈ControlNet修复应用",
         "inputs": {
-            "positive": "正向条件",
+            "positive": "正面条件",
             "negative": "负面条件",
             "control_net": "Control_Net",
             "vae": "VAE编码器",
@@ -1435,7 +1435,7 @@
             "end_percent": "结束百分比"
         },
         "outputs": {
-            "positive": "正向条件",
+            "positive": "正面条件",
             "negative": "负面条件"
         }
     },
@@ -1521,7 +1521,7 @@
         "title": "☁️BizyAir_CFG引导器",
         "inputs": {
             "model": "扩散模型",
-            "positive": "正向条件",
+            "positive": "正面条件",
             "negative": "负面条件"
         },
         "widgets": {
@@ -1755,13 +1755,13 @@
     "BizyAir_InstructPixToPixConditioning": {
         "title": "☁️BizyAir_Pix2Pix指令条件",
         "inputs": {
-            "positive": "正向条件",
+            "positive": "正面条件",
             "negative": "负面条件",
             "vae": "VAE编码器",
             "pixels": "像素图像"
         },
         "outputs": {
-            "positive": "正向条件",
+            "positive": "正面条件",
             "negative": "负面条件",
             "latent": "潜空间"
         }
@@ -1894,7 +1894,7 @@
     "BizyAir_ControlNetApplySD3": {
         "title": "☁️BizyAir_SD3ControlNet应用",
         "inputs": {
-            "positive": "正向条件",
+            "positive": "正面条件",
             "negative": "负面条件",
             "control_net": "Control_Net",
             "vae": "VAE编码器",
@@ -1906,7 +1906,7 @@
             "end_percent": "结束百分比"
         },
         "outputs": {
-            "positive": "正向条件",
+            "positive": "正面条件",
             "negative": "负面条件"
         }
     },
@@ -1982,7 +1982,7 @@
         "inputs": {
             "model": "模型",
             "image": "图像",
-            "positive": "正向条件",
+            "positive": "正面条件",
             "negative": "负面条件",
             "upscale_model": "放大模型"
         },

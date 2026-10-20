@@ -404,8 +404,13 @@ function matchTrigger(e) {
     const t = normalizeTrigger(CM.rules.drag_trigger);
     const wantBtn = t.mouse === "left" ? 0 : 2;
     if (e.button !== wantBtn) return false;
+    // 配置为"无修饰键"时宽容处理：不校验实际按下的修饰键。
+    // 原因：此配置下管理菜单的回退键是 Alt+右键（见 menuTriggerConfig），
+    // 用户很容易顺手用 Alt+右键来拖拽；拖拽与菜单由移动阈值区分
+    // （未移动 = 打开管理菜单，移动超过阈值 = 拖拽），互不干扰。
+    if (!t.modifier) return true;
     const need = { alt: false, ctrl: false, shift: false };
-    if (t.modifier) for (const p of t.modifier.split("+")) if (p in need) need[p] = true;
+    for (const p of t.modifier.split("+")) if (p in need) need[p] = true;
     return e.altKey === need.alt && e.ctrlKey === need.ctrl && e.shiftKey === need.shift;
 }
 
@@ -442,6 +447,26 @@ function rebuildIndex(store) {
     CM.nodeIndex.clear();
     CM.classIndex.clear();
     CM.baseByDisp.clear();
+
+    // 预计算：真实（后端）分类的「显示路径 → 基准路径」映射。
+    // 用于区分「真实分类」与「由规则聚合/派生出来的分类」：
+    // 后者（如把节点拖入自建分类 "RH DLSS5" 后形成的分类）在后端并不存在，
+    // 其基准必须是其自身显示路径；若错误地按内部节点的原始分类反推，
+    // 会得到节点的原分类（如 video），导致之后再次拖入该分类时写不出有效规则。
+    const realDispToBase = new Map();
+    const uniqRaw = new Set(CM.rawCategory.values());
+    for (const raw of uniqRaw) {
+        if (!raw) continue;
+        const rp = String(raw).split("/");
+        for (let i = 1; i <= rp.length; i++) {
+            const baseLv = rp.slice(0, i).join("/");
+            const chain = renameChain(baseLv);
+            if (!chain) continue;
+            const disp = toDisplayPath(chain);
+            if (disp && !realDispToBase.has(disp)) realDispToBase.set(disp, baseLv);
+        }
+    }
+
     for (const nd of store.nodeDefs) {
         if (!nd || !nd.name) continue;
         const dispPath = String(nd.category || "");
@@ -451,7 +476,14 @@ function rebuildIndex(store) {
 
         // 显示路径 → 英文基准路径（把树上的路径反查回与语言无关的基准）
         if (!CM.baseByDisp.has(dispPath)) {
-            CM.baseByDisp.set(dispPath, String(CM.rawCategory.get(nd.name) ?? nd._original_category ?? nd.category ?? ""));
+            const realBase = realDispToBase.get(dispPath);
+            if (realBase !== undefined) {
+                // 真实分类：优先用预计算映射，其次用节点数据兜底
+                CM.baseByDisp.set(dispPath, realBase || String(CM.rawCategory.get(nd.name) ?? nd._original_category ?? nd.category ?? ""));
+            } else {
+                // 聚合/派生分类（后端不存在）：基准 = 显示路径自身
+                CM.baseByDisp.set(dispPath, dispPath);
+            }
         }
 
         const entry = { name: nd.name, dispPath };

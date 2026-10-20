@@ -185,8 +185,8 @@
     "HyVideoTextEmbedBridge": {
         "title": "混元视频 文本嵌入桥接",
         "inputs": {
-            "positive": "正向提示",
-            "negative": "负向提示",
+            "positive": "正面提示",
+            "negative": "负面提示",
             "hyvid_cfg": "CFG配置"
         },
         "outputs": {
@@ -237,7 +237,7 @@
     "HyVideoCFG": {
         "title": "混元视频 CFG控制",
         "inputs": {
-            "negative_prompt": "负向提示"
+            "negative_prompt": "负面提示"
         },
         "widgets": {
             "cfg": "CFG值",

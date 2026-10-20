@@ -174,9 +174,9 @@
         "title": "KSampler 渐进式增加降噪（高效版）",
         "inputs": {
             "model": "模型",
-            "positive": "正向提示词",
-            "negative": "反向提示词",
-            "latent_image": "隐空间图像",
+            "positive": "正面提示词",
+            "negative": "负面提示词",
+            "latent_image": "潜空间图像",
             "optional_vae": "可选VAE"
         },
         "outputs": {},

@@ -42,8 +42,8 @@
     "WanCameraImageToVideo": {
         "title": "Wan相机图像转视频",
         "inputs": {
-            "positive": "正向",
-            "negative": "负向",
+            "positive": "正面",
+            "negative": "负面",
             "clip_vision_output": "clip 视觉输出",
             "start_image": "起始图像",
             "camera_conditions": "相机条件"
@@ -55,15 +55,15 @@
             "batch_size": "批量大小"
         },
         "outputs": {
-            "positive": "正向",
-            "negative": "负向"
+            "positive": "正面",
+            "negative": "负面"
         }
     },
     "WanPhantomSubjectToVideo": {
         "title": "Wan虚拟主体转视频",
         "inputs": {
-            "positive": "正向",
-            "negative": "负向",
+            "positive": "正面",
+            "negative": "负面",
             "images": "图像"
         },
         "widgets": {
@@ -73,9 +73,9 @@
             "batch_size": "批量大小"
         },
         "outputs": {
-            "positive": "正向文本提示",
-            "negative_text": "负向文本提示",
-            "negative_img_text": "负向图像文本提示"
+            "positive": "正面文本提示",
+            "negative_text": "负面文本提示",
+            "negative_img_text": "负面图像文本提示"
         }
     },
     "Hunyuan3Dv2Conditioning": {

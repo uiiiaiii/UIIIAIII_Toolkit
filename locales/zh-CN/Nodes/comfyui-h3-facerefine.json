@@ -34,12 +34,12 @@
         "description": "逐帧降噪强度，与面部大小成反比。",
         "inputs": {
             "model": "模型",
-            "The H3 model, on its way to the sampler. Required: making a per-frame mask behave takes two changes to the MODEL rather than to the latent. This node's video mask is kept out of H3's per-token timesteps, and the frames that mask holds back are re-noised to the step the sampler is on instead of being handed back nearly clean. Pass the returned model on to the guider.": "H3 模型，在通往采样器的路上。必需：要使逐帧蒙版生效，需要对模型进行两处修改，而不是对隐空间。此节点的视频蒙版被排除在 H3 的逐 token 时间步之外，蒙版保留的帧会被重新加噪到采样器当前所处的步骤，而不是以接近干净的状态返回。将返回的模型传递给引导器。",
-            "av_latent": "音视频隐空间",
+            "The H3 model, on its way to the sampler. Required: making a per-frame mask behave takes two changes to the MODEL rather than to the latent. This node's video mask is kept out of H3's per-token timesteps, and the frames that mask holds back are re-noised to the step the sampler is on instead of being handed back nearly clean. Pass the returned model on to the guider.": "H3 模型，在通往采样器的路上。必需：要使逐帧蒙版生效，需要对模型进行两处修改，而不是对潜空间。此节点的视频蒙版被排除在 H3 的逐 token 时间步之外，蒙版保留的帧会被重新加噪到采样器当前所处的步骤，而不是以接近干净的状态返回。将返回的模型传递给引导器。",
+            "av_latent": "音视频潜空间",
             "transform": "变换"
         },
         "outputs": {
-            "av_latent": "音视频隐空间",
+            "av_latent": "音视频潜空间",
             "report": "报告",
             "model": "模型"
         },
@@ -87,7 +87,7 @@
             "crop_factor": "裁剪系数",
             "Crop side as a multiple of detected face HEIGHT. 2.5 puts the face at ~40% of the crop, comfortably inside H3's good regime. Bigger = more context so the seam lands in hair/background, but less magnification. 2.0-3.0 is the useful range.": "裁剪边长为检测到的人脸高度的倍数。2.5 将人脸置于裁剪的约 40% 处，舒适地处于 H3 的良好范围内。更大 = 更多上下文，因此接缝落在头发/背景中，但放大倍数更小。2.0-3.0 是有用的范围。",
             "canvas_width": "画布宽度",
-            "Resolution H3 generates at. 768 is H3's native short edge and the default here; 512 is cheaper. In manual mode this is used exactly as typed, high or low. Ignored when canvas_mode is not 'manual', where the canvas comes from the crop instead and never falls below 512x512. Cost scales with area: 768 is 2.25x the latent tokens of 512.": "H3 生成的分辨率。768 是 H3 的原生短边，也是这里的默认值；512 更便宜。在手动模式下，完全按输入使用，无论高低。当 canvas_mode 不是 'manual' 时忽略，此时画布来自裁剪，且永远不会低于 512x512。成本随面积缩放：768 的隐空间 token 是 512 的 2.25 倍。",
+            "Resolution H3 generates at. 768 is H3's native short edge and the default here; 512 is cheaper. In manual mode this is used exactly as typed, high or low. Ignored when canvas_mode is not 'manual', where the canvas comes from the crop instead and never falls below 512x512. Cost scales with area: 768 is 2.25x the latent tokens of 512.": "H3 生成的分辨率。768 是 H3 的原生短边，也是这里的默认值；512 更便宜。在手动模式下，完全按输入使用，无论高低。当 canvas_mode 不是 'manual' 时忽略，此时画布来自裁剪，且永远不会低于 512x512。成本随面积缩放：768 的潜空间 token 是 512 的 2.25 倍。",
             "canvas_height": "画布高度",
             "canvas_mode": "画布模式",
             "manual: use canvas_width/height as given.\nauto_no_downscale: size the canvas from the LARGEST crop in the video so no frame is ever downscaled (magnification never drops below 1.0x). Can get expensive on videos that include close-ups.\nauto_capped_768: same, but clamped to 768 - H3's native short edge and a sane VRAM ceiling.\nBoth auto modes clamp UP to a minimum of 512x512, whatever the crop, so a small face in a low-resolution clip is still magnified. manual is not clamped - it uses canvas_width and canvas_height exactly as typed.": "manual：按给定的 canvas_width/height 使用。\nauto_no_downscale：根据视频中最大的裁剪来调整画布大小，这样任何帧都不会被缩小（放大倍数永远不会低于 1.0 倍）。对于包含特写镜头的视频，可能会很昂贵。\nauto_capped_768：相同，但限制为 768——H3 的原生短边和合理的显存上限。\n两种自动模式都会向上限制到最小 512x512，无论裁剪如何，因此低分辨率片段中的小脸仍会被放大。manual 不受限制——它完全按输入的 canvas_width 和 canvas_height 使用。",
@@ -128,15 +128,15 @@
         }
     },
     "H3InjectVideoLatent": {
-        "title": "H3 注入视频隐空间 (img2img)",
-        "description": "将真实帧编码到 H3 联合音视频隐空间的视频流中。",
+        "title": "H3 注入视频潜空间 (img2img)",
+        "description": "将真实帧编码到 H3 联合音视频潜空间的视频流中。",
         "inputs": {
-            "av_latent": "音视频隐空间",
+            "av_latent": "音视频潜空间",
             "images": "图片",
             "vae": "Vae"
         },
         "outputs": {
-            "av_latent": "音视频隐空间",
+            "av_latent": "音视频潜空间",
             "report": "报告"
         }
     },

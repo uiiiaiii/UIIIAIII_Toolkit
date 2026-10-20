@@ -32,8 +32,6 @@
     "ComfyUI Guide To Making Custom Nodes": "制作自定义节点指南",
     "ComfyUI Examples": "ComfyUI使用例",
     "Close": "关闭",
-
-    "\nThe custom node DB is currently being updated, 和 updates to custom nodes are being checked for.\nNOTE: Update only checks for extensions that have been fetched.\n": "\n现在正在更新已安装的节点。\n注意: 仅更新已检查出可以更新的节点.\n",
     "input search keyword": "输入搜索关键词",
     "Filter": "过滤",
     "Tags": "标签",
@@ -44,24 +42,21 @@
     "Try update": "尝试更新",
     "Try fix": "尝试修复",
     "Uninstall": "卸载",
-	"Stop": "停止",
-	"Restart Required": "需要重启",
+    "Stop": "停止",
+    "Restart Required": "需要重启",
     "Switch Ver": "切换版本",
-	"Update All Custom Nodes": "更新所有自定义节点",
+    "Update All Custom Nodes": "更新所有自定义节点",
     "Extensions": "扩展",
     "Conflicts": "冲突",
     "Confirm": "确认",
-
     "IMPORT FAILED ↗": "导入失败 ↗",
     "Missing Node Types": "缺失节点类型",
     "Open Manager": "打开管理器",
     "When loading the graph, the following node types were not found": "加载工作流时，找不到以下节点类型",
-    
     "Update: ComfyUI Stable Version": "更新: ComfyUI 稳定版",
     "Update: ComfyUI Nightly Version": "更新: ComfyUI 夜间版",
     "Custom Nodes In Workflow": "工作流中的自定义节点",
     "Switch ComfyUI": "切换 ComfyUI 版本",
-    
     "All": "所有",
     "Installed": "已安装",
     "Not Installed": "未安装",
@@ -93,14 +88,12 @@
     "Default UI: None": "默认UI：无",
     "Default UI: History": "默认UI：历史记录",
     "Default UI: Queue": "默认UI：执行队列",
-
     "Channel: default": "频道：默认",
     "Channel: recent": "频道：最近",
     "Channel: legacy": "频道：传统",
     "Channel: forked": "频道：分支",
     "Channel: dev": "频道：开发",
     "Channel: tutorial": "频道：教程",
-
     "DB: Channel (1day cache)": "数据库：频道(1天缓存)",
     "DB: Local": "数据库：本地",
     "DB: Channel (remote)": "数据库：频道：(远程)",
@@ -125,7 +118,6 @@
     "Double-Click: Copy Input Connections": "双击：复制输入连接",
     "Double-Click: Possible Input Connections": "双击：全部可用输入连接",
     "Double-Click: Possible(left) + Copy(right)": "双击：可用(左侧) + 复制(右侧)",
-    
     "Share your art": "分享你的艺术",
     "Choose a platform to share your workflow": "选择分享平台",
     "Open 'openart.ai'": "打开openart.ai",
@@ -133,7 +125,6 @@
     "Open 'comfyworkflows.com'": "打开comfyworkflows.com",
     "Open 'esheep'": "打开esheep",
     "Open 'Copus.io'": "打开Copus.io",
-    
     "Install PIP packages": "安装PIP包",
     "Unload models": "卸载全部模型",
     "EXPERIMENTAL": "测试中",
@@ -145,7 +136,6 @@
     "Models have been unloaded.": "模型已卸载。",
     "Unloading of models failed.<BR><BR>Installed ComfyUI may be an outdated version.": "模型卸载失败。<BR><BR>可能是ComfyUI版本过旧。",
     "Are you sure you'd like to reboot the server?": "确定要重启ComfyUI吗？",
-    "The custom node DB is currently being updated, and updates to custom nodes are being checked for.":"正在更新节点数据库，同时正在检查已安装节点的可用更新。",
     "NOTE: Update only checks for extensions that have been fetched.": "注意：更新仅检查已获取的扩展。",
     "ComfyUI and all extensions have been updated to the latest version.": "ComfyUI 和所有扩展已更新到最新版本。",
     "Loading custom nodes (cache) ...": "正在加载自定义节点（缓存）...",
@@ -183,6 +173,5 @@
     "Workflow": "工作流",
     "Node": "节点",
     "Panel Controls": "面板控制",
-    "commands.Workspace_ToggleBottomPanel_Shortcuts.label": "切换底部面板快捷方式",
     "Manage Shortcuts": "管理快快捷键"
 }

@@ -118,12 +118,9 @@ async def get_translation(request: web.Request):
     json_data = "{}"
     headers = {}
 
-    current_enabled = app_cfg.get("translation_enabled", True)
-    if not current_enabled:
-        return web.Response(status=200, body=json_data, headers=headers)
-
+    # 无论开关状态都返回字典：
+    # 关闭翻译时前端不应用译文，但需要用它识别界面上残留的旧译文并还原英文。
     disabled_plugins = app_cfg.get("disabled_plugins", [])
-
     try:
         json_data = compile_translation(locale, disabled_plugins)
         if "gzip" in accept_encoding:

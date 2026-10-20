@@ -14,6 +14,21 @@ const NODE_ID = "RandomNoiseSeed"; // 对应 nodes.py 中的 class mapping 键�
 const SEED_NAME = "noise_seed";
 const NAMESPACE = "UIIIAIII Toolkit";
 
+// 按钮文案片段（英文原文 source），由插件的翻译开关按字典翻译为界面语言。
+// 采用"英文片段 + tr() 查字典"而非硬编码中文，符合本插件"英文源 + 翻译自身"的约定。
+const BTN_RANDOM = "🎲 Random";
+const BTN_LAST = "♻️ Last";
+
+/**
+ * 查询当前界面语言的译文；翻译关闭或未加载字典时返回英文原文
+ * @param {string} s 英文原文
+ * @returns {string}
+ */
+function tr(s) {
+    const menu = window.__UiTranslated && window.__UiTranslated.Menu;
+    return (menu && menu[s]) || s;
+}
+
 class _NoiseSeedControl {
     constructor(node) {
         this.lastSeed = -1;
@@ -45,7 +60,7 @@ class _NoiseSeedControl {
 
         this.button = this.node.addWidget(
             "button",
-            "🎲 Random / ♻️ Last",
+            `${tr(BTN_RANDOM)} / ${tr(BTN_LAST)}`,
             null,
             () => {
                 const isValidValue =
@@ -53,7 +68,9 @@ class _NoiseSeedControl {
                     this.seedWidget.value >= min &&
                     this.seedWidget.value <= max;
 
-                if (this.button.name.includes("Last") && this.seedWidget.value == -1) {
+                // 当前显示"上次"占位（lastSeed 未知）且种子为 -1 时，点击无操作。
+                // 原实现依赖按钮英文名是否含 "Last"，翻译成中文后判断会失效，故改用状态判断。
+                if (this.lastSeed === -1 && this.seedWidget.value == -1) {
                     return;
                 }
 
@@ -114,11 +131,17 @@ class _NoiseSeedControl {
             this.updateButtonLabel();
             this.serializedCtx = {};
         };
+
+        // 初始化按钮文案（label 与 name 同步，避免首次绘制取到旧值）
+        this.updateButtonLabel();
     }
 
     updateButtonLabel() {
-        const prev = this.lastSeed === -1 ? "Last" : this.lastSeed;
-        this.button.name = `🎲 Random / ♻️ ${prev}`;
+        const prev = this.lastSeed === -1 ? tr(BTN_LAST) : `♻️ ${this.lastSeed}`;
+        const text = `${tr(BTN_RANDOM)} / ${prev}`;
+        this.button.name = text;
+        // LiteGraph 绘制按钮时优先取 label，需与 name 同步，否则状态变化后文案不刷新
+        this.button.label = text;
         this.node.setDirtyCanvas(true, true);
     }
 }

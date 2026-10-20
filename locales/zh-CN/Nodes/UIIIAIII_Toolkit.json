@@ -59,7 +59,7 @@
             "duration": "持续时间",
             "frame_rate": "帧率",
             "negative_prompt": "负面条件",
-            "Negative prompt describing what to avoid": "反向提示词，描述需要避免的内容",
+            "Negative prompt describing what to avoid": "负面提示词，描述需要避免的内容",
             "seed": "随机种子",
             "Random seed (0 means not specified)": "随机种子（0 表示不指定）",
             "num_inference_steps": "推理步数",
@@ -92,7 +92,7 @@
             "duration": "持续时间",
             "frame_rate": "帧率",
             "negative_prompt": "负面条件",
-            "Negative prompt describing what to avoid": "反向提示词，描述需要避免的内容",
+            "Negative prompt describing what to avoid": "负面提示词，描述需要避免的内容",
             "seed": "随机种子",
             "Random seed (0 means not specified)": "随机种子（0 表示不指定）",
             "num_inference_steps": "推理步数",
@@ -127,7 +127,7 @@
             "duration": "持续时间",
             "frame_rate": "帧率",
             "negative_prompt": "负面条件",
-            "Negative prompt describing what to avoid": "反向提示词，描述需要避免的内容",
+            "Negative prompt describing what to avoid": "负面提示词，描述需要避免的内容",
             "seed": "随机种子",
             "Random seed (0 means not specified)": "随机种子（0 表示不指定）",
             "num_inference_steps": "推理步数",
@@ -223,7 +223,8 @@
     "RandomNoiseSeed": {
         "title": "随机噪声种子",
         "outputs": {
-            "SEED": "种子"
+            "SEED / NOISE": "种子 / 噪波",
+            "Connects to both sampler seed inputs (INT, e.g. KSampler) and custom sampler noise inputs (NOISE, e.g. SamplerCustomAdvanced) - both come from the same seed": "可同时连接采样器的种子输入（INT，如 K 采样器）与自定义采样器的噪波输入（NOISE，如自定义采样器（高级）），二者均来自同一个种子"
         },
         "widgets": {
             "noise_seed": "随机种",
