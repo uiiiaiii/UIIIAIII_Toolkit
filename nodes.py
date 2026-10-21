@@ -1712,15 +1712,20 @@ class _SeededNoise(int):
     - 种子值：本身是 int（python 侧 isinstance(x, int) 成立，可直接用于
       torch.manual_seed、算术运算、JSON 序列化等），供 K 采样器 seed、
       SamplerCustom noise_seed 等 INT 输入端使用；
-    - 噪声源：带 generate_noise() 方法，行为与内置「随机噪波」(RandomNoise)
-      完全一致（同种子生成同噪声），供「自定义采样器（高级）」等
-      NOISE 输入端使用。
+    - 噪声源：带 seed 属性与 generate_noise() 方法，行为与内置「随机噪波」
+      (RandomNoise) 完全一致（同种子生成同噪声），供「自定义采样器（高级）」
+      等 NOISE 输入端使用。ComfyUI 0.42 起 SamplerCustomAdvanced 会读取
+      noise.seed（guider.sample(..., seed=noise.seed)），因此必须提供该属性。
 
     因此输出类型声明为 "*"（Any），一个端口就能直连两类输入。
     """
 
     def __new__(cls, seed):
-        return super().__new__(cls, int(seed))
+        value = int(seed)
+        obj = super().__new__(cls, value)
+        # 新版采样器接口需要 noise.seed；int 子类实例可携带自定义属性
+        obj.seed = value
+        return obj
 
     def generate_noise(self, input_latent):
         import comfy.sample
