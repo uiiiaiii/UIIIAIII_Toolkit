@@ -290,6 +290,35 @@ export class TUtils {
   }
 
   /**
+   * 节点标题是否为用户自定义（界面上双击标题改名）。
+   *
+   * 用户在画布上改名时 LiteGraph 直接写 node.title，不经过任何钩子，
+   * 而绘制层会用 _uiiaiii_title 覆盖显示 → 改名后仍显示译文。
+   * 因此每次应用/绘制时按运行时状态判定：标题既不是原型英文标题、
+   * 也不是当前译文、且不属于已知译文 → 视为用户自定义，翻译让位。
+   */
+  static isCustomNodeTitle(node) {
+    if (!node) return false;
+    const title = node.title;
+    if (typeof title !== "string" || !title) return false;
+    if (node._uiiaiii_title !== undefined && title === node._uiiaiii_title) return false;
+    if (isAlreadyTranslatedText(title)) return false;
+
+    const classType = node.constructor?.comfyClass || node.constructor?.type;
+    const dictTitle = classType ? this.T.Nodes?.[classType]?.title : undefined;
+    if (dictTitle !== undefined && title === dictTitle) return false;
+
+    // 原型标题：未翻译时是英文原名，翻译后是译文；两者都代表"不是用户改的"
+    const protoTitle = node.constructor?.title;
+    if (protoTitle !== undefined && title === protoTitle) return false;
+
+    const origTitle = node.constructor?._uiiaiii_orig_title;
+    if (origTitle !== undefined && title === origTitle) return false;
+
+    return true;
+  }
+
+  /**
    * 应用端口（inputs/outputs）显示名译文。
    *
    * 关键原则：译文只写入自定义属性 _uiiaiii_label，**绝不写 slot.label**。
@@ -379,11 +408,13 @@ export class TUtils {
       }
       
       if (t.hasOwnProperty("title")) {
-        // 仅当用户在界面上显式改过标题时才跳过翻译（由 setTitle/loadedGraphNode 标记），
-        // 不再用"标题不等于类名"之类的启发式判断：那会把英文显示名误判为自定义标题，导致标题永不翻译
-        // 译文同样只写自定义属性 _uiiaiii_title：node.title 会被序列化进工作流，不能改写
-        if (!node._translation_custom_title) {
+        // 仅当用户在界面上显式改过标题时才跳过翻译（由 setTitle/loadedGraphNode 标记，
+        // 以及 isCustomNodeTitle 的运行时判定）；否则译文只写自定义属性 _uiiaiii_title：
+        // node.title 会被序列化进工作流，不能改写
+        if (!node._translation_custom_title && !this.isCustomNodeTitle(node)) {
           node._uiiaiii_title = t["title"];
+        } else {
+          delete node._uiiaiii_title;
         }
       }
       
@@ -689,8 +720,13 @@ export class TUtils {
         const restore = [];
 
         if (node._uiiaiii_title !== undefined) {
-          restore.push([node, "title", node.title]);
-          node.title = node._uiiaiii_title;
+          if (TUtils.isCustomNodeTitle(node)) {
+            // 用户已手动改名：自定义标题优先，撤销显示层译文
+            delete node._uiiaiii_title;
+          } else {
+            restore.push([node, "title", node.title]);
+            node.title = node._uiiaiii_title;
+          }
         }
 
         const applySlot = (slot) => {
