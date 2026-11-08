@@ -5,15 +5,15 @@
             "model": "模型",
             "positive": "正面条件",
             "negative": "负面条件",
-            "latent_image": "Latent"
+            "latent_image": "Latent图像"
         },
         "widgets": {
             "seed": "随机种",
             "control_after_generate": "运行后操作",
-                "fixed": "固定",
-                "increment": "增加",
-                "decrement": "减少",
-                "randomize": "随机",
+            "fixed": "固定",
+            "increment": "增加",
+            "decrement": "减少",
+            "randomize": "随机",
             "steps": "步数",
             "cfg": "CFG",
             "sampler_name": "采样器",
@@ -31,15 +31,15 @@
             "model": "模型",
             "positive": "正面条件",
             "negative": "负面条件",
-            "latent_image": "Latent"
+            "latent_image": "Latent图像"
         },
         "widgets": {
             "seed": "随机种",
             "control_after_generate": "运行后操作",
-                "fixed": "固定",
-                "increment": "增加",
-                "decrement": "减少",
-                "randomize": "随机",
+            "fixed": "固定",
+            "increment": "增加",
+            "decrement": "减少",
+            "randomize": "随机",
             "steps": "步数",
             "cfg": "CFG",
             "sampler_name": "采样器",
@@ -58,16 +58,16 @@
             "model": "模型",
             "positive": "正面条件",
             "negative": "负面条件",
-            "latent_image": "Latent"
+            "latent_image": "Latent图像"
         },
         "widgets": {
             "add_noise": "添加噪波",
             "noise_seed": "随机种",
             "control_after_generate": "运行后操作",
-                "fixed": "固定",
-                "increment": "增加",
-                "decrement": "减少",
-                "randomize": "随机",
+            "fixed": "固定",
+            "increment": "增加",
+            "decrement": "减少",
+            "randomize": "随机",
             "steps": "步数",
             "cfg": "CFG",
             "sampler_name": "采样器",

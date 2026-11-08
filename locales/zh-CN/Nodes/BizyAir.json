@@ -231,7 +231,7 @@
             "model": "模型",
             "positive": "正面条件",
             "negative": "负面条件",
-            "latent_image": "latent图像"
+            "latent_image": "Latent图像"
         },
         "widgets": {
             "seed": "随机种子",
@@ -251,7 +251,7 @@
             "model": "模型",
             "positive": "正面条件",
             "negative": "负面条件",
-            "latent_image": "latent图像"
+            "latent_image": "Latent图像"
         },
         "widgets": {
             "add_noise": "添加随机",
@@ -1548,7 +1548,7 @@
             "guider": "引导",
             "sampler": "采样器",
             "sigmas": "调度器",
-            "latent_image": "latent"
+            "latent_image": "Latent图像"
         },
         "outputs": {
             "output": "输出",

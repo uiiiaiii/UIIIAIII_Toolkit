@@ -914,7 +914,7 @@
         "title": "ICLora图像准备",
         "inputs": {
             "reference_image": "参考图像",
-            "latent_image": "Latent",
+            "latent_image": "Latent图像",
             "latent_mask": "Latent遮罩",
             "reference_mask": "遮罩"
         },
@@ -2256,12 +2256,12 @@
         "title": "条件传递",
         "description": "Simply passes through the positive and negative conditioning,\n    workaround for Set node not allowing bypassed inputs.",
         "inputs": {
-            "positive": "积极情感",
-            "negative": "消极情感"
+            "positive": "正面条件",
+            "negative": "负面条件"
         },
         "outputs": {
-            "positive": "积极情感",
-            "negative": "消极情感"
+            "positive": "正面条件",
+            "negative": "负面条件"
         }
     },
     "ModelPassThrough": {
@@ -2594,8 +2594,8 @@
             "vae": "Vae"
         },
         "outputs": {
-            "positive": "积极情感",
-            "negative": "消极情感",
+            "positive": "正面条件",
+            "negative": "负面条件",
             "latent": "潜空间"
         },
         "widgets": {
@@ -2616,8 +2616,8 @@
             "vae": "Vae"
         },
         "outputs": {
-            "positive": "积极情感",
-            "negative": "消极情感",
+            "positive": "正面条件",
+            "negative": "负面条件",
             "latent": "潜空间"
         },
         "widgets": {
@@ -2866,8 +2866,8 @@
         "title": "调度式CFG引导",
         "inputs": {
             "model": "模型",
-            "positive": "积极情感",
-            "negative": "消极情感"
+            "positive": "正面条件",
+            "negative": "负面条件"
         },
         "outputs": {
             "GUIDER": "引导"
@@ -3159,16 +3159,16 @@
         "title": "混元视频 关键帧编码为条件",
         "inputs": {
             "model": "模型",
-            "positive": "积极情感",
+            "positive": "正面条件",
             "vae": "Vae",
             "start_frame": "起始帧",
             "end_frame": "结束帧",
-            "negative": "消极情感"
+            "negative": "负面条件"
         },
         "outputs": {
             "model": "模型",
-            "positive": "积极情感",
-            "negative": "消极情感",
+            "positive": "正面条件",
+            "negative": "负面条件",
             "latent": "潜空间"
         },
         "widgets": {
@@ -3465,16 +3465,16 @@
         "title": "LTXV 从批次添加引导",
         "description": "从批次中向潜空间添加多个引导图像，并对应帧索引。批次中的非黑色图像用作引导。",
         "inputs": {
-            "positive": "积极情感",
-            "negative": "消极情感",
+            "positive": "正面条件",
+            "negative": "负面条件",
             "vae": "Vae",
             "latent": "潜空间",
             "images": "图片",
             "Batch of images - non-black images will be used as guides": "图像批次 - 非黑色图像将用作引导"
         },
         "outputs": {
-            "positive": "积极情感",
-            "negative": "消极情感",
+            "positive": "正面条件",
+            "negative": "负面条件",
             "latent": "潜空间"
         },
         "widgets": {
@@ -4280,14 +4280,14 @@
     "WanImageToVideoSVIPro": {
         "title": "Wan 图像转视频 SVIPro",
         "inputs": {
-            "positive": "积极情感",
-            "negative": "消极情感",
+            "positive": "正面条件",
+            "negative": "负面条件",
             "anchor_samples": "锚定样本",
             "prev_samples": "先前样本"
         },
         "outputs": {
-            "positive": "积极情感",
-            "negative": "消极情感",
+            "positive": "正面条件",
+            "negative": "负面条件",
             "latent": "潜空间"
         },
         "widgets": {
@@ -4371,9 +4371,9 @@
         "title": "LTXV 添加多个引导",
         "description": "在指定的帧索引处添加多个引导图像并设置强度，使用 DynamicCombo，需要 ComfyUI 0.8.1 和前端 1.33.4 或更高版本。",
         "inputs": {
-            "positive": "积极情感",
+            "positive": "正面条件",
             "Positive conditioning to which guide keyframe info will be added": "将添加引导关键帧信息的正面条件",
-            "negative": "消极情感",
+            "negative": "负面条件",
             "Negative conditioning to which guide keyframe info will be added": "将添加引导关键帧信息的负面条件",
             "vae": "Vae",
             "Video VAE used to encode the guide images": "用于编码引导图像的视频 VAE",
@@ -4381,8 +4381,8 @@
             "Video latent, guides are added to the end of this latent": "视频潜空间，引导将添加到该潜空间的末尾"
         },
         "outputs": {
-            "positive": "积极情感",
-            "negative": "消极情感",
+            "positive": "正面条件",
+            "negative": "负面条件",
             "latent": "潜空间",
             "Video latent with added guides": "添加了引导的视频潜空间"
         },

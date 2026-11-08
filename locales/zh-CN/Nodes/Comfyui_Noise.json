@@ -5,7 +5,7 @@
             "model": "模型",
             "positive": "正面条件",
             "negative": "负面条件",
-            "latent_image": "Latent"
+            "latent_image": "Latent图像"
         },
         "widgets": {
             "steps": "步数",
@@ -25,10 +25,10 @@
             "source": "生成设备",
             "seed": "随机种",
             "control_after_generate": "运行后操作",
-                "fixed": "固定",
-                "increment": "增加",
-                "decrement": "减少",
-                "randomize": "随机",
+            "fixed": "固定",
+            "increment": "增加",
+            "decrement": "减少",
+            "randomize": "随机",
             "width": "宽度",
             "height": "高度",
             "batch_size": "批次大小"

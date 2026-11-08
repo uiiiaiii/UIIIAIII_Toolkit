@@ -1,0 +1,154 @@
+{
+    "SelfLiftAvatarH3TST": {
+        "title": "selflift-Avatar H3 TST 节点",
+        "inputs": {
+            "model": "模型"
+        },
+        "outputs": {
+            "MODEL": "模型"
+        },
+        "widgets": {
+            "tau": "阈值 τ",
+            "log_diagnostics": "记录诊断日志",
+            "Homeostatic correction strength; 0.2 is the paper setting. 0 disables correction while keeping the diagnostic active.": "稳态校正强度；0.2 为论文设置。设为 0 可禁用校正，同时保持诊断功能启用。",
+            "Log per-forward Spectral Tension and correction statistics to the console. Note: TST is skipped with a warning when highres_tiling is enabled on the SelfLift sampler.": "将每次前向传播的频谱张力和校正统计信息记录到控制台。注意：当 SelfLift 采样器启用 highres_tiling 时，TST 将被跳过并发出警告。"
+        }
+    },
+    "SelfLiftAvatarH3Sampler": {
+        "title": "selflift-Avatar 采样器（MiniMax H3）",
+        "inputs": {
+            "low_res_model": "低分辨率模型",
+            "Low-resolution model used for the first transition_step evaluations. Also used for the high-resolution stage when high_res_model is disconnected.": "用于最初的‘过渡步数’次评估；高分辨率模型未连接时，也会用于高分辨率阶段。",
+            "positive": "正面条件",
+            "negative": "负面条件",
+            "vae": "Vae",
+            "Video VAE used for the pixel re-encode anchor at the resolution transition.": "用于在分辨率转换时进行像素重编码锚定的视频VAE。",
+            "latent_image": "Latent图像",
+            "Target-resolution H3 AV latent defining size and duration. Experimental: accepts existing latents, Tensor masks and H3 NestedTensor video/audio masks. 0 keeps content; 1 generates. Spatial tiling requires video=1 everywhere and audio=0 everywhere; global modes keep full-sequence masks unchanged.": "目标分辨率的 H3 音视频潜空间，用于定义尺寸和时长。实验性功能：可接受已有潜空间数据、张量遮罩以及 H3 NestedTensor 视频/音频遮罩。0 表示保留内容；1 表示生成内容。空间分块要求视频遮罩全部为 1、音频遮罩全部为 0；全局模式会保持全序列遮罩不变。",
+            "sampler": "采样器",
+            "Standard Euler only; SelfLift reuses its transition-step prediction to keep the original NFE count.": "仅支持标准Euler；SelfLift复用其转换步预测以保持原始NFE数量。",
+            "sigmas": "噪声调度",
+            "high_res_model": "高分辨率模型",
+            "高分辨率阶段模型 / High-resolution model. Used after the resolution lift. If disconnected, uses low_res_model. Both stages must use compatible architecture, latent format, sampling parameterization, VAE and conditioning.": "高分辨率阶段模型。在分辨率提升后使用。如果未连接，则使用低分辨率模型。两个阶段必须使用兼容的架构、潜空间格式、采样参数化方式、VAE 和条件信息。"
+        },
+        "outputs": {
+            "LATENT": "Latent"
+        },
+        "widgets": {
+            "seed": "随机种子",
+            "cfg": "CFG",
+            "transition_step": "转换步",
+            "Number of low-resolution denoiser evaluations. The paper uses 6 of 8 NFEs for its 8-step image model; H3 requires independent validation.": "低分辨率去噪器评估次数。论文中8步图像模型使用8个NFE中的6个；H3需要独立验证。",
+            "lowres_scale": "低分辨率缩放",
+            "Spatial scale of the low-resolution prefix (paper: 0.5).": "低分辨率前缀的空间缩放（论文：0.5）。",
+            "rho": "校正比例",
+            "Fraction of highest-risk spatiotemporal locations corrected toward the pixel-VAE anchor. The H3 default 0 uses only the external latent upscaler and skips the VAE round trip. For SelfLift-zero with upscaler_model=none, start near 0.6.": "向像素VAE锚定校正的最高风险时空位置比例。H3默认值0仅使用外部潜空间放大模型并跳过VAE往返。对于upscaler_model=none的SelfLift-zero，从接近0.6开始。",
+            "w_min": "最小权重",
+            "Correction-strength floor. H3's widespread nearest-lift error can require 1.0; 0.5 is the paper's image-model setting.": "校正强度下限。H3普遍的最近邻提升误差可能需要1.0；0.5是论文的图像模型设置。",
+            "w_max": "最大权重",
+            "Correction-strength ceiling. Keep at 1.0 for the H3 SelfLift-zero diagnostic.": "校正强度上限。对于H3 SelfLift-zero诊断，保持为1.0。",
+            "upscaler_model": "放大模型",
+            "External H3 latent upscaler (models/latent_upscale_models). The first detected H3 model is selected by default; 'none' uses nearest-neighbor lifting.": "外部H3潜空间放大模型（models/latent_upscale_models）。默认选择第一个检测到的H3模型；'none'使用最近邻提升。",
+            "highres_tiling": "高分辨率分块",
+            "Experimental high-resolution memory saving. Choose Spatial for crop tiles, or Global stream/Global for full-sequence chunking that preserves cross-tile attention context. Spatial supports only video=1 everywhere / audio=0 everywhere; global modes keep arbitrary full-sequence masks.": "用于高分辨率显存节省的实验性功能。选择‘空间’可使用裁剪图块，或选择‘全局流’/‘全局’进行全序列分块处理，以保留跨图块的注意力上下文。空间模式仅支持视频遮罩全部为 1、音频遮罩全部为 0；全局模式可保留任意全序列遮罩。",
+            "tiling_mode": "边缘平铺模式",
+            "Spatial mode only. auto 自动: choose 1–8 tiles using memory estimates. manual 手动: use tiling_tiles, no automatic increase.": "仅适用于空间模式。auto 自动：根据显存估算选择 1–8 个图块。manual 手动：使用‘分块数量’，不会自动增加。",
+            "tiling_tiles": "分块数量",
+            "Spatial mode only. Manual tiles: 2, 4, 6, 8. Ignored in auto mode. Small dimensions can reduce the effective count.": "仅适用于空间模式。手动图块数：2、4、6、8。在 auto 自动模式下忽略。尺寸较小时可能会减少实际生效的数量。",
+            "tiling_axis": "分块轴",
+            "Spatial mode only. auto = longer patch-grid side; width = left/right strips; height = top/bottom strips; audio/time are not split.": "仅适用于空间模式。auto = 选择图块网格较长的一侧；宽度 = 左右条带；高度 = 上下条带；音频/时间维度不会被拆分。",
+            "highres_tiling_mode": "高分辨率分块模式",
+            "Memory-saving strategy. spatial: crop tiles with an automatic full-frame low-resolution anchor, content-aware cuts and seam diagnostics. global_stream: full-sequence context, GPU head groups, requires native SLA/sol-attn (VSA not adapted). global: full-sequence dense-compatible path; higher VRAM. global_ram: full-sequence host-RAM staging; slower. Global modes preserve the complete video/audio mask on the packed sequence.": "显存节省策略。spatial：使用自动全帧低分辨率锚点、内容感知切分和接缝诊断来裁剪图块。global_stream：全序列上下文、GPU 注意力头分组，需要原生 SLA/sol-attn（尚未适配 VSA）。global：全序列稠密计算兼容路径；显存占用更高。global_ram：全序列主机内存暂存；速度较慢。全局模式会在打包序列上保留完整的视频/音频遮罩。",
+            "highres_token_chunk": "高分辨率令牌分块大小",
+            "Global modes only. Tokens per projection/feed-forward batch. Smaller batches usually save intermediate VRAM but add overhead. This is not a spatial tile or attention window.": "仅适用于全局模式。每个投影/前馈批次的令牌数。较小的批次通常可节省中间结果占用的显存，但会增加额外开销。这不是空间图块，也不是注意力窗口。",
+            "highres_weight_cache_gb": "高分辨率权重缓存大小（GiB）",
+            "Global stream only. Resident DynamicVRAM weight-cache budget in GiB. Not total VRAM or system RAM. 0 keeps the automatic policy; it does not disable caching.": "仅适用于全局流模式。DynamicVRAM 的常驻权重缓存预算，单位为 GiB。并非总显存或系统内存。0 表示保留自动策略；不会禁用缓存。"
+        }
+    },
+    "SelfLiftAvatarH3SpatialAnchoredSampler": {
+        "title": "selflift-Avatar 空间锚点（测试）",
+        "inputs": {
+            "low_res_model": "低分辨率模型",
+            "Low-resolution model used for the first transition_step evaluations. Also used for the high-resolution stage when high_res_model is disconnected.": "用于最初的‘过渡步数’次评估；高分辨率模型未连接时，也会用于高分辨率阶段。",
+            "positive": "正面条件",
+            "negative": "负面条件",
+            "vae": "Vae",
+            "Video VAE used for the pixel re-encode anchor at the resolution transition.": "用于在分辨率转换时进行像素重编码锚定的视频VAE。",
+            "latent_image": "Latent图像",
+            "Target-resolution H3 AV latent defining size and duration. Experimental: accepts existing latents, Tensor masks and H3 NestedTensor video/audio masks. 0 keeps content; 1 generates. Spatial tiling requires video=1 everywhere and audio=0 everywhere; global modes keep full-sequence masks unchanged.": "目标分辨率的 H3 音视频潜空间，用于定义尺寸和时长。实验性功能：可接受已有潜空间数据、张量遮罩以及 H3 NestedTensor 视频/音频遮罩。0 表示保留内容；1 表示生成内容。空间分块要求视频遮罩全部为 1、音频遮罩全部为 0；全局模式会保持全序列遮罩不变。",
+            "sampler": "采样器",
+            "Standard Euler only; SelfLift reuses its transition-step prediction to keep the original NFE count.": "仅支持标准Euler；SelfLift复用其转换步预测以保持原始NFE数量。",
+            "sigmas": "噪声调度",
+            "high_res_model": "高分辨率模型",
+            "高分辨率阶段模型 / High-resolution model. Used after the resolution lift. If disconnected, uses low_res_model. Both stages must use compatible architecture, latent format, sampling parameterization, VAE and conditioning.": "高分辨率阶段模型。在分辨率提升后使用。如果未连接，则使用低分辨率模型。两个阶段必须使用兼容的架构、潜空间格式、采样参数化方式、VAE 和条件信息。"
+        },
+        "outputs": {
+            "LATENT": "Latent"
+        },
+        "widgets": {
+            "TEST node: spatial tiling only. Disable for a direct full-frame control run.": "测试节点：仅支持空间分块。如需直接进行整帧对照运行，请禁用此项。",
+            "manual is recommended for A/B tests: 2 or 3 strips first; increase only if OOM.": "建议 A/B 测试使用 manual（手动）模式：先设为 2 或 3 个条带；仅在出现显存不足（OOM）时再增加。",
+            "Fewer strips preserve more context. 3 can keep a centered subject in one middle strip.": "条带越少，保留的上下文信息越多。3 个条带可让居中主体落在中间的一个条带内。",
+            "This test node intentionally supports spatial tiling only. Use the original sampler for global modes.": "此测试节点特意仅支持空间分块。如需全局模式，请使用原始采样器。",
+            "tiling_overlap": "分块重叠量",
+            "Explicit overlap in H3 patch units. Larger values give each strip more neighbour context but use more VRAM.": "以 H3 图块单位显式指定重叠量。数值越大，每个条带获得的相邻上下文信息越多，但会占用更多显存。",
+            "spatial_anchor": "空间锚点",
+            "lowres_global appends the aligned full-frame low-resolution endpoint as an uncropped H3 video reference. off is the control path.": "lowres_global 会将对齐后的整帧低分辨率端点追加为未裁剪的 H3 视频参考；off 为对照路径。",
+            "seed": "随机种子",
+            "cfg": "CFG",
+            "transition_step": "转换步",
+            "Number of low-resolution denoiser evaluations. The paper uses 6 of 8 NFEs for its 8-step image model; H3 requires independent validation.": "低分辨率去噪器评估次数。论文中8步图像模型使用8个NFE中的6个；H3需要独立验证。",
+            "lowres_scale": "低分辨率缩放",
+            "Spatial scale of the low-resolution prefix (paper: 0.5).": "低分辨率前缀的空间缩放（论文：0.5）。",
+            "rho": "校正比例",
+            "Fraction of highest-risk spatiotemporal locations corrected toward the pixel-VAE anchor. The H3 default 0 uses only the external latent upscaler and skips the VAE round trip. For SelfLift-zero with upscaler_model=none, start near 0.6.": "向像素VAE锚定校正的最高风险时空位置比例。H3默认值0仅使用外部潜空间放大模型并跳过VAE往返。对于upscaler_model=none的SelfLift-zero，从接近0.6开始。",
+            "w_min": "最小权重",
+            "Correction-strength floor. H3's widespread nearest-lift error can require 1.0; 0.5 is the paper's image-model setting.": "校正强度下限。H3普遍的最近邻提升误差可能需要1.0；0.5是论文的图像模型设置。",
+            "w_max": "最大权重",
+            "Correction-strength ceiling. Keep at 1.0 for the H3 SelfLift-zero diagnostic.": "校正强度上限。对于H3 SelfLift-zero诊断，保持为1.0。",
+            "upscaler_model": "放大模型",
+            "External H3 latent upscaler (models/latent_upscale_models). The first detected H3 model is selected by default; 'none' uses nearest-neighbor lifting.": "外部H3潜空间放大模型（models/latent_upscale_models）。默认选择第一个检测到的H3模型；'none'使用最近邻提升。",
+            "highres_tiling": "高分辨率分块",
+            "tiling_mode": "边缘平铺模式",
+            "tiling_tiles": "分块数量",
+            "tiling_axis": "分块轴",
+            "Spatial mode only. auto = longer patch-grid side; width = left/right strips; height = top/bottom strips; audio/time are not split.": "仅适用于空间模式。auto = 选择图块网格较长的一侧；宽度 = 左右条带；高度 = 上下条带；音频/时间维度不会被拆分。",
+            "highres_tiling_mode": "高分辨率分块模式"
+        }
+    },
+    "SelfLiftAvatarImageSampler": {
+        "title": "selflift-Avatar 采样器（图像）",
+        "inputs": {
+            "Target-resolution image latent. Experimental: accepts existing content and BHW/BCHW Tensor masks. 0 keeps content; 1 generates.": "目标分辨率的图像潜空间。实验性功能：可接受已有内容以及 BHW/BCHW 张量遮罩。0 保留内容；1 生成内容。",
+            "low_res_model": "低分辨率模型",
+            "Low-resolution model used for the first transition_step evaluations. Also used for the high-resolution stage when high_res_model is disconnected.": "用于最初的‘过渡步数’次评估；高分辨率模型未连接时，也会用于高分辨率阶段。",
+            "positive": "正面条件",
+            "negative": "负面条件",
+            "vae": "Vae",
+            "VAE used for the pixel re-encode anchor at the resolution transition.": "用于在分辨率转换时进行像素重编码锚定的VAE。",
+            "latent_image": "Latent图像",
+            "sampler": "采样器",
+            "Standard Euler only; SelfLift reuses its transition-step prediction to keep the original NFE count.": "仅支持标准Euler；SelfLift复用其转换步预测以保持原始NFE数量。",
+            "sigmas": "噪声调度",
+            "high_res_model": "高分辨率模型",
+            "高分辨率阶段模型 / High-resolution model. Used after the resolution lift. If disconnected, uses low_res_model. Both stages must use compatible architecture, latent format, sampling parameterization, VAE and conditioning.": "高分辨率阶段模型。在分辨率提升后使用。如果未连接，则使用低分辨率模型。两个阶段必须使用兼容的架构、潜空间格式、采样参数化方式、VAE 和条件信息。"
+        },
+        "outputs": {
+            "LATENT": "Latent"
+        },
+        "widgets": {
+            "seed": "随机种子",
+            "cfg": "CFG",
+            "transition_step": "转换步",
+            "Number of low-resolution denoiser evaluations. Paper: 3 of 4 for FLUX.2-Klein, 6 of 8 for Z-Image-Turbo.": "低分辨率去噪器评估次数。论文：FLUX.2-Klein为4步中的3步，Z-Image-Turbo为8步中的6步。",
+            "lowres_scale": "低分辨率缩放",
+            "Spatial scale of the low-resolution prefix (paper: 0.5).": "低分辨率前缀的空间缩放（论文：0.5）。",
+            "rho": "校正比例",
+            "Fraction of locations corrected toward the pixel-VAE anchor. Paper: 0.4 for FLUX.2-Klein, 0.3 for Z-Image-Turbo.": "向像素VAE锚定校正的位置比例。论文：FLUX.2-Klein为0.4，Z-Image-Turbo为0.3。",
+            "w_min": "最小权重",
+            "w_max": "最大权重",
+            "latent_upsample": "潜空间上采样",
+            "Interpolation for the direct latent lift (paper: nearest).": "直接潜空间提升的插值方法（论文：最近邻）。"
+        }
+    }
+}

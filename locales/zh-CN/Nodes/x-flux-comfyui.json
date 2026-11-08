@@ -56,7 +56,7 @@
             "model": "模型",
             "conditioning": "正面条件",
             "neg_conditioning": "负面条件",
-            "latent_image": "Latent",
+            "latent_image": "Latent图像",
             "controlnet_condition": "ControlNet条件"
         },
         "widgets": {

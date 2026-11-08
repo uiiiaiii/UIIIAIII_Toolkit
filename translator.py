@@ -158,8 +158,9 @@ def build_system_prompt(target_lang: str = "zh-CN") -> str:
 
 ### 术语规范（参考，按目标语言习惯调整；与 ComfyUI 官方中文译法保持一致）
 - prompt → 提示词
-- positive / positive_prompt → 正面 / 正面提示词
-- negative / negative_prompt → 负面 / 负面提示词（不要用"正向/反向/负向"）
+- positive → 正面条件（条件端口名，不要用"积极情感/正向"）
+- negative → 负面条件（条件端口名，不要用"消极情感/反向"）
+- positive_prompt / negative_prompt → 正面提示词 / 负面提示词
 - seed → 种子
 - steps → 步数
 - guidance/cfg → 引导系数
@@ -173,6 +174,7 @@ def build_system_prompt(target_lang: str = "zh-CN") -> str:
 - video → 视频
 - mask → 遮罩（不要用"蒙版""掩码"）
 - latent → 潜空间（不要用"隐空间""潜在空间"）
+- latent_image → Latent图像（不要用"潜空间图像""隐空间图像"）
 - model → 模型
 - Add Node → 新建节点
 - Save → 保存
@@ -254,9 +256,13 @@ def load_translation_dict(target_lang: str) -> Dict[str, Any]:
         sub_dir = os.path.join(base, sub)
         if not os.path.isdir(sub_dir):
             continue
-        for fn in sorted(os.listdir(sub_dir)):
-            if not fn.endswith(".json"):
-                continue
+        # 按修改时间升序：最近提取/翻译的文件最后合并，其译文优先
+        files = [fn for fn in sorted(os.listdir(sub_dir)) if fn.endswith(".json")]
+        try:
+            files.sort(key=lambda fn: os.path.getmtime(os.path.join(sub_dir, fn)))
+        except Exception:
+            pass
+        for fn in files:
             path = os.path.join(sub_dir, fn)
             try:
                 with open(path, "r", encoding="utf-8") as f:

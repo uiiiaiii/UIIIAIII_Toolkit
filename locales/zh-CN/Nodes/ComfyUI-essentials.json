@@ -680,7 +680,7 @@
         "title": "K采样器差异",
         "inputs": {
             "model": "模型",
-            "latent_image": "Latent",
+            "latent_image": "Latent图像",
             "positive": "正面条件",
             "negative": "负面条件"
         },
@@ -702,7 +702,7 @@
         "title": "K采样器差异噪波",
         "inputs": {
             "model": "模型",
-            "latent_image": "Latent",
+            "latent_image": "Latent图像",
             "positive": "正面条件",
             "negative": "负面条件"
         },
@@ -741,7 +741,7 @@
         "inputs": {
             "model": "模型",
             "conditioning": "条件",
-            "latent_image": "Latent",
+            "latent_image": "Latent图像",
             "loras": "Lora"
         },
         "widgets": {

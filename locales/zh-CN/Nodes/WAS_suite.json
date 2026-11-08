@@ -2416,7 +2416,7 @@
             "seed": "随机种",
             "positive": "正面条件",
             "negative": "负面条件",
-            "latent_image": "Latent"
+            "latent_image": "Latent图像"
         },
         "widgets": {
             "seed": "随机种",
@@ -2437,7 +2437,7 @@
             "seed": "随机种",
             "positive": "正面条件",
             "negative": "负面条件",
-            "latent_image": "Latent"
+            "latent_image": "Latent图像"
         },
         "widgets": {
             "seed": "随机种",
@@ -2457,7 +2457,7 @@
             "model": "模型",
             "positive": "正面条件",
             "negative": "负面条件",
-            "latent_image": "Latent",
+            "latent_image": "Latent图像",
             "vae": "VAE",
             "secondary_model": "第二模型",
             "upscale_model": "放大模型",

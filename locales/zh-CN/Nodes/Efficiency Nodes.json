@@ -5,7 +5,7 @@
             "model": "模型",
             "positive": "正面条件",
             "negative": "负面条件",
-            "latent_image": "Latent",
+            "latent_image": "Latent图像",
             "optional_vae": "VAE(可选)",
             "script": "脚本"
         },
@@ -54,7 +54,7 @@
             "model": "模型",
             "positive": "正面条件",
             "negative": "负面条件",
-            "latent_image": "Latent",
+            "latent_image": "Latent图像",
             "optional_vae": "VAE(可选)",
             "script": "脚本"
         },
@@ -107,7 +107,7 @@
         "title": "K采样器(SDXL效率)",
         "inputs": {
             "sdxl_tuple": "SDXL元组",
-            "latent_image": "Latent",
+            "latent_image": "Latent图像",
             "optional_vae": "VAE(可选)",
             "script": "脚本"
         },

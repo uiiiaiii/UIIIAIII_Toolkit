@@ -243,7 +243,7 @@
             "model": "模型",
             "positive": "正面条件",
             "negative": "负面条件",
-            "latent_image": "Latent",
+            "latent_image": "Latent图像",
             "tonal_guide_latent": "色调引导Latent",
             "ppf_settings": "柏林乘方分形设置",
             "ch_settings": "交叉线设置"

@@ -176,7 +176,7 @@
             "model": "模型",
             "positive": "正面提示词",
             "negative": "负面提示词",
-            "latent_image": "潜空间图像",
+            "latent_image": "Latent图像",
             "optional_vae": "可选VAE"
         },
         "outputs": {},

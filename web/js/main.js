@@ -141,7 +141,8 @@ export class TUtils {
         if (w._uiiaiii_tl === shown) continue;   // 显示名未变，无需重复处理
         w._uiiaiii_tl = shown;
         if (isAlreadyTranslatedText(shown)) continue;   // 已是译文
-        const translated = widgetDict[shown] || menuT[shown];
+        // 字典以控件内部名为 key；插件改写 label 时按 label 兜底
+        const translated = (w.name && widgetDict[w.name]) || widgetDict[shown] || menuT[shown];
         if (translated && translated !== shown) {
           // 仅首次改写时记录原文（null 表示原本没有 label，显示名取 name）
           if (w._uiiaiii_tl_orig === undefined) {

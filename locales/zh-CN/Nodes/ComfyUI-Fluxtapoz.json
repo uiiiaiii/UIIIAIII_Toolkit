@@ -175,7 +175,7 @@
         "title": "Flux逆向ODE采样器",
         "inputs": {
             "model": "模型",
-            "latent_image": "潜空间图像",
+            "latent_image": "Latent图像",
             "attn_override": "注意力覆盖"
         },
         "widgets": {
@@ -194,7 +194,7 @@
         "title": "应用FluxSEG注意力",
         "inputs": {
             "model": "模型",
-            "latent_image": "潜空间图像",
+            "latent_image": "Latent图像",
             "attn_override": "注意力覆盖"
         },
         "widgets": {

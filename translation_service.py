@@ -33,42 +33,68 @@ def try_get_json(path: Path):
     return {}
 
 
+def _iter_locale_json(dir_path: Path, disabled_stems=None):
+    """
+    按修改时间升序列出语言 JSON 文件（旧的先、新的后）
+
+    多个文件可能包含同一个节点类或同一个词条（如插件目录字典与用户单独
+    提取翻译的 selected_nodes.json）。按时间排序保证最近提取/翻译的结果
+    最后合并、优先生效，而非依赖文件系统返回顺序。
+    """
+    disabled = set(disabled_stems or [])
+    files = [p for p in dir_path.glob("*.json") if p.stem not in disabled]
+    try:
+        files.sort(key=lambda p: p.stat().st_mtime)
+    except Exception:
+        pass
+    return files
+
+
 def get_nodes_translation(locale, disabled_plugins=None):
     path = Path(LOCALES_DIR).joinpath(locale, "Nodes")
     if not path.exists():
         path = Path(LOCALES_DIR).joinpath("en-US", "Nodes")
     if not path.exists():
         return {}
-    disabled = set(disabled_plugins or [])
     translations = {}
-    for jpath in path.glob("*.json"):
-        if jpath.stem in disabled:
-            continue
-        translations.update(try_get_json(jpath))
+    for jpath in _iter_locale_json(path, disabled_plugins):
+        data = try_get_json(jpath)
+        if isinstance(data, dict):
+            # 翻译时会复用旧字典，重新提取得到的条目本身是完整的，
+            # 因此同名节点按文件修改时间先后整体覆盖即可：最新的字典生效
+            translations.update(data)
     return translations
 
 
 def get_category_translation(locale):
     cats = {}
-    for cat_json in Path(LOCALES_DIR).joinpath(locale, "Categories").glob("*.json"):
-        cats.update(try_get_json(cat_json))
+    for cat_json in _iter_locale_json(Path(LOCALES_DIR).joinpath(locale, "Categories")):
+        data = try_get_json(cat_json)
+        if isinstance(data, dict):
+            cats.update(data)
     path = Path(LOCALES_DIR).joinpath(locale, "NodeCategory.json")
     if not path.exists():
         path = Path(LOCALES_DIR).joinpath("en-US", "NodeCategory.json")
     if path.exists():
-        cats.update(try_get_json(path))
+        data = try_get_json(path)
+        if isinstance(data, dict):
+            cats.update(data)
     return cats
 
 
 def get_menu_translation(locale):
     menus = {}
-    for menu_json in Path(LOCALES_DIR).joinpath(locale, "Menus").glob("*.json"):
-        menus.update(try_get_json(menu_json))
+    for menu_json in _iter_locale_json(Path(LOCALES_DIR).joinpath(locale, "Menus")):
+        data = try_get_json(menu_json)
+        if isinstance(data, dict):
+            menus.update(data)
     path = Path(LOCALES_DIR).joinpath(locale, "Menu.json")
     if not path.exists():
         path = Path(LOCALES_DIR).joinpath("en-US", "Menu.json")
     if path.exists():
-        menus.update(try_get_json(path))
+        data = try_get_json(path)
+        if isinstance(data, dict):
+            menus.update(data)
     return menus
 
 

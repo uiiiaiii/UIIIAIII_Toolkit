@@ -3,7 +3,7 @@
         "title": "K采样器(节点束)",
         "inputs": {
             "basic_pipe": "基础节点束",
-            "latent_image": "Latent"
+            "latent_image": "Latent图像"
         },
         "widgets": {
             "seed": "随机种",
@@ -27,7 +27,7 @@
         "title": "K采样器(高级节点束)",
         "inputs": {
             "basic_pipe": "基础节点束",
-            "latent_image": "Latent"
+            "latent_image": "Latent图像"
         },
         "widgets": {
             "add_noise": "添加噪波",
@@ -2195,7 +2195,7 @@
     "TwoSamplersForMask": {
         "title": "双采样器",
         "inputs": {
-            "latent_image": "Latent",
+            "latent_image": "Latent图像",
             "base_sampler": "基础采样器",
             "mask_sampler": "遮罩采样器",
             "mask": "遮罩"
@@ -2358,7 +2358,7 @@
         "title": "区域采样器(高级)",
         "inputs": {
             "samples": "Latent",
-            "latent_image": "Latent",
+            "latent_image": "Latent图像",
             "base_sampler": "K采样器(高级)",
             "regional_prompts": "区域提示词"
         },

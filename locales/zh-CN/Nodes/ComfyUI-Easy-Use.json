@@ -219,12 +219,12 @@
         "outputs": {
             "pipe": "节点束",
             "ipadapter_params": "IPAdapter参数组",
-            "positive": "积极情感",
-            "negative": "消极情感"
+            "positive": "正面条件",
+            "negative": "负面条件"
         },
         "widgets": {
-            "positive": "积极情感",
-            "negative": "消极情感",
+            "positive": "正面条件",
+            "negative": "负面条件",
             "image_weight": "图像权重",
             "prompt_weight": "提示词权重",
             "weight_type": "权重类型",
@@ -263,8 +263,8 @@
         "outputs": {
             "pipe": "节点束",
             "model": "模型",
-            "positive": "积极情感",
-            "negative": "消极情感"
+            "positive": "正面条件",
+            "negative": "负面条件"
         },
         "widgets": {
             "instantid_file": "InstantID文件",
@@ -286,14 +286,14 @@
             "image_kps": "图像_kps",
             "mask": "遮罩图像",
             "control_net": "ControlNet",
-            "positive": "积极情感",
-            "negative": "消极情感"
+            "positive": "正面条件",
+            "negative": "负面条件"
         },
         "outputs": {
             "pipe": "节点束",
             "model": "模型",
-            "positive": "积极情感",
-            "negative": "消极情感"
+            "positive": "正面条件",
+            "negative": "负面条件"
         },
         "widgets": {
             "instantid_file": "InstantID文件",
@@ -488,8 +488,8 @@
             "image": "图像"
         },
         "widgets": {
-            "positive": "积极情感",
-            "negative": "消极情感",
+            "positive": "正面条件",
+            "negative": "负面条件",
             "model": "模型",
             "aspect_ratio": "宽高比",
             "seed": "随机种子",
@@ -1224,8 +1224,8 @@
             "model": "模型",
             "vae": "Vae",
             "clip": "CLIP",
-            "positive": "积极情感",
-            "negative": "消极情感",
+            "positive": "正面条件",
+            "negative": "负面条件",
             "latent": "潜空间"
         },
         "widgets": {
@@ -1240,10 +1240,10 @@
             "resolution": "分辨率",
             "empty_latent_width": "宽度",
             "empty_latent_height": "高度",
-            "positive": "积极情感",
+            "positive": "正面条件",
             "positive_token_normalization": "正面Token规格化",
             "positive_weight_interpretation": "正面权重插值方式",
-            "negative": "消极情感",
+            "negative": "负面条件",
             "negative_token_normalization": "负面Token规格化",
             "negative_weight_interpretation": "负面权重插值方式",
             "batch_size": "批次大小",
@@ -1272,8 +1272,8 @@
             "resolution": "分辨率",
             "empty_latent_width": "宽度",
             "empty_latent_height": "高度",
-            "positive": "积极情感",
-            "negative": "消极情感",
+            "positive": "正面条件",
+            "negative": "负面条件",
             "batch_size": "批次大小",
             "a1111_prompt_style": "A1111提示词风格"
         }
@@ -1300,8 +1300,8 @@
             "resolution": "分辨率",
             "empty_latent_width": "宽度",
             "empty_latent_height": "高度",
-            "positive": "积极情感",
-            "negative": "消极情感",
+            "positive": "正面条件",
+            "negative": "负面条件",
             "batch_size": "批次大小"
         }
     },
@@ -1325,8 +1325,8 @@
             "resolution": "分辨率",
             "empty_latent_width": "宽度",
             "empty_latent_height": "高度",
-            "positive": "积极情感",
-            "negative": "消极情感",
+            "positive": "正面条件",
+            "negative": "负面条件",
             "batch_size": "批次大小"
         }
     },
@@ -1353,8 +1353,8 @@
             "empty_latent_width": "宽度",
             "empty_latent_height": "高度",
             "compression": "压缩失真",
-            "positive": "积极情感",
-            "negative": "消极情感",
+            "positive": "正面条件",
+            "negative": "负面条件",
             "batch_size": "批次大小"
         }
     },
@@ -1446,8 +1446,8 @@
             "resolution": "分辨率",
             "empty_latent_width": "宽度",
             "empty_latent_height": "高度",
-            "positive": "积极情感",
-            "negative": "消极情感",
+            "positive": "正面条件",
+            "negative": "负面条件",
             "batch_size": "批次大小",
             "auto_clean_gpu": "自动清理GPU"
         }
@@ -1475,7 +1475,7 @@
             "resolution": "分辨率",
             "empty_latent_width": "宽度",
             "empty_latent_height": "高度",
-            "positive": "积极情感",
+            "positive": "正面条件",
             "batch_size": "批次大小"
         }
     },
@@ -1504,8 +1504,8 @@
             "ratio": "宽高比",
             "empty_latent_width": "宽度",
             "empty_latent_height": "高度",
-            "positive": "积极情感",
-            "negative": "消极情感",
+            "positive": "正面条件",
+            "negative": "负面条件",
             "batch_size": "批次大小"
         }
     },
@@ -1525,8 +1525,8 @@
             "The number of latent images in the batch.": "批次中潜空间图像的数量。",
             "ckpt_name": "模型名称",
             "vae_name": "VAE",
-            "positive": "积极情感",
-            "negative": "消极情感",
+            "positive": "正面条件",
+            "negative": "负面条件",
             "resolution": "分辨率",
             "empty_latent_width": "宽度",
             "empty_latent_height": "高度",
@@ -1629,8 +1629,8 @@
         },
         "outputs": {
             "pipe": "节点束",
-            "positive": "积极情感",
-            "negative": "消极情感"
+            "positive": "正面条件",
+            "negative": "负面条件"
         },
         "widgets": {
             "control_net_name": "ControlNet",
@@ -1647,8 +1647,8 @@
         },
         "outputs": {
             "pipe": "节点束",
-            "positive": "积极情感",
-            "negative": "消极情感"
+            "positive": "正面条件",
+            "negative": "负面条件"
         },
         "widgets": {
             "control_net_name": "ControlNet",
@@ -1667,8 +1667,8 @@
         },
         "outputs": {
             "pipe": "节点束",
-            "positive": "积极情感",
-            "negative": "消极情感"
+            "positive": "正面条件",
+            "negative": "负面条件"
         },
         "widgets": {
             "control_net_name": "ControlNet",
@@ -2383,8 +2383,8 @@
             "pipe": "节点束"
         },
         "widgets": {
-            "positive": "积极情感",
-            "negative": "消极情感"
+            "positive": "正面条件",
+            "negative": "负面条件"
         }
     },
     "easy pipeToBasicPipe": {
@@ -2667,10 +2667,10 @@
     "easy positive": {
         "title": "正面提示词",
         "outputs": {
-            "positive": "积极情感"
+            "positive": "正面条件"
         },
         "widgets": {
-            "positive": "积极情感"
+            "positive": "正面条件"
         }
     },
     "easy wildcards": {
@@ -2692,10 +2692,10 @@
     "easy negative": {
         "title": "负面提示词",
         "outputs": {
-            "negative": "消极情感"
+            "negative": "负面条件"
         },
         "widgets": {
-            "negative": "消极情感"
+            "negative": "负面条件"
         }
     },
     "easy stylesSelector": {
@@ -2703,12 +2703,12 @@
         "inputs": {
             "select_styles": "选择样式",
             "styles": "艺术风格",
-            "positive": "积极情感",
-            "negative": "消极情感"
+            "positive": "正面条件",
+            "negative": "负面条件"
         },
         "outputs": {
-            "positive": "积极情感",
-            "negative": "消极情感"
+            "positive": "正面条件",
+            "negative": "负面条件"
         }
     },
     "easy prompt": {
@@ -2809,8 +2809,8 @@
             "photorealism_improvement": "提升真实度"
         },
         "outputs": {
-            "positive": "积极情感",
-            "negative": "消极情感"
+            "positive": "正面条件",
+            "negative": "负面条件"
         },
         "widgets": {
             "shot_weight": "镜头权重",
@@ -2845,8 +2845,8 @@
         "inputs": {
             "pipe": "节点束",
             "model": "模型",
-            "positive": "积极情感",
-            "negative": "消极情感",
+            "positive": "正面条件",
+            "negative": "负面条件",
             "latent": "潜空间",
             "vae": "Vae",
             "clip": "CLIP",
@@ -2857,8 +2857,8 @@
             "pipe": "节点束",
             "image": "图像",
             "model": "模型",
-            "positive": "积极情感",
-            "negative": "消极情感",
+            "positive": "正面条件",
+            "negative": "负面条件",
             "latent": "潜空间",
             "vae": "Vae",
             "clip": "CLIP",
@@ -3508,7 +3508,7 @@
     "easy XYInputs: PositiveCondList": {
         "title": "XY 输入：正面条件列表 //简易使用",
         "inputs": {
-            "positive": "积极情感"
+            "positive": "正面条件"
         },
         "outputs": {
             "X or Y": "X 或 Y"
@@ -3517,7 +3517,7 @@
     "easy XYInputs: NegativeCondList": {
         "title": "XY 输入：负面条件列表 //简易使用",
         "inputs": {
-            "negative": "消极情感"
+            "negative": "负面条件"
         },
         "outputs": {
             "X or Y": "X 或 Y"
@@ -3554,14 +3554,14 @@
         "inputs": {
             "model": "模型",
             "clip": "CLIP",
-            "positive": "积极情感",
-            "negative": "消极情感"
+            "positive": "正面条件",
+            "negative": "负面条件"
         },
         "outputs": {
             "model": "模型",
             "clip": "CLIP",
-            "positive": "积极情感",
-            "negative": "消极情感"
+            "positive": "正面条件",
+            "negative": "负面条件"
         }
     },
     "easy loraSwitcher": {

@@ -102,7 +102,7 @@
             "positive": "正面",
             "negative": "负面",
             "info": "信息",
-            "latent_image": "Latent"
+            "latent_image": "Latent图像"
         },
         "widgets": {
             "seed": "种子",
