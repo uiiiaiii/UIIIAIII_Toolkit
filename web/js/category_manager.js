@@ -247,13 +247,22 @@ function baseOfDispPath(dispPath) {
     const exact = CM.baseByDisp.get(dispPath);
     if (exact) return exact;
     // 2) 父级前缀反查：dispPath 是某个已知显示路径的祖先
+    //    必须按「段」对齐截断：基准路径是规则改写前的原始路径，分类被移动后
+    //    它的段数可能与显示路径不同（如 MINIMAX H3/MiniMaxH3Turbo ← MiniMaxH3Turbo），
+    //    若按字符串长度差截断会切出错误名字（MINIMAX H3 → MiniMaxH3Turb）
     let best = null;
-    let bestLen = -1;
+    let bestDispLen = -1;
+    const dispDepth = dispPath.split("/").length;
     for (const [disp, base] of CM.baseByDisp) {
-        if (disp.startsWith(dispPath + "/") && dispPath.length > bestLen) {
-            const rest = disp.slice(dispPath.length);
-            bestLen = dispPath.length;
-            best = base.slice(0, base.length - rest.length);
+        if (!disp.startsWith(dispPath + "/")) continue;
+        const dispParts = disp.split("/");
+        const baseParts = String(base).split("/");
+        if (baseParts.length !== dispParts.length) continue; // 段数不一致，无法安全对齐
+        const rest = dispParts.length - dispDepth;
+        if (rest <= 0 || baseParts.length <= rest) continue;
+        if (dispPath.length > bestDispLen) {
+            bestDispLen = dispPath.length;
+            best = baseParts.slice(0, baseParts.length - rest).join("/");
         }
     }
     if (best) return best;
@@ -361,8 +370,15 @@ function applyOrderRules() {
                 return String(CM.rawCategory.get(k) ?? nd?._original_category ?? nd?.category ?? "");
             };
             const nameOf = (k) => String(dict[k]?.name || "");
-            const hit = (k, path) =>
-                isCat ? (catOf(k) === path || catOf(k).startsWith(path + "/")) : nameOf(k) === path;
+            // 规则可能记录三种形态：源基准路径、最终基准路径、历史遗留的显示路径。
+            // finalBase 是「套用 rename 链之后」的最终基准，因此规则值先按分类字典
+            // 逆翻译回基准、再过一遍 renameChain，统一成同一形态后比较。
+            const hit = (k, path) => {
+                if (!isCat) return nameOf(k) === path;
+                const base = catOf(k);
+                const target = renameChain(baseOfDisplayPath(path) || path);
+                return base === target || base.startsWith(target + "/");
+            };
             const srcKeys = keys.filter((k) => hit(k, rule.key));
             if (!srcKeys.length) continue;
             const dstKey = keys.find((k) => hit(k, rule.before));
@@ -1060,35 +1076,45 @@ function actionDeleteEmptyCat(path) {
     saveRules();
 }
 
-/** 重命名空分类（其下空子分类跟随移动） */
+/** 重命名空分类（只改名字；其下空子分类跟随） */
 function actionRenameEmptyCat(path) {
     showInputDialog({
         title: tr("Rename Category"),
         desc: tr("Current: {path} (empty category; its subcategories will follow)", { path }),
-        defaultValue: path,
+        defaultValue: path.split("/").pop(),
         confirmText: tr("Rename"),
         onConfirm: (np) => {
-            if (!np || np === path) return;
+            const name = String(np || "").trim().split("/").pop().trim();
+            if (!name) return;
+            const parent = parentOfPath(path);
+            const newPath = parent ? parent + "/" + name : name;
+            if (newPath === path) return;
             CM.rules.empty_categories = (CM.rules.empty_categories || []).map((p) =>
-                p === path ? np : (p.startsWith(path + "/") ? np + p.slice(path.length) : p)
+                p === path ? newPath : (p.startsWith(path + "/") ? newPath + p.slice(path.length) : p)
             );
+            syncOrderRulesForRename(path, newPath);
             saveRules();
         },
     });
 }
 
-/** 重命名分类（其下子分类跟随移动） */
+/** 重命名分类（只改名字，位置不变；支持中文名，其下子分类跟随） */
 function actionRenameCategory(key) {
     showInputDialog({
         title: tr("Rename Category"),
         desc: tr("Current: {path} (its subcategories will follow)", { path: key }),
-        defaultValue: key,
+        defaultValue: key.split("/").pop(), // 只填名字：避免把父级路径一起改写而意外移动分类
         confirmText: tr("Rename"),
         onConfirm: (np) => {
-            if (np && np !== key) {
-                moveCategoryTo(key, np, np.split("/").pop()); // 统一走基准语义（含排序规则同步）
-                saveRules();
-            }
+            // 只取一段名字（名字里带 "/" 时取末段），父级沿用当前位置。
+            // 用户自定义的中文名直接作为显示名记录，不经过翻译字典。
+            const name = String(np || "").trim().split("/").pop().trim();
+            if (!name) return;
+            const parent = parentOfPath(key);
+            const newDisp = parent ? parent + "/" + name : name;
+            if (newDisp === key) return;
+            moveCategoryTo(key, newDisp, name);
+            saveRules();
         },
     });
 }
@@ -1499,10 +1525,14 @@ function setupTreeInteraction() {
                     // 比较用英文基准路径（与界面语言无关），移动/排序仍传显示路径
                     const srcBase = baseOfDispPath(rd.folderPath);
                     const srcName = srcBase.split("/").pop();
+                    // 判重必须用「套用现有规则后的当前位置」：
+                    // srcBase 是未经规则改写的原始路径（顶层名），直接比较会把
+                    // "从子级移回顶层"误判成已在同级，从而只写排序规则、不删除移动规则
+                    const curBase = renameChain(srcBase);
                     const parentDisp = parentOfPath(target.localPath);
                     const parentBase = parentDisp ? baseOfDispPath(parentDisp) : "";
                     const newBase = parentBase ? parentBase + "/" + srcName : srcName;
-                    if (newBase !== srcBase) {
+                    if (newBase !== curBase) {
                         const newDisp = parentDisp ? parentDisp + "/" + toDisplayPath(srcName) : toDisplayPath(srcName);
                         moveCategoryTo(rd.folderPath, newDisp);   // 整个分类（含子分类/节点）跟随
                         addOrderRule("cat", newDisp, target.localPath, false);
