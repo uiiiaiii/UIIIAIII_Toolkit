@@ -208,9 +208,17 @@ function syncOrderRulesForRename(oldPath, newPath) {
  * 翻译未启用 / 字典不可用时为恒等映射（显示英文原文）。
  * 用户自定义的中文分类名不在字典键中，会原样保留。
  */
+let _catDispSource = null;
+let _catDispEmpty = true;
+
 function toDisplayPath(basePath) {
+    if (!basePath) return "";
     const catsT = window.__UiTranslated?.NodeCategory || {};
-    if (!basePath || !Object.keys(catsT).length) return String(basePath || "");
+    if (_catDispSource !== catsT) {
+        _catDispSource = catsT;
+        _catDispEmpty = !Object.keys(catsT).length;
+    }
+    if (_catDispEmpty) return String(basePath);
     return String(basePath).split("/").map((seg) => catsT[seg] || seg).join("/");
 }
 
@@ -223,13 +231,32 @@ function toDisplayPath(basePath) {
  *   因为用户看到的是最终形态；且用户自建分类名（如「其他节点」）不在翻译字典中，
  *   会原样保留，不会像 baseOfDispPath 那样被误反查成内部节点的原始分类。
  */
+/**
+ * 分类字典的逆映射缓存（中文显示名 → 英文名）。
+ *
+ * 每次调用都遍历整本字典会让排序/重命名变慢（排序规则 × 全部节点）。
+ * 字典对象在翻译同步时整体替换，因此按对象引用判断缓存是否失效。
+ */
+let _catRevSource = null;
+let _catRevMap = null;
+
+function _getCategoryRevMap() {
+    const catsT = window.__UiTranslated?.NodeCategory || {};
+    if (_catRevSource !== catsT || !_catRevMap) {
+        const rev = {};
+        for (const [k, v] of Object.entries(catsT)) {
+            if (k && v && k !== v && rev[v] === undefined) rev[v] = k;
+        }
+        _catRevSource = catsT;
+        _catRevMap = rev;
+    }
+    return _catRevMap;
+}
+
 function baseOfDisplayPath(dispPath) {
     if (!dispPath) return "";
-    const catsT = window.__UiTranslated?.NodeCategory || {};
-    const rev = {};
-    for (const [k, v] of Object.entries(catsT)) {
-        if (k && v && k !== v && rev[v] === undefined) rev[v] = k;
-    }
+    const rev = _getCategoryRevMap();
+    if (!Object.keys(rev).length) return String(dispPath);
     return String(dispPath).split("/").map((seg) => rev[seg] || seg).join("/");
 }
 
@@ -247,9 +274,10 @@ function baseOfDispPath(dispPath) {
     const exact = CM.baseByDisp.get(dispPath);
     if (exact) return exact;
     // 2) 父级前缀反查：dispPath 是某个已知显示路径的祖先
-    //    必须按「段」对齐截断：基准路径是规则改写前的原始路径，分类被移动后
-    //    它的段数可能与显示路径不同（如 MINIMAX H3/MiniMaxH3Turbo ← MiniMaxH3Turbo），
-    //    若按字符串长度差截断会切出错误名字（MINIMAX H3 → MiniMaxH3Turb）
+    //    必须按「段」对齐并逐段校验：基准路径是规则改写前的原始路径，分类被移动后
+    //    显示路径的父级来自目标位置、基准路径的父级来自原位置，二者并不同源。
+    //    例：H3 从 model_patches 移到 MINIMAX H3 后，显示 "MINIMAX H3/H3" 的基准是
+    //    "model_patches/H3"；若不校验，"MINIMAX H3" 会被反查成 "model_patches"。
     let best = null;
     let bestDispLen = -1;
     const dispDepth = dispPath.split("/").length;
@@ -258,6 +286,14 @@ function baseOfDispPath(dispPath) {
         const dispParts = disp.split("/");
         const baseParts = String(base).split("/");
         if (baseParts.length !== dispParts.length) continue; // 段数不一致，无法安全对齐
+        let aligned = true;
+        for (let i = 0; i < dispParts.length; i++) {
+            if (dispParts[i] !== baseParts[i] && toDisplayPath(baseParts[i]) !== dispParts[i]) {
+                aligned = false;
+                break;
+            }
+        }
+        if (!aligned) continue; // 该路径已被移动/改名，不能用它反推父级
         const rest = dispParts.length - dispDepth;
         if (rest <= 0 || baseParts.length <= rest) continue;
         if (dispPath.length > bestDispLen) {
@@ -267,7 +303,10 @@ function baseOfDispPath(dispPath) {
     }
     if (best) return best;
     // 3) 规则逆向回溯（历史规则兼容）
-    return baseOfDispPathByRules(dispPath);
+    //    先把显示名逆翻译回英文形态：规则里存的是英文基准/自定义名，
+    //    直接拿中文显示路径去比对会匹配不到（分类节点全在子分类里、
+    //    子分类被移走后，父分类不在 baseByDisp 索引中，只能走这里）
+    return baseOfDispPathByRules(baseOfDisplayPath(dispPath) || dispPath);
 }
 
 /** 沿 category_rename 规则逆向回溯：显示路径 → 基准路径 */
@@ -278,8 +317,9 @@ function baseOfDispPathByRules(dispPath) {
     for (let i = 0; i < 6; i++) {
         let next = null;
         // 精确：某规则的值正好是当前路径
+        // 不比较末段名：重命名会改变末段（old → P/new），比较末段会导致改名后查不回源基准
         for (const [k, v] of entries) {
-            if (v === cur && k.split("/").pop() === cur.split("/").pop()) { next = k; break; }
+            if (v === cur) { next = k; break; }
         }
         // 最长前缀：某规则的值是当前路径的父级
         if (!next) {
@@ -371,17 +411,20 @@ function applyOrderRules() {
             };
             const nameOf = (k) => String(dict[k]?.name || "");
             // 规则可能记录三种形态：源基准路径、最终基准路径、历史遗留的显示路径。
-            // finalBase 是「套用 rename 链之后」的最终基准，因此规则值先按分类字典
-            // 逆翻译回基准、再过一遍 renameChain，统一成同一形态后比较。
-            const hit = (k, path) => {
-                if (!isCat) return nameOf(k) === path;
+            // 归一化只依赖规则本身，提到规则层计算一次即可——放在 hit 里会对
+            // 每个节点重复做字典逆映射与规则链推导，节点多时造成明显卡顿。
+            const norm = (p) => (isCat ? renameChain(baseOfDisplayPath(p) || p) : p);
+            const srcTarget = norm(rule.key);
+            const dstTarget = norm(rule.before);
+            if (!srcTarget || !dstTarget || srcTarget === dstTarget) continue;
+            const hit = (k, target) => {
+                if (!isCat) return nameOf(k) === target;
                 const base = catOf(k);
-                const target = renameChain(baseOfDisplayPath(path) || path);
                 return base === target || base.startsWith(target + "/");
             };
-            const srcKeys = keys.filter((k) => hit(k, rule.key));
+            const srcKeys = keys.filter((k) => hit(k, srcTarget));
             if (!srcKeys.length) continue;
-            const dstKey = keys.find((k) => hit(k, rule.before));
+            const dstKey = keys.find((k) => hit(k, dstTarget));
             if (!dstKey || srcKeys.includes(dstKey)) continue;
             const nk = [];
             for (const k of keys) {
@@ -601,15 +644,14 @@ function reapply() {
     const store = getNodeDefStore();
     if (!store || !Array.isArray(store.nodeDefs)) return false;
 
-    // 首次：记录英文基准（优先后端原始分类，与界面语言无关）
-    if (!CM.ready) {
-        for (const nd of store.nodeDefs) {
-            if (nd && nd.name && !CM.baseCategory.has(nd.name)) {
-                CM.baseCategory.set(nd.name, String(CM.rawCategory.get(nd.name) ?? nd._original_category ?? nd.category ?? ""));
-            }
+    // 每次应用都增量补齐基准：页面运行中新加载的节点（如热装插件）也要纳入规则，
+    // 已记录的基准不被覆盖（首次可能来自节点数据，之后由后端原始分类重建）
+    for (const nd of store.nodeDefs) {
+        if (nd && nd.name && !CM.baseCategory.has(nd.name)) {
+            CM.baseCategory.set(nd.name, String(CM.rawCategory.get(nd.name) ?? nd._original_category ?? nd.category ?? ""));
         }
-        CM.ready = true;
     }
+    CM.ready = true;
 
     // 从基准 + 规则重算每个节点的基准路径，再按当前语言翻译为显示路径
     CM.finalBase.clear();
@@ -1073,6 +1115,7 @@ function actionDeleteEmptyCat(path) {
     CM.rules.empty_categories = (CM.rules.empty_categories || []).filter(
         (p) => p !== path && !p.startsWith(path + "/")
     );
+    removeOrderRulesForCategory(path); // 同步清理指向它的排序规则
     saveRules();
 }
 
@@ -1133,8 +1176,19 @@ function actionDeleteCategory(key) {
         onConfirm: (names, target) => {
             const destBase = baseOfDispPath(target); // 目标用基准语义，后续跟随
             for (const n of names) CM.rules.node_move[n] = destBase;
-            delete CM.rules.category_rename[baseOfDispPath(key)];
-            delete CM.rules.category_rename[key];
+            // 节点已全部移走，该分类（含子分类）随之消失：一并清理其改名/隐藏/排序规则，
+            // 否则残留规则会让分类以空壳形式重新出现或影响同前缀的其他分类
+            const base = baseOfDispPath(key);
+            for (const k of Object.keys(CM.rules.category_rename)) {
+                if (k === base || k.startsWith(base + "/") || k === key || k.startsWith(key + "/")) {
+                    delete CM.rules.category_rename[k];
+                }
+            }
+            CM.rules.hidden_categories = (CM.rules.hidden_categories || []).filter(
+                (h) => h !== base && !h.startsWith(base + "/") && h !== key && !h.startsWith(key + "/")
+            );
+            removeOrderRulesForCategory(base);
+            removeOrderRulesForCategory(key);
             saveRules();
         },
     });
@@ -1560,7 +1614,9 @@ function setupTreeInteraction() {
                 saveRules();
             } else if (rd.name) {
                 // 节点移入目标分类（值用基准语义，之后目标分类若再移动会自动跟随）
-                CM.rules.node_move[rd.name] = baseOfDispPath(target.localPath);
+                const destBase = target.localPath ? baseOfDispPath(target.localPath) : "";
+                if (!destBase) { rdCleanup(); return; } // 目标分类无法反查：不写无效规则
+                CM.rules.node_move[rd.name] = destBase;
                 // 拖拽移动视为主动整理：同时取消该节点的隐藏
                 if (CM.rules.hidden_nodes && CM.rules.hidden_nodes.includes(rd.name)) {
                     CM.rules.hidden_nodes = CM.rules.hidden_nodes.filter((n) => n !== rd.name);
