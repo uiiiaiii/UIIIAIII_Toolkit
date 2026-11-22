@@ -6,7 +6,9 @@
  * - ComfyUI-DD-Translation
  */
 
-import { app } from "../../../scripts/app.js";
+// ComfyUI 已废弃 /scripts/app.js 等 legacy 导入路径，改用运行时全局对象
+// （window.comfyAPI 由前端在加载扩展前挂载；window.app 兼容更早的版本）
+const app = window.comfyAPI?.app?.app || window.app;
 import { applyMenuTranslation, observeFactory } from "./MenuTranslate.js";
 import { registerSettings, addPanelButtons, setupPluginManager } from "./SettingsPanel.js";
 import {
@@ -842,4 +844,8 @@ const ext = {
   },
 };
 
-app.registerExtension(ext);
+if (app && typeof app.registerExtension === "function") {
+  app.registerExtension(ext);
+} else {
+  console.error("[UIIIAIII Toolkit] 无法获取 ComfyUI app，界面翻译未注册");
+}

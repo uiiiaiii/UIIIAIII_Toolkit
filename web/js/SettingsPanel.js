@@ -3,7 +3,6 @@
  * 负责：设置项注册、翻译按钮、插件翻译管理面板
  */
 
-import { $el } from "../../../scripts/ui.js";
 import {
   isTranslationEnabled,
   toggleTranslation,
@@ -216,17 +215,21 @@ export function addPanelButtons(app) {
     const inactiveClass = "translation-inactive-plain";
 
     // 旧版菜单按钮（文本兜底，缩小尺寸）
+    // 用原生 DOM 创建：不再依赖已废弃的 /scripts/ui.js 中的 $el
     if (document.querySelector(".comfy-menu") && !document.getElementById("toggle-translation-button")) {
-      app.ui.menuContainer.appendChild(
-        $el("button.translation-btn", {
-          id: "toggle-translation-button",
-          textContent: "🌐",
-          className: translationEnabled ? `translation-btn ${activeClass}` : `translation-btn ${inactiveClass}`,
-          style: { fontWeight: "normal", margin: "2px", padding: "4px 8px", fontSize: "12px" },
-          title: translationEnabled ? onText : offText,
-          onclick: async () => { await toggleTranslation(); },
-        })
-      );
+      const btnEl = document.createElement("button");
+      btnEl.id = "toggle-translation-button";
+      btnEl.className = `translation-btn ${translationEnabled ? activeClass : inactiveClass}`;
+      btnEl.textContent = "🌐";
+      Object.assign(btnEl.style, {
+        fontWeight: "normal",
+        margin: "2px",
+        padding: "4px 8px",
+        fontSize: "12px",
+      });
+      btnEl.title = translationEnabled ? onText : offText;
+      btnEl.onclick = async () => { await toggleTranslation(); };
+      app.ui.menuContainer.appendChild(btnEl);
     }
 
     // 新版 UI 按钮：纯图标（MDI），状态信息放 tooltip，与顶栏其他图标按钮一致
