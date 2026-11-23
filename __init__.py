@@ -43,7 +43,7 @@ from . import translation_writer
 from . import translation_service  # 注册 /translation_node/* 界面翻译端点
 
 # 插件版本
-__version__ = "1.3.4"
+__version__ = "1.3.13"
 
 # 插件信息
 PLUGIN_INFO = {
@@ -361,6 +361,9 @@ try:
                 target_lang=target_lang,
             )
 
+            # 字典已更新：重建 ComfyUI 官方语言包，使 Nodes 2.0 的端口/控件名同步翻译
+            translation_service.sync_official_node_defs(force=True)
+
             # 统计翻译比例
             input_node_count = len(nodes_data) if isinstance(nodes_data, dict) else 0
             input_menu_count = len(menus_data) if isinstance(menus_data, dict) else 0
@@ -414,6 +417,23 @@ try:
             return web.json_response({"error": str(e)}, status=500)
 
     logger.info("翻译功能端点已注册：/agnes-translate/*")
+
+    # ============================================================
+    # Nodes 2.0 兼容：启动完成后同步 ComfyUI 官方 i18n 语言包
+    # ============================================================
+    # 官方前端只读取 locales/<官方语言>/nodeDefs.json，且 CustomNodeManager
+    # 在首次 /api/i18n 请求时缓存结果。放在 on_startup 保证所有节点类已加载
+    # （输出端口按 RETURN_TYPES 顺序映射索引），早于浏览器首次请求。
+    async def _sync_official_i18n_on_startup(_app):
+        try:
+            translation_service.sync_official_node_defs(force=True)
+        except Exception as e:
+            logger.warning("启动时同步官方语言包失败：%s", e)
+
+    try:
+        PromptServer.instance.app.on_startup.append(_sync_official_i18n_on_startup)
+    except Exception as e:
+        logger.warning("注册官方语言包启动同步失败：%s", e)
 
     # ============================================================
     # 节点分类管理端点（category_overrides.json 规则存取）

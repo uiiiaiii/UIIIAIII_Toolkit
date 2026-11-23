@@ -1,0 +1,25 @@
+{
+    "MiniMaxH3TurboSampler": {
+        "title": "MiniMax-H3 Turbo 采样器（4步）",
+        "description": "用于 MiniMax-H3 Turbo LoRA 的4步采样器。接入 SamplerCustomAdvanced 并将调度器设置为4步。自动适配 ComfyUI 版本：在原生处理音频调度（ModelSamplingAV）的较新版本上，它作为普通的单调度采样器步进；在较旧版本上，它按视频和音频各自的时钟分别步进。",
+        "outputs": {
+            "SAMPLER": "采样器"
+        }
+    },
+    "MiniMaxH3TurboLoRA": {
+        "title": "MiniMax-H3 Turbo LoRA",
+        "description": "将 MiniMax-H3 Turbo LoRA 应用到 H3 扩散模型。",
+        "inputs": {
+            "model": "模型"
+        },
+        "outputs": {
+            "MODEL": "模型"
+        },
+        "widgets": {
+            "lora_name": "LoRA名称",
+            "strength": "强度",
+            "low_vram": "低显存模式：关闭（默认）：在运行时应用 LoRA（旁路）——最清晰，但会额外占用峰值显存。开启：将 LoRA 合并到权重中——显存占用最低，小显存显卡也能运行，但在量化基础模型上效果会变柔和（增量部分会被舍入掉）。仅在显存不足（OOM）时开启。",
+            "OFF (default): apply the LoRA at run time (bypass) — sharpest, but costs extra peak VRAM. ON: merge the LoRA into the weights — lowest VRAM so small GPUs can run, but softer on quantized bases (the delta is partly rounded away). Turn ON only if you OOM.": "关闭（默认）：在运行时应用 LoRA（旁路）——最锐利，但会额外占用峰值显存。开启：将 LoRA 合并到权重中——显存占用最低，小显存显卡也能运行，但在量化底模上效果会变柔和（增量部分会被舍入掉）。仅在显存不足时开启。"
+        }
+    }
+}

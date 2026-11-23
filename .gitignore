@@ -8,6 +8,9 @@ __pycache__/
 # 运行时生成的翻译输出（用户本地数据，不分发）
 locales/**/selected_nodes.json
 
+# ComfyUI 官方 i18n 语言包（由节点字典自动生成，分发后首次启动重建）
+locales/*/nodeDefs.json
+
 # 节点分类管理规则（用户本地数据，不分发）
 category_overrides.json
 

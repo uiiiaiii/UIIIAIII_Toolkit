@@ -119,6 +119,9 @@ export class TUtils {
       const widgets = node?.widgets;
       if (!widgets || !widgets.length) return;
 
+      // 子图容器的控件是内部控件投影，显示名以子图输入定义为准，跳过翻译
+      if (this.isSubgraphNode(node)) return;
+
       if (!isTranslationEnabled()) {
         // 关闭翻译：还原先前被改写的控件显示名（label 可能来自运行时改写，需原样回退）
         for (const w of widgets) {
@@ -339,6 +342,78 @@ export class TUtils {
     item._uiiaiii_label = translation;
   }
 
+  /**
+   * 判断节点是否为子图容器节点（Subgraph Node）。
+   *
+   * 子图容器的端口/控件是把内部节点的端口/控件"提升"出来的投影，
+   * 显示名由用户为子图输入/输出定义的名字决定，不能套用翻译字典，
+   * 否则用户自定义的"步数"会被源控件的译文"步进"覆盖。
+   */
+  static isSubgraphNode(node) {
+    if (!node) return false;
+    try {
+      if (typeof node.isSubgraphNode === "function" && node.isSubgraphNode()) return true;
+      if (node.subgraph) return true;
+    } catch (e) { /* 忽略 */ }
+    return false;
+  }
+
+  /**
+   * 把子图容器上提升端口的显示名同步为子图自身输入/输出定义的名字。
+   *
+   * 历史版本会把提升控件当作普通控件翻译（如 steps → 步进），该译文会被
+   * 前端写进工作流并显示在容器外，与用户在子图内部设置的名字（如"步数"）
+   * 不一致。这里以子图边界的 label 为唯一权威来源做一次纠正。
+   */
+  static syncSubgraphHostLabels(node) {
+    try {
+      const sub = node?.subgraph;
+      if (!sub || !Array.isArray(sub.inputs) || !Array.isArray(node.inputs)) return;
+
+      const boundary = new Map();
+      for (const slot of sub.inputs) {
+        if (slot && typeof slot.name === "string") boundary.set(slot.name, slot);
+      }
+
+      for (const inp of node.inputs) {
+        if (!inp || typeof inp.name !== "string") continue;
+        const def = boundary.get(inp.name);
+        if (!def) continue;
+        const label = (typeof def.label === "string" && def.label) ? def.label : undefined;
+
+        // Nodes 2.0 的提升控件通过 _widget 投影读写（同时同步 input.label 与控件状态）
+        const proj = inp._widget;
+        if (proj) {
+          if (label !== undefined) {
+            if (proj.label !== label) proj.label = label;
+          } else if (proj.label !== undefined && isAlreadyTranslatedText(proj.label)) {
+            proj.label = undefined;
+            delete inp.label;
+          }
+          continue;
+        }
+
+        if (label !== undefined) {
+          if (inp.label !== label) inp.label = label;
+        } else if (inp.label !== undefined) {
+          delete inp.label;
+        }
+
+        // 显示层控件（Nodes 2.0 从 widget.label 取显示名）
+        if (inp.widget?.name && Array.isArray(node.widgets)) {
+          const w = node.widgets.find((item) => item && item.name === inp.widget.name);
+          if (!w) continue;
+          if (label !== undefined) {
+            if (w.label !== label) w.label = label;
+          } else if (w.label !== undefined && isAlreadyTranslatedText(w.label)) {
+            // 边界没有自定义名：只撤销旧译文，保留用户可能的自定义名
+            delete w.label;
+          }
+        }
+      }
+    } catch (e) { /* 忽略 */ }
+  }
+
   static applyNodeTranslation(node) {
     try {
       if (!node || !node.constructor) return;
@@ -348,6 +423,13 @@ export class TUtils {
       let class_type = node.constructor.comfyClass ? node.constructor.comfyClass : node.constructor.type;
       
       if (!class_type) return;
+
+      // 子图容器：端口/控件名由子图输入定义决定，禁止套用字典翻译，
+      // 同时纠正历史版本写入容器的译文（如把"步数"改成"步进"）
+      if (this.isSubgraphNode(node)) {
+        this.syncSubgraphHostLabels(node);
+        return;
+      }
 
       if (!isTranslationEnabled()) {
         for (let key of keys) {
@@ -721,22 +803,29 @@ export class TUtils {
       LGraphCanvas.prototype.drawNode = function (node) {
         if (!node) return origDrawNode.apply(this, arguments);
         const restore = [];
+        const pushRestore = (obj, key, val, remove) => restore.push({ obj, key, val, remove });
 
         if (node._uiiaiii_title !== undefined) {
           if (TUtils.isCustomNodeTitle(node)) {
             // 用户已手动改名：自定义标题优先，撤销显示层译文
             delete node._uiiaiii_title;
           } else {
-            restore.push([node, "title", node.title]);
+            pushRestore(node, "title", node.title, false);
             node.title = node._uiiaiii_title;
           }
         }
 
+        // 端口显示名：新版前端（ComfyUI 1.4+）给 socket 预置了 localized_name
+        // 作为内置 i18n 的显示字段，其优先级高于 label。只映射 label 时，
+        // 带 localized_name 的端口仍显示英文，因此两处都在绘制瞬间映射。
         const applySlot = (slot) => {
-          if (slot && slot._uiiaiii_label !== undefined) {
-            restore.push([slot, "label", slot.label]);
-            slot.label = slot._uiiaiii_label;
-          }
+          if (!slot || slot._uiiaiii_label === undefined) return;
+          const hadOwn = Object.prototype.hasOwnProperty.call(slot, "label");
+          pushRestore(slot, "label", slot.label, !hadOwn);
+          slot.label = slot._uiiaiii_label;
+          const hadLN = Object.prototype.hasOwnProperty.call(slot, "localized_name");
+          pushRestore(slot, "localized_name", slot.localized_name, !hadLN);
+          slot.localized_name = slot._uiiaiii_label;
         };
         if (Array.isArray(node.inputs)) node.inputs.forEach(applySlot);
         if (Array.isArray(node.outputs)) node.outputs.forEach(applySlot);
@@ -744,8 +833,9 @@ export class TUtils {
         try {
           return origDrawNode.apply(this, arguments);
         } finally {
-          for (const [obj, key, val] of restore) {
-            obj[key] = val;
+          for (const r of restore) {
+            if (r.remove) delete r.obj[r.key];
+            else r.obj[r.key] = r.val;
           }
         }
       };

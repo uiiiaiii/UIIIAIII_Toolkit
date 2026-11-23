@@ -107,16 +107,18 @@ def _is_connection_input(spec: Any) -> bool:
     spec_type = spec[0]
     options = spec[1] if len(spec) >= 2 and isinstance(spec[1], dict) else {}
 
-    # 规则 0：V3 DynamicCombo 是下拉控件（含内嵌参数，见 _extract_node_def）
-    if spec_type == "COMFY_DYNAMICCOMBO_V3":
-        return False
-
-    # 规则 1：forceInput 显式指定为连接端口
+    # 规则 0：forceInput 显式指定为连接端口（优先于类型判断，
+    # 应用既可把下拉转成端口，也可把数值转成端口）
     if options.get("forceInput"):
         return True
 
-    # 规则 2：COMBO 类型（列表）是控件
-    if isinstance(spec_type, (list, tuple)):
+    # 规则 1：V3 动态下拉（含内嵌参数，见 _extract_node_def）是控件
+    if spec_type == "COMFY_DYNAMICCOMBO_V3":
+        return False
+
+    # 规则 2：下拉控件。旧版以「列表首元素」声明，节点 2.0（V3 schema）
+    # 以字符串 "COMBO" 声明（选项在 options.options 中），二者同义
+    if spec_type == "COMBO" or isinstance(spec_type, (list, tuple)):
         return False
 
     # 规则 3-5：字符串类型名判断

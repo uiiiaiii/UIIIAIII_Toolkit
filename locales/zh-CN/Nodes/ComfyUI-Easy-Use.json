@@ -2675,10 +2675,6 @@
     },
     "easy wildcards": {
         "title": "通配符提示词",
-        "inputs": {
-            "Select to add LoRA": "添加LoRA",
-            "Select to add Wildcard": "添加通配符"
-        },
         "outputs": {
             "text": "文本",
             "populated_text": "填充文本"
@@ -2686,7 +2682,9 @@
         "widgets": {
             "text": "文本",
             "seed": "随机种子",
-            "multiline_mode": "多行模式"
+            "multiline_mode": "多行模式",
+            "Select to add LoRA": "添加LoRA",
+            "Select to add Wildcard": "添加通配符"
         }
     },
     "easy negative": {
@@ -2702,18 +2700,24 @@
         "title": "样式选择器",
         "inputs": {
             "select_styles": "选择样式",
-            "styles": "艺术风格",
             "positive": "正面条件",
             "negative": "负面条件"
         },
         "outputs": {
             "positive": "正面条件",
             "negative": "负面条件"
+        },
+        "widgets": {
+            "styles": "艺术风格"
         }
     },
     "easy prompt": {
         "title": "提示词",
-        "inputs": {
+        "outputs": {
+            "prompt": "提示词"
+        },
+        "widgets": {
+            "text": "文本",
             "prefix": "前缀",
             "subject": "主体",
             "action": "操作",
@@ -2721,12 +2725,6 @@
             "environment": "环境",
             "background": "背景",
             "nsfw": "NSFW"
-        },
-        "outputs": {
-            "prompt": "提示词"
-        },
-        "widgets": {
-            "text": "文本"
         }
     },
     "easy promptList": {
@@ -2791,23 +2789,6 @@
     },
     "easy portraitMaster": {
         "title": "肖像大师",
-        "inputs": {
-            "shot": "镜头类型",
-            "gender": "性别",
-            "nationality_1": "人种",
-            "nationality_2": "人种",
-            "body_type": "体型",
-            "model_pose": "姿势",
-            "eyes_color": "眼睛颜色",
-            "facial_expression": "表情",
-            "face_shape": "脸型",
-            "hair_style": "发型",
-            "hair_color": "头发颜色",
-            "beard": "胡子",
-            "light_type": "灯光类型",
-            "light_direction": "灯光方向",
-            "photorealism_improvement": "提升真实度"
-        },
         "outputs": {
             "positive": "正面条件",
             "negative": "负面条件"
@@ -2837,7 +2818,22 @@
             "prompt_start": "起始提示词",
             "prompt_additional": "中间提示词",
             "prompt_end": "末尾提示词",
-            "negative_prompt": "负面条件"
+            "negative_prompt": "负面条件",
+            "shot": "镜头类型",
+            "gender": "性别",
+            "nationality_1": "人种",
+            "nationality_2": "人种",
+            "body_type": "体型",
+            "model_pose": "姿势",
+            "eyes_color": "眼睛颜色",
+            "facial_expression": "表情",
+            "face_shape": "脸型",
+            "hair_style": "发型",
+            "hair_color": "头发颜色",
+            "beard": "胡子",
+            "light_type": "灯光类型",
+            "light_direction": "灯光方向",
+            "photorealism_improvement": "提升真实度"
         }
     },
     "easy fullkSampler": {
@@ -3697,10 +3693,6 @@
     },
     "easy wildcardsMatrix": {
         "title": "通配符矩阵",
-        "inputs": {
-            "Select to add LoRA": "添加LoRA",
-            "Select to add Wildcard": "添加通配符"
-        },
         "outputs": {
             "populated_text": "填充文本",
             "total": "总量",
@@ -3710,7 +3702,9 @@
             "output_limit": "输出限制",
             "Output All Probilities": "输出所有概率",
             "text": "文本",
-            "offset": "偏移量"
+            "offset": "偏移量",
+            "Select to add LoRA": "添加LoRA",
+            "Select to add Wildcard": "添加通配符"
         }
     },
     "easy stringJoinLines": {

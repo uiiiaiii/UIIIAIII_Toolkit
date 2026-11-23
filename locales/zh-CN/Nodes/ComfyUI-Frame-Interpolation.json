@@ -1,190 +1,219 @@
 {
     "VFI FloatToInt": {
         "title": "VFI 浮点转整数",
-        "outputs": {},
+        "outputs": {
+            "INT": "整数"
+        },
         "widgets": {
-            "float": "浮点数"
+            "float": "浮点"
         }
     },
     "GMFSS Fortuna VFI": {
-        "title": "GMFSS Fortuna VFI",
+        "title": "GMFSS Fortuna 视频帧插值",
         "inputs": {
-            "frames": "帧",
+            "frames": "分帧",
             "optional_interpolation_states": "可选插值状态"
         },
-        "outputs": {},
+        "outputs": {
+            "IMAGE": "图像"
+        },
         "widgets": {
-            "ckpt_name": "模型文件",
-            "clear_cache_after_n_frames": "每N帧清理缓存",
-            "multiplier": "倍率"
+            "ckpt_name": "模型名称",
+            "clear_cache_after_n_frames": "每N帧清除缓存",
+            "multiplier": "倍数"
         }
     },
     "IFRNet VFI": {
-        "title": "IFRNet VFI",
+        "title": "IFRNet 视频帧插值",
         "inputs": {
-            "frames": "帧",
+            "frames": "分帧",
             "optional_interpolation_states": "可选插值状态"
         },
-        "outputs": {},
+        "outputs": {
+            "IMAGE": "图像"
+        },
         "widgets": {
-            "ckpt_name": "模型文件",
-            "clear_cache_after_n_frames": "每N帧清理缓存",
-            "multiplier": "倍率",
-            "scale_factor": "缩放因子"
+            "ckpt_name": "模型名称",
+            "clear_cache_after_n_frames": "每N帧清除缓存",
+            "multiplier": "倍数",
+            "scale_factor": "缩放系数"
         }
     },
     "IFUnet VFI": {
-        "title": "IFUnet VFI",
+        "title": "IFUnet 视频帧插值",
         "inputs": {
-            "frames": "帧",
+            "frames": "分帧",
             "optional_interpolation_states": "可选插值状态"
         },
-        "outputs": {},
+        "outputs": {
+            "IMAGE": "图像"
+        },
         "widgets": {
-            "ckpt_name": "模型文件",
-            "clear_cache_after_n_frames": "每N帧清理缓存",
-            "multiplier": "倍率",
-            "scale_factor": "缩放因子",
+            "ckpt_name": "模型名称",
+            "clear_cache_after_n_frames": "每N帧清除缓存",
+            "multiplier": "倍数",
+            "scale_factor": "缩放系数",
             "ensemble": "集成"
         }
     },
     "M2M VFI": {
-        "title": "M2M VFI",
+        "title": "M2M 视频帧插值",
         "inputs": {
-            "frames": "帧",
+            "frames": "分帧",
             "optional_interpolation_states": "可选插值状态"
         },
-        "outputs": {},
+        "outputs": {
+            "IMAGE": "图像"
+        },
         "widgets": {
-            "ckpt_name": "模型文件",
-            "clear_cache_after_n_frames": "每N帧清理缓存",
-            "multiplier": "倍率"
+            "ckpt_name": "模型名称",
+            "clear_cache_after_n_frames": "每N帧清除缓存",
+            "multiplier": "倍数"
         }
     },
     "RIFE VFI": {
         "title": "RIFE VFI（推荐使用 rife47 和 rife49）",
         "inputs": {
-            "frames": "帧",
+            "frames": "分帧",
             "optional_interpolation_states": "可选插值状态"
         },
-        "outputs": {},
+        "outputs": {
+            "IMAGE": "图像"
+        },
         "widgets": {
-            "ckpt_name": "模型文件",
-            "clear_cache_after_n_frames": "每N帧清理缓存",
-            "multiplier": "倍率",
+            "ckpt_name": "模型名称",
+            "clear_cache_after_n_frames": "每N帧清除缓存",
+            "multiplier": "倍数",
             "fast_mode": "快速模式",
             "ensemble": "集成",
-            "scale_factor": "缩放因子",
+            "scale_factor": "缩放系数",
             "dtype": "数据类型",
-            "torch_compile": "启用编译加速",
+            "torch_compile": "Torch编译",
             "Compile the model with torch.compile() for 10-30% faster inference after the first (warm-up) run. Requires PyTorch 2.0+.": "使用 torch.compile() 编译模型可在首次（预热）运行后实现10-30%的推理加速。需要 PyTorch 2.0+。",
-            "batch_size": "批处理大小",
+            "batch_size": "批次大小",
             "Number of interpolation tasks per GPU call. Higher values improve throughput but use more VRAM. Set to 1 for the most conservative behaviour.": "每次GPU调用的插值任务数量。较高值可提升吞吐量但占用更多显存。设为1可获得最保守的行为。"
         }
     },
     "Sepconv VFI": {
-        "title": "Sepconv VFI",
+        "title": "Sepconv 视频帧插值",
         "inputs": {
-            "frames": "帧",
+            "frames": "分帧",
             "optional_interpolation_states": "可选插值状态"
         },
-        "outputs": {},
+        "outputs": {
+            "IMAGE": "图像"
+        },
         "widgets": {
-            "ckpt_name": "模型文件",
-            "clear_cache_after_n_frames": "每N帧清理缓存",
-            "multiplier": "倍率"
+            "ckpt_name": "模型名称",
+            "clear_cache_after_n_frames": "每N帧清除缓存",
+            "multiplier": "倍数"
         }
     },
     "AMT VFI": {
-        "title": "AMT VFI",
+        "title": "AMT 视频帧插值",
         "inputs": {
-            "frames": "帧",
+            "frames": "分帧",
             "optional_interpolation_states": "可选插值状态"
         },
-        "outputs": {},
+        "outputs": {
+            "IMAGE": "图像"
+        },
         "widgets": {
-            "ckpt_name": "模型文件",
-            "clear_cache_after_n_frames": "每N帧清理缓存",
-            "multiplier": "倍率"
+            "ckpt_name": "模型名称",
+            "clear_cache_after_n_frames": "每N帧清除缓存",
+            "multiplier": "倍数"
         }
     },
     "FILM VFI": {
-        "title": "FILM VFI",
+        "title": "FILM 视频帧插值",
         "inputs": {
-            "frames": "帧",
+            "frames": "分帧",
             "optional_interpolation_states": "可选插值状态"
         },
-        "outputs": {},
+        "outputs": {
+            "IMAGE": "图像"
+        },
         "widgets": {
-            "ckpt_name": "模型文件",
-            "clear_cache_after_n_frames": "每N帧清理缓存",
-            "multiplier": "倍率"
+            "disable_gc_collect": "禁用垃圾回收",
+            "ckpt_name": "模型名称",
+            "clear_cache_after_n_frames": "每N帧清除缓存",
+            "multiplier": "倍数"
         }
     },
     "STMFNet VFI": {
-        "title": "STMFNet VFI",
+        "title": "STMFNet 视频帧插值",
         "inputs": {
-            "frames": "帧",
+            "frames": "分帧",
             "optional_interpolation_states": "可选插值状态"
         },
-        "outputs": {},
+        "outputs": {
+            "IMAGE": "图像"
+        },
         "widgets": {
-            "ckpt_name": "模型文件",
-            "clear_cache_after_n_frames": "每N帧清理缓存",
-            "multiplier": "倍率",
+            "ckpt_name": "模型名称",
+            "clear_cache_after_n_frames": "每N帧清除缓存",
+            "multiplier": "倍数",
             "duplicate_first_last_frames": "重复首尾帧"
         }
     },
     "FLAVR VFI": {
-        "title": "FLAVR VFI",
+        "title": "FLAVR 视频帧插值",
         "inputs": {
-            "frames": "帧",
+            "frames": "分帧",
             "optional_interpolation_states": "可选插值状态"
         },
-        "outputs": {},
+        "outputs": {
+            "IMAGE": "图像"
+        },
         "widgets": {
-            "ckpt_name": "模型文件",
-            "clear_cache_after_n_frames": "每N帧清理缓存",
-            "multiplier": "倍率",
+            "ckpt_name": "模型名称",
+            "clear_cache_after_n_frames": "每N帧清除缓存",
+            "multiplier": "倍数",
             "duplicate_first_last_frames": "重复首尾帧"
         }
     },
     "CAIN VFI": {
-        "title": "CAIN VFI",
+        "title": "CAIN 视频帧插值",
         "inputs": {
-            "frames": "帧",
+            "frames": "分帧",
             "optional_interpolation_states": "可选插值状态"
         },
-        "outputs": {},
+        "outputs": {
+            "IMAGE": "图像"
+        },
         "widgets": {
-            "ckpt_name": "模型文件",
-            "clear_cache_after_n_frames": "每N帧清理缓存",
-            "multiplier": "倍率"
+            "ckpt_name": "模型名称",
+            "clear_cache_after_n_frames": "每N帧清除缓存",
+            "multiplier": "倍数"
         }
     },
     "Make Interpolation State List": {
-        "title": "创建插值状态列表",
-        "outputs": {},
+        "title": "生成插值状态列表",
         "widgets": {
             "frame_indices": "帧索引",
             "is_skip_list": "是否为跳过列表"
         }
     },
     "KSampler Gradually Adding More Denoise (efficient)": {
-        "title": "KSampler 渐进式增加降噪（高效版）",
+        "title": "KSampler 逐步增加降噪强度（高效）",
         "inputs": {
             "model": "模型",
-            "positive": "正面提示词",
-            "negative": "负面提示词",
+            "positive": "正面条件",
+            "negative": "负面条件",
             "latent_image": "Latent图像",
-            "optional_vae": "可选VAE"
+            "optional_vae": "VAE(可选)"
         },
-        "outputs": {},
+        "outputs": {
+            "MODEL": "模型",
+            "CONDITIONING+": "正面条件",
+            "CONDITIONING-": "负面条件",
+            "LATENT": "Latent"
+        },
         "widgets": {
-            "seed": "种子",
-            "steps": "步数",
-            "cfg": "引导系数",
-            "sampler_name": "采样器名称",
+            "seed": "随机种子",
+            "steps": "步进",
+            "cfg": "CFG",
+            "sampler_name": "采样器",
             "scheduler": "调度器",
             "start_denoise": "开始降噪强度",
             "denoise_increment": "降噪增量",
@@ -194,28 +223,32 @@
     "ATM VFI": {
         "title": "ATM VFI（仅支持2倍倍率）",
         "inputs": {
-            "frames": "帧",
+            "frames": "分帧",
             "optional_interpolation_states": "可选插值状态"
         },
-        "outputs": {},
+        "outputs": {
+            "IMAGE": "图像"
+        },
         "widgets": {
-            "ckpt_name": "模型文件",
-            "clear_cache_after_n_frames": "每N帧清理缓存",
-            "multiplier": "倍率",
+            "ckpt_name": "模型名称",
+            "clear_cache_after_n_frames": "每N帧清除缓存",
+            "multiplier": "倍数",
             "global_motion": "全局运动"
         }
     },
     "MOMO VFI": {
-        "title": "MOMO VFI（仅支持2倍倍率）",
+        "title": "MOMO VFI（仅支持2倍插值）",
         "inputs": {
-            "frames": "帧",
+            "frames": "分帧",
             "optional_interpolation_states": "可选插值状态"
         },
-        "outputs": {},
+        "outputs": {
+            "IMAGE": "图像"
+        },
         "widgets": {
-            "ckpt_name": "模型文件",
-            "clear_cache_after_n_frames": "每N帧清理缓存",
-            "multiplier": "倍率",
+            "ckpt_name": "模型名称",
+            "clear_cache_after_n_frames": "每N帧清除缓存",
+            "multiplier": "倍数",
             "num_inference_steps": "推理步数"
         }
     }
