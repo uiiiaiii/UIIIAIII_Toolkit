@@ -302,7 +302,13 @@ def _is_field_entry(key, value) -> bool:
         return False
     if not key or not value or key == value:
         return False
-    return " " not in key and len(key) <= 64
+    if " " in key or len(key) > 64:
+        return False
+    # 字段名的译文应当是短标签；字典翻译偶尔会把 tooltip 整句译文写成
+    # 字段名译文，若写入官方语言包，Nodes 2.0 会按控件名宽度把节点撑得极长
+    if len(value) > 60:
+        return False
+    return True
 
 
 def _build_official_outputs(class_name, outputs, node_mappings) -> dict:

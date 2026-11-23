@@ -18,7 +18,7 @@
         "widgets": {
             "lora_name": "LoRA名称",
             "strength": "强度",
-            "low_vram": "低显存模式：关闭（默认）：在运行时应用 LoRA（旁路）——最清晰，但会额外占用峰值显存。开启：将 LoRA 合并到权重中——显存占用最低，小显存显卡也能运行，但在量化基础模型上效果会变柔和（增量部分会被舍入掉）。仅在显存不足（OOM）时开启。",
+            "low_vram": "低显存模式",
             "OFF (default): apply the LoRA at run time (bypass) — sharpest, but costs extra peak VRAM. ON: merge the LoRA into the weights — lowest VRAM so small GPUs can run, but softer on quantized bases (the delta is partly rounded away). Turn ON only if you OOM.": "关闭（默认）：在运行时应用 LoRA（旁路）——最锐利，但会额外占用峰值显存。开启：将 LoRA 合并到权重中——显存占用最低，小显存显卡也能运行，但在量化底模上效果会变柔和（增量部分会被舍入掉）。仅在显存不足时开启。"
         }
     }

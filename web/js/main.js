@@ -140,6 +140,10 @@ export class TUtils {
       const widgetDict = (classType && nodesT[classType]?.widgets) || {};
       for (const w of widgets) {
         if (!w) continue;
+        // 撤销异常长的控件名（官方语言包/历史脏字典可能把 tooltip 整句写进 label）
+        if (typeof w.label === "string" && this.isOversizedFieldLabel(w.name, w.label)) {
+          delete w.label;
+        }
         // 显示名优先 label，其次 name
         const shown = (typeof w.label === "string" && w.label) ? w.label : w.name;
         if (typeof shown !== "string" || !shown) continue;
@@ -147,7 +151,8 @@ export class TUtils {
         w._uiiaiii_tl = shown;
         if (isAlreadyTranslatedText(shown)) continue;   // 已是译文
         // 字典以控件内部名为 key；插件改写 label 时按 label 兜底
-        const translated = (w.name && widgetDict[w.name]) || widgetDict[shown] || menuT[shown];
+        let translated = (w.name && widgetDict[w.name]) || widgetDict[shown] || menuT[shown];
+        if (this.isOversizedFieldLabel(w.name, translated)) translated = null;
         if (translated && translated !== shown) {
           // 仅首次改写时记录原文（null 表示原本没有 label，显示名取 name）
           if (w._uiiaiii_tl_orig === undefined) {
@@ -333,8 +338,23 @@ export class TUtils {
    * 在绘制瞬间临时映射到 label，序列化数据始终只含英文原名。
    * （widgets 的 label 不参与序列化，故仍可照常改写。）
    */
+  /**
+   * 判断译文是否为"整句说明"误当成了字段显示名。
+   *
+   * 字典的 widgets/inputs 段同时收录 tooltip 原文（key 为整句），翻译管线
+   * 偶尔会把 tooltip 译文写到字段名上。字段名本身很短（无空格）而译文超长
+   * 时一律视为脏数据：套用后 Nodes 2.0 会按文字宽度把节点撑得极长。
+   */
+  static isOversizedFieldLabel(name, translation) {
+    if (typeof name !== "string" || typeof translation !== "string") return false;
+    if (!name || name.length > 40 || /\s/.test(name)) return false;
+    return translation.length > 60;
+  }
+
   static applySlotTranslation(item, translation) {
     if (!item || !translation || translation === item.name) return;
+    if (this.isOversizedFieldLabel(item.name, translation)) return;
+
     // 历史污染：label 曾是被写进工作流的译文 → 内存中恢复英文原名，改由 _uiiaiii_label 承担显示
     if (typeof item.label === "string" && item.label !== item.name && isAlreadyTranslatedText(item.label)) {
       item.label = item.name;
@@ -469,12 +489,21 @@ export class TUtils {
         const dict = t[key] || {};
         node[key].forEach((item) => {
           if (!item || !item.name) return;
+          // 官方语言包/历史脏字典可能把 tooltip 整句写成控件名：撤销异常 label，
+          // 否则 Nodes 2.0 会按文字宽度把节点撑得极长
+          if (key === "widgets" && typeof item.label === "string"
+              && this.isOversizedFieldLabel(item.name, item.label)) {
+            delete item.label;
+          }
           let translation = dict[item.name];
           // widgets 额外查 Menu 字典：覆盖前端动态创建/改写的控件与按钮文案
           // （如 addWidget("button", "Browse…")、运行时 label 赋值 detector_confidence）
           if (!translation && key === "widgets") {
             const menuT = this.T.Menu || {};
             translation = menuT[item.name] || (item.label && menuT[item.label]) || null;
+          }
+          if (translation && this.isOversizedFieldLabel(item.name, translation)) {
+            translation = null;
           }
           if (translation) {
             if (key === "widgets") {
@@ -547,7 +576,10 @@ export class TUtils {
             let class_type = this.constructor.comfyClass || this.constructor.type;
             let dict = TUtils.T.Nodes[class_type];
             if (dict && dict["widgets"] && res.name in dict["widgets"]) {
-              TUtils.safeApplyTranslation(res, dict["widgets"][res.name]);
+              const widgetT = dict["widgets"][res.name];
+              if (!TUtils.isOversizedFieldLabel(res.name, widgetT)) {
+                TUtils.safeApplyTranslation(res, widgetT);
+              }
             }
           }
           return res;

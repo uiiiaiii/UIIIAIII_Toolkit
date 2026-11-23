@@ -38,6 +38,21 @@ def _get_locales_base() -> str:
 # 写入函数
 # ============================================================
 
+def _is_oversized_field_value(key: str, value: str) -> bool:
+    """
+    判断"字段名 → 译文"是否为脏数据（把 tooltip 整句译文写到了字段名上）
+
+    翻译 API 偶尔会把 tooltip 的整句译文写到同批次的字段名条目上。
+    字段名本身很短（无空格），对应译文应当是短标签；若译文是长句，
+    Nodes 2.0 会按控件名宽度把节点撑得极长，因此写入前直接丢弃该条目。
+    """
+    if not isinstance(key, str) or not isinstance(value, str):
+        return False
+    if not key or " " in key or len(key) > 40:
+        return False
+    return len(value) > 60
+
+
 def write_translation(
     plugin_name: str,
     translated_nodes: Dict[str, Any],
@@ -117,7 +132,10 @@ def write_translation(
             for field in ("inputs", "outputs", "widgets"):
                 raw = node_def.get(field)
                 if isinstance(raw, dict) and raw:
-                    filtered = {k: v for k, v in raw.items() if k != v}
+                    filtered = {
+                        k: v for k, v in raw.items()
+                        if k != v and not _is_oversized_field_value(k, v)
+                    }
                     if filtered:
                         clean_def[field] = filtered
             # 仅在非空时写入

@@ -43,7 +43,7 @@ from . import translation_writer
 from . import translation_service  # 注册 /translation_node/* 界面翻译端点
 
 # 插件版本
-__version__ = "1.3.13"
+__version__ = "1.3.14"
 
 # 插件信息
 PLUGIN_INFO = {
