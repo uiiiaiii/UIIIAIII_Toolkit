@@ -40,6 +40,27 @@ QWEN_MODEL = "Qwen/Qwen-Image-Edit-2511"
 # Qwen-Image-2.1：文生图 + 图像编辑统一模型
 QWEN_21_MODEL = "Qwen/Qwen-Image-2.1"
 
+# Krea 2 Turbo（文生图）
+KREA_2_TURBO_MODEL = "krea/Krea-2-Turbo"
+
+# Z-Image Turbo（文生图）
+Z_IMAGE_TURBO_MODEL = "Tongyi-MAI/Z-Image-Turbo"
+
+# MiniMax H3 Image（文生图 + 图像编辑，支持多参考图）
+MINIMAX_H3_IMAGE_MODEL = "MiniMax/MiniMax-H3-Image"
+
+# MOSS Image SFT（文生图）
+MOSS_IMAGE_SFT_MODEL = "openmoss/MOSS-Image-SFT"
+
+# MiniMax H3 Image 单次请求参考图上限（模型本身支持 16 张）
+MINIMAX_MAX_REFERENCE_IMAGES = 16
+
+# MiniMax H3 Image 输出档位（ModelScope API-Inference 限制最大边 2048）
+MINIMAX_RESOLUTION_OPTIONS = ["1K", "2K"]
+
+# 文生图模型的输出档位（最大边 1024 / 2048，8 对齐）
+TURBO_RESOLUTION_OPTIONS = ["1K", "2K"]
+
 # 创建图像生成任务的端点
 IMAGES_GENERATIONS_ENDPOINT = "v1/images/generations"
 
@@ -237,6 +258,56 @@ def ratio_to_size_21(ratio: str, resolution: str = "1K") -> str:
     if resolution == "2K":
         return _RATIO_TO_RESOLUTION_21.get(ratio, "2048x2048")
     return _RATIO_TO_RESOLUTION_21_1K.get(ratio, "1024x1024")
+
+
+def ratio_to_size_turbo(ratio: str, resolution: str = "1K") -> str:
+    """
+    Krea 2 Turbo / Z-Image Turbo 专用：将宽高比转换为 size
+
+    两个模型与 Qwen-Image-2.1 使用相同的 8 对齐尺寸表（1K / 2K）。
+    """
+    return ratio_to_size_21(ratio, resolution)
+
+
+def ratio_to_size_by_max_edge(ratio: str, max_edge: int, align: int = 8) -> str:
+    """
+    按最大边与宽高比计算对齐后的 size（用于可灵活选择分辨率的模型）
+
+    Args:
+        ratio: 宽高比字符串，如 "16:9"
+        max_edge: 最大边像素（如 1024 / 2048 / 4096）
+        align: 宽高对齐粒度（多数模型 8，MOSS-Image 要求 16）
+
+    Returns:
+        size 字符串，如 "4096x2304"
+    """
+    r = _RATIO_VALUES.get(ratio, 1.0)
+    if r >= 1.0:
+        width = max_edge
+        height = int(round(max_edge / r / float(align))) * align
+    else:
+        height = max_edge
+        width = int(round(max_edge * r / float(align))) * align
+    return f"{max(align, width)}x{max(align, height)}"
+
+
+def ratio_to_size_minimax(ratio: str, resolution: str = "1K") -> str:
+    """
+    MiniMax H3 Image 专用：1K / 2K 档位 → size
+
+    注意：ModelScope API-Inference 限制宽高必须在 [64, 2048] 内，
+    因此无法使用模型原生的 4K/16MP 尺寸；2K（最大边 2048）是平台上限。
+    """
+    edges = {"1K": 1024, "2K": 2048}
+    return ratio_to_size_by_max_edge(ratio, edges.get(resolution, 1024))
+
+
+def ratio_to_size_moss(ratio: str, resolution: str = "1K") -> str:
+    """
+    MOSS-Image-SFT 专用：1K / 2K 档位 → size（宽高必须是 16 的倍数）
+    """
+    edges = {"1K": 1024, "2K": 2048}
+    return ratio_to_size_by_max_edge(ratio, edges.get(resolution, 1024), align=16)
 
 
 # ============================================================

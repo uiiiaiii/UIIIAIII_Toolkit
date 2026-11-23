@@ -3,17 +3,24 @@ UIIIAIII Toolkit 自定义节点插件（由 ComfyUI-API 更名而来）
 
 将多个自定义 API 打包为 ComfyUI 节点：
 
-Agnes AI（https://agnes-ai.cn）：
-- Agnes Image 2.1 Flash（文生图、图生图）
-- Agnes Video V2.0（文生视频、图生视频、关键帧动画）
+Agnes AI（https://agnes-ai.com）：
+- Agnes Image 2.5 / 2.1 Flash（文生图、图生图合并为一个节点，模型可切换）
+- Agnes Video 2.5 Flash（文生视频、首尾帧控制、参考图片与音频）
 
 ModelScope（https://www.modelscope.cn）：
-- Qwen-Image-Edit-2511（图像编辑）
+- Qwen-Image-2.1（文生图 + 图像编辑，最多 4 张参考图）
+- Qwen-Image-Edit-2511（图像编辑，最多 3 张参考图）
+- Krea-2-Turbo（文生图）
+- Z-Image-Turbo（文生图）
+- MOSS-Image-SFT（文生图）
+- MiniMax-H3-Image（文生图 + 图像编辑，最多 16 张参考图）
 
 文档参考：
-- https://agnes-ai.cn/zh-Hans/docs/agnes-image-21-flash
-- https://agnes-ai.cn/zh-Hans/docs/agnes-video-v20
+- https://agnes-ai.com/zh-Hans/docs/agnes-image-25-flash
+- https://agnes-ai.com/zh-Hans/docs/agnes-video-25-flash
 - https://www.modelscope.cn/models/Qwen/Qwen-Image-Edit-2511
+- https://www.modelscope.cn/models/krea/Krea-2-Turbo
+- https://www.modelscope.cn/models/Tongyi-MAI/Z-Image-Turbo
 
 API Key 配置（以下方式任选其一）：
 - 在 ComfyUI 设置 → UIIIAIII Toolkit → 节点API 中统一配置
@@ -43,19 +50,24 @@ from . import translation_writer
 from . import translation_service  # 注册 /translation_node/* 界面翻译端点
 
 # 插件版本
-__version__ = "1.3.14"
+__version__ = "1.4.0"
 
 # 插件信息
 PLUGIN_INFO = {
     "name": "UIIIAIII Toolkit",
     "version": __version__,
     "author": "UIIIAIII Toolkit",
-    "description": "Node category manager (rename/move/hide/sort via tree menu & drag), node and plugin UI translation (derived from AIGODLIKE-ComfyUI-Translation and ComfyUI-DD-Translation with modifications), plus bundled nodes: Agnes AI (text-to-image / image-to-image / text-to-video / image-to-video / keyframe animation), Qwen-Image-2.1 (unified generation and editing) and Qwen-Image-Edit-2511 via ModelScope API, text input/preview, background fill, and random noise seed.",
+    "description": "Node category manager (rename/move/hide/sort via tree menu & drag), node and plugin UI translation (derived from AIGODLIKE-ComfyUI-Translation and ComfyUI-DD-Translation with modifications), plus bundled nodes: Agnes AI (text-to-image / image-to-image / multi-image composition / text-to-video / first-last-frame / reference video), Qwen-Image-2.1 (unified generation and editing), Qwen-Image-Edit-2511, Krea-2-Turbo and Z-Image-Turbo via ModelScope API, text input/preview, background fill, and random noise seed.",
     "models": [
+        "agnes-image-2.5-flash",
         "agnes-image-2.1-flash",
-        "agnes-video-v2.0",
+        "agnes-video-2.5-flash",
         "Qwen-Image-2.1",
         "Qwen-Image-Edit-2511",
+        "Krea-2-Turbo",
+        "Z-Image-Turbo",
+        "MOSS-Image-SFT",
+        "MiniMax-H3-Image",
     ],
 }
 
@@ -186,7 +198,7 @@ try:
         提取画布选中节点的定义
 
         请求体 JSON：
-        {"class_names": ["AgnesTextToImage", "AgnesImageToImage"]}
+        {"class_names": ["AgnesImage"]}
         """
         try:
             data = await request.json()
@@ -509,6 +521,6 @@ except ImportError:
 
 # 日志输出
 logger.info(
-    "UIIIAIII Toolkit 插件已加载（v%s）：提供 8 个节点（Agnes 文生图/图生图/文生视频/图生视频/关键帧动画 + ModelScope Qwen-Image-2.1 文生图与图像编辑 + Qwen-Image-Edit-2511 图像编辑 + 文本输入/预览）",
+    "UIIIAIII Toolkit 插件已加载（v%s）：提供 Agnes 图像（文生图/图生图/多图合成，2.5/2.1 切换）、Agnes 视频（文生视频/首尾帧/参考素材，2.5 Flash）+ ModelScope Qwen-Image-2.1、Qwen-Image-Edit-2511、Krea 2 Turbo、Z-Image Turbo、MOSS Image SFT、MiniMax H3 Image + 文本输入/预览",
     __version__,
 )

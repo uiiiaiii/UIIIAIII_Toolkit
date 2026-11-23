@@ -1,11 +1,11 @@
 """
 Agnes AI ComfyUI 节点定义模块
 
-提供 4 个节点：
-- AgnesTextToImage：文生图（agnes-image-2.1-flash）
-- AgnesImageToImage：图生图（agnes-image-2.1-flash）
-- AgnesTextToVideo：文生视频（agnes-video-v2.0）
-- AgnesImageToVideo：图生视频（agnes-video-v2.0）
+Agnes 图像节点：
+- AgnesImage：文生图 + 图生图 / 多图合成（同一节点，model 可切换 agnes-image-2.5-flash / 2.1-flash）
+
+Agnes 视频节点：
+- AgnesVideo：文生视频 / 首尾帧控制 / 参考图片与音频（agnes-video-2.5-flash，自动判断模式）
 
 所有节点使用传统的 INPUT_TYPES 风格，保证最大兼容性。
 """
@@ -139,17 +139,20 @@ def _make_progress_callback(node_id: Optional[str]):
 
 
 # ============================================================
-# 文生图节点
+# 图像节点（文生图 / 图生图合并）
 # ============================================================
 
-class AgnesTextToImage:
+class AgnesImage:
     """
-    Agnes Image 2.1 Flash 文生图节点
+    Agnes Image 节点（文生图 + 图生图 + 多图合成）
 
-    根据文本提示词生成图像。
+    - 不连接参考图片：文生图
+    - 连接 1 张或多张参考图片：图生图 / 多图合成（逐级展开，最多 5 张）
+    - ratio=auto 时自动沿用第一张参考图的比例
+    - model 可在 agnes-image-2.5-flash 与 agnes-image-2.1-flash 之间切换
     """
 
-    DESCRIPTION = "Generate an image from a text prompt using the Agnes Image 2.1 Flash model"
+    DESCRIPTION = "Generate an image from a prompt, or edit a reference image, using Agnes Image models (2.5 Flash / 2.1 Flash)"
 
     CATEGORY = "UIIIAIII Toolkit/Agnes"
 
@@ -160,135 +163,8 @@ class AgnesTextToImage:
 
     OUTPUT_NODE = True
 
-    @classmethod
-    def INPUT_TYPES(cls):
-        return {
-            "required": {
-                "prompt": (
-                    "STRING",
-                    {
-                        "default": "",
-                        "multiline": True,
-                        "tooltip": "Text prompt for image generation",
-                    },
-                ),
-                "seed": (
-                    "INT",
-                    {
-                        "default": 0,
-                        "min": 0,
-                        "max": 0xFFFFFFFFFFFFFFFF,
-                        "control_after_generate": True,
-                        "tooltip": "Random seed used to break the ComfyUI execution cache (the Agnes Image API does not support seed, so this value is not sent to the API)",
-                    },
-                ),
-                "size": (
-                    ["1K", "2K", "3K", "4K"],
-                    {
-                        "default": "2K",
-                        "tooltip": "Output size preset",
-                    },
-                ),
-                "ratio": (
-                    agnes_client.IMAGE_RATIO_OPTIONS,
-                    {
-                        "default": "1:1",
-                        "tooltip": "Aspect ratio",
-                    },
-                ),
-            },
-            "hidden": {
-                "unique_id": "UNIQUE_ID",
-                "prompt_id": "PROMPT_ID",
-            },
-        }
-
-    def generate(
-        self,
-        prompt: str,
-        seed: int = 0,
-        size: str = "2K",
-        ratio: str = "1:1",
-        unique_id: Optional[str] = None,
-        prompt_id: Optional[str] = None,
-    ):
-        """执行文生图"""
-        # 验证提示词
-        if not prompt or not prompt.strip():
-            raise RuntimeError("Prompt cannot be empty")
-
-        # 显示进度
-        pbar = _update_progress(unique_id, 0, 2, "Calling Agnes image API...")
-
-        # 调用 API（使用 URL 返回模式，更高效）
-        # 注意：Agnes Image API 不支持 seed 参数，seed 仅用于打破 ComfyUI 缓存，不发送给 API
-        # 根据官方文档，response_format 必须放在 extra_body 中
-        # API Key 自动从 ComfyUI 设置面板读取
-        try:
-            url_result, b64_result = agnes_client.generate_image(
-                prompt=prompt.strip(),
-                size=size,
-                ratio=ratio,
-                image_data_uris=None,
-                return_base64=False,
-                extra_params={"response_format": "url"},
-                timeout=agnes_client.DEFAULT_TIMEOUT,
-            )
-        except Exception as e:
-            raise RuntimeError(f"Agnes image API call failed: {e}")
-
-        # 处理返回结果
-        pbar = _update_progress(unique_id, 1, 3, "Downloading generated image...", pbar)
-
-        try:
-            if url_result:
-                # URL 模式：下载图像
-                image_buffer = agnes_client.download_url_to_bytesio(url_result)
-                image_tensor = agnes_client.bytesio_to_image_tensor(image_buffer)
-            elif b64_result:
-                # Base64 模式：解码
-                import base64 as b64mod
-                img_data = b64mod.b64decode(b64_result)
-                image_buffer = BytesIO(img_data)
-                image_tensor = agnes_client.bytesio_to_image_tensor(image_buffer)
-            else:
-                raise RuntimeError("API did not return an image URL or Base64 data")
-        except Exception as e:
-            raise RuntimeError(f"Image download/decode failed: {e}")
-
-        # 诊断日志：确认图像解码成功及张量形状
-        import logging
-        logging.info(
-            "Agnes 图生图完成：返回张量形状 %s，dtype=%s",
-            tuple(image_tensor.shape), image_tensor.dtype,
-        )
-
-        _update_progress(unique_id, 2, 3, "Image generation complete", pbar)
-
-        return (image_tensor,)
-
-
-# ============================================================
-# 图生图节点
-# ============================================================
-
-class AgnesImageToImage:
-    """
-    Agnes Image 2.1 Flash 图生图节点
-
-    基于输入图像进行转换、重绘和风格化编辑。
-    """
-
-    DESCRIPTION = "Edit an input image from a text instruction using the Agnes Image 2.1 Flash model"
-
-    CATEGORY = "UIIIAIII Toolkit/Agnes"
-
-    RETURN_TYPES = ("IMAGE",)
-    RETURN_NAMES = ("image",)
-
-    FUNCTION = "generate"
-
-    OUTPUT_NODE = True
+    # 默认模型（旧节点子类可覆盖，保持旧工作流行为）
+    DEFAULT_MODEL = agnes_client.AGNES_IMAGE_MODEL
 
     @classmethod
     def INPUT_TYPES(cls):
@@ -299,13 +175,7 @@ class AgnesImageToImage:
                     {
                         "default": "",
                         "multiline": True,
-                        "tooltip": "Text instruction for image editing",
-                    },
-                ),
-                "image": (
-                    "IMAGE",
-                    {
-                        "tooltip": "Input image (converted to a Base64 Data URI for the API)",
+                        "tooltip": "Text prompt for generation, or the edit instruction when an image is connected",
                     },
                 ),
                 "seed": (
@@ -329,7 +199,51 @@ class AgnesImageToImage:
                     agnes_client.IMAGE_RATIO_OPTIONS_WITH_AUTO,
                     {
                         "default": "auto",
-                        "tooltip": "Aspect ratio. 'auto' detects the input image ratio and keeps it consistent",
+                        "tooltip": "Aspect ratio. 'auto' keeps the reference image ratio when an image is connected, and falls back to 1:1 for text-to-image",
+                    },
+                ),
+                "model": (
+                    agnes_client.AGNES_IMAGE_MODELS,
+                    {
+                        "default": cls.DEFAULT_MODEL,
+                        "tooltip": "Agnes image model: 2.5 Flash is the newest generation; 2.1 Flash is the previous generation",
+                    },
+                ),
+            },
+            "optional": {
+                "reference_images_1": (
+                    "IMAGE",
+                    {
+                        "display_name": "Reference image 1",
+                        "tooltip": "Reference image for editing / multi-image composition. Connect to reveal the next slot (up to 5)",
+                    },
+                ),
+                "reference_images_2": (
+                    "IMAGE",
+                    {
+                        "display_name": "Reference image 2",
+                        "tooltip": "Reference image for editing / multi-image composition. Connect to reveal the next slot (up to 5)",
+                    },
+                ),
+                "reference_images_3": (
+                    "IMAGE",
+                    {
+                        "display_name": "Reference image 3",
+                        "tooltip": "Reference image for editing / multi-image composition. Connect to reveal the next slot (up to 5)",
+                    },
+                ),
+                "reference_images_4": (
+                    "IMAGE",
+                    {
+                        "display_name": "Reference image 4",
+                        "tooltip": "Reference image for editing / multi-image composition. Connect to reveal the next slot (up to 5)",
+                    },
+                ),
+                "reference_images_5": (
+                    "IMAGE",
+                    {
+                        "display_name": "Reference image 5",
+                        "tooltip": "Reference image for editing / multi-image composition. Up to 5 images are sent",
                     },
                 ),
             },
@@ -342,42 +256,84 @@ class AgnesImageToImage:
     def generate(
         self,
         prompt: str,
-        image,
         seed: int = 0,
         size: str = "2K",
         ratio: str = "auto",
+        model: Optional[str] = None,
         unique_id: Optional[str] = None,
         prompt_id: Optional[str] = None,
+        **kwargs,
     ):
-        """执行图生图"""
+        """执行文生图 / 图生图 / 多图合成"""
         # 验证提示词
         if not prompt or not prompt.strip():
             raise RuntimeError("Prompt cannot be empty")
 
-        pbar = _update_progress(unique_id, 0, 3, "Encoding input image...")
+        model = model or self.DEFAULT_MODEL
+        limit = agnes_client.IMAGE_MAX_REFERENCE_IMAGES
 
-        # 将输入图像转换为 Data URI
-        try:
-            data_uri = agnes_client.image_tensor_to_data_uri(image)
-        except Exception as e:
-            raise RuntimeError(f"Input image encoding failed: {e}")
+        # 收集参考图：逐级展开的 reference_images_1..5（每个插槽也可接批次）
+        slots = [kwargs.get(f"reference_images_{i}") for i in range(1, limit + 1)]
 
-        # 自动检测输入图像比例，保持输出与原图比例一致
-        if ratio == "auto":
-            ratio = agnes_client.detect_image_ratio(image)
+        source_images = []
+        for slot in slots:
+            if slot is None:
+                continue
+            count = int(slot.shape[0]) if len(slot.shape) == 4 else 1
+            for i in range(count):
+                if len(source_images) >= limit:
+                    break
+                source_images.append(slot[i:i + 1])
+            if len(source_images) >= limit:
+                break
 
-        pbar = _update_progress(unique_id, 1, 3, "Calling Agnes image API...", pbar)
+        has_image = bool(source_images)
+        total = 4 if has_image else 3
 
-        # 调用 API
+        pbar = _update_progress(
+            unique_id,
+            0,
+            total,
+            "Encoding reference image(s)..." if has_image else "Calling Agnes image API...",
+        )
+
+        image_data_uris = None
+        if has_image:
+            # 参考图 → Data URI（官方文档：图生图放在 extra_body.image）
+            try:
+                image_data_uris = [
+                    agnes_client.image_tensor_to_data_uri(t) for t in source_images
+                ]
+            except Exception as e:
+                raise RuntimeError(f"Reference image encoding failed: {e}")
+
+            # ratio=auto：自动匹配第一张参考图比例，保持构图一致
+            if ratio == "auto":
+                ratio = agnes_client.detect_image_ratio(source_images[0])
+
+            pbar = _update_progress(unique_id, 1, total, "Calling Agnes image API...", pbar)
+        elif ratio == "auto":
+            ratio = "1:1"
+
+        logger.info(
+            "Agnes 图像请求：model=%s, mode=%s, refs=%d, size=%s, ratio=%s",
+            model,
+            "图生图/多图合成" if has_image else "文生图",
+            len(source_images),
+            size,
+            ratio,
+        )
+
         # 注意：Agnes Image API 不支持 seed 参数，seed 仅用于打破 ComfyUI 缓存，不发送给 API
-        # 根据官方文档，图生图的 image 和 response_format 都必须放在 extra_body 中
+        # 根据官方文档，response_format 必须放在 extra_body 中
         # API Key 自动从 ComfyUI 设置面板读取
         try:
             url_result, b64_result = agnes_client.generate_image(
                 prompt=prompt.strip(),
+                model=model,
                 size=size,
                 ratio=ratio,
-                image_data_uris=[data_uri],
+                image_data_uris=image_data_uris,
                 return_base64=False,
                 extra_params={"response_format": "url"},
                 timeout=agnes_client.DEFAULT_TIMEOUT,
@@ -385,7 +341,7 @@ class AgnesImageToImage:
         except Exception as e:
             raise RuntimeError(f"Agnes image API call failed: {e}")
 
-        pbar = _update_progress(unique_id, 2, 3, "Downloading generated image...", pbar)
+        pbar = _update_progress(unique_id, total - 1, total, "Downloading generated image...", pbar)
 
         # 处理返回结果
         try:
@@ -402,27 +358,35 @@ class AgnesImageToImage:
         except Exception as e:
             raise RuntimeError(f"Image download/decode failed: {e}")
 
-        _update_progress(unique_id, 3, 3, "Image generation complete", pbar)
+        # 诊断日志：确认图像解码成功及张量形状
+        logger.info(
+            "Agnes 图像生成完成：model=%s，返回张量形状 %s，dtype=%s",
+            model, tuple(image_tensor.shape), image_tensor.dtype,
+        )
+
+        _update_progress(unique_id, total, total, "Image generation complete", pbar)
 
         return (image_tensor,)
 
 
 # ============================================================
-# 文生视频节点
+# 视频节点（文生视频 / 首尾帧 / 参考素材合并）
 # ============================================================
 
-class AgnesTextToVideo:
+class AgnesVideo:
     """
-    Agnes Video V2.0 文生视频节点
+    Agnes Video 2.5 Flash 节点
 
-    根据文本提示词生成视频。视频生成采用异步任务 API。
+    根据连接的输入自动选择生成模式：
+    - 无媒体输入：文生视频（text）
+    - 连接 first_frame / last_frame：首尾帧控制（keyframe）
+    - 连接 reference_images 或填入参考音频：参考生成（reference）
     """
 
-    DESCRIPTION = "Generate a video from a text prompt using the Agnes Video V2.0 model"
+    DESCRIPTION = "Generate videos with Agnes Video 2.5 Flash: text-to-video, first/last frame control, or reference images and audio"
 
     CATEGORY = "UIIIAIII Toolkit/Agnes"
 
-    # 根据是否支持 VIDEO 类型动态设置返回类型
     RETURN_TYPES = ("VIDEO",) if _HAS_VIDEO_SUPPORT else ("STRING",)
     RETURN_NAMES = ("video",) if _HAS_VIDEO_SUPPORT else ("video_path",)
 
@@ -439,47 +403,91 @@ class AgnesTextToVideo:
                     {
                         "default": "",
                         "multiline": True,
-                        "tooltip": "Text description of the video content",
+                        "tooltip": "Video description. In reference mode use <Picture 1>, <Audio 1>, ... to refer to the reference media",
                     },
                 ),
-                "ratio": (
-                    ["16:9", "9:16", "1:1", "4:3", "3:4"],
+                "seconds": (
+                    agnes_client.VIDEO_SECONDS,
+                    {
+                        "default": "5",
+                        "tooltip": "Video duration in seconds (4-12)",
+                    },
+                ),
+                "aspect_ratio": (
+                    agnes_client.VIDEO_ASPECT_RATIOS,
                     {
                         "default": "16:9",
-                        "tooltip": "Video aspect ratio",
-                    },
-                ),
-                "resolution": (
-                    ["480p", "720p", "1080p"],
-                    {
-                        "default": "720p",
-                        "tooltip": "Video resolution preset",
-                    },
-                ),
-                "duration": (
-                    ["3s", "5s", "10s", "18s"],
-                    {
-                        "default": "5s",
-                        "tooltip": "Video duration (based on num_frames and frame_rate)",
-                    },
-                ),
-                "frame_rate": (
-                    "INT",
-                    {
-                        "default": 24,
-                        "min": 1,
-                        "max": 60,
-                        "tooltip": "Video frame rate (1-60)",
+                        "tooltip": "Output aspect ratio (Agnes Video 2.5 Flash is fixed at 720P)",
                     },
                 ),
             },
             "optional": {
-                "negative_prompt": (
-                    "STRING",
+                "first_frame": (
+                    "IMAGE",
                     {
-                        "default": "",
-                        "multiline": True,
-                        "tooltip": "Negative prompt describing what to avoid",
+                        "tooltip": "Keyframe mode: first frame. Connect first_frame and/or last_frame to use keyframe control",
+                    },
+                ),
+                "last_frame": (
+                    "IMAGE",
+                    {
+                        "tooltip": "Keyframe mode: last frame. Provide first_frame and/or last_frame (at least one)",
+                    },
+                ),
+                "reference_images_1": (
+                    "IMAGE",
+                    {
+                        "display_name": "Reference image 1",
+                        "tooltip": "Reference mode: reference image(s). Connect this input to reveal the next slot (up to 5)",
+                    },
+                ),
+                "reference_images_2": (
+                    "IMAGE",
+                    {
+                        "display_name": "Reference image 2",
+                        "tooltip": "Reference mode: reference image(s). Connect this input to reveal the next slot (up to 5)",
+                    },
+                ),
+                "reference_images_3": (
+                    "IMAGE",
+                    {
+                        "display_name": "Reference image 3",
+                        "tooltip": "Reference mode: reference image(s). Connect this input to reveal the next slot (up to 5)",
+                    },
+                ),
+                "reference_images_4": (
+                    "IMAGE",
+                    {
+                        "display_name": "Reference image 4",
+                        "tooltip": "Reference mode: reference image(s). Connect this input to reveal the next slot (up to 5)",
+                    },
+                ),
+                "reference_images_5": (
+                    "IMAGE",
+                    {
+                        "display_name": "Reference image 5",
+                        "tooltip": "Reference mode: reference image(s). Up to 5 images are sent",
+                    },
+                ),
+                "reference_audio_1": (
+                    "AUDIO",
+                    {
+                        "display_name": "Reference audio 1",
+                        "tooltip": "Reference mode: local audio input (e.g. from LoadAudio). Encoded as mono 16 kHz WAV and sent inline; connect to reveal the next slot (up to 3)",
+                    },
+                ),
+                "reference_audio_2": (
+                    "AUDIO",
+                    {
+                        "display_name": "Reference audio 2",
+                        "tooltip": "Reference mode: local audio input (e.g. from LoadAudio). Encoded as mono 16 kHz WAV and sent inline; connect to reveal the next slot (up to 3)",
+                    },
+                ),
+                "reference_audio_3": (
+                    "AUDIO",
+                    {
+                        "display_name": "Reference audio 3",
+                        "tooltip": "Reference mode: local audio input (e.g. from LoadAudio). Up to 3 clips are sent",
                     },
                 ),
                 "seed": (
@@ -490,15 +498,6 @@ class AgnesTextToVideo:
                         "max": 0xFFFFFFFFFFFFFFFF,
                         "control_after_generate": True,
                         "tooltip": "Random seed (0 means not specified)",
-                    },
-                ),
-                "num_inference_steps": (
-                    "INT",
-                    {
-                        "default": 0,
-                        "min": 0,
-                        "max": 200,
-                        "tooltip": "Inference steps (0 uses the default value)",
                     },
                 ),
                 "poll_interval": (
@@ -529,333 +528,93 @@ class AgnesTextToVideo:
     def generate(
         self,
         prompt: str,
-        ratio: str = "16:9",
-        resolution: str = "720p",
-        duration: str = "5s",
-        frame_rate: int = 24,
-        negative_prompt: str = "",
+        seconds: str = "5",
+        aspect_ratio: str = "16:9",
+        first_frame=None,
+        last_frame=None,
         seed: int = 0,
-        num_inference_steps: int = 0,
         poll_interval: int = 5,
         max_wait_time: int = 600,
         unique_id: Optional[str] = None,
         prompt_id: Optional[str] = None,
+        **kwargs,
     ):
-        """执行文生视频"""
-        return _generate_video(
-            prompt=prompt,
-            image=None,
-            ratio=ratio,
-            resolution=resolution,
-            duration=duration,
-            frame_rate=frame_rate,
-            negative_prompt=negative_prompt,
-            seed=seed,
-            num_inference_steps=num_inference_steps,
-            poll_interval=poll_interval,
-            max_wait_time=max_wait_time,
-            unique_id=unique_id,
-        )
+        """执行视频生成（自动判断 text / keyframe / reference 模式）"""
+        if not prompt or not prompt.strip():
+            raise RuntimeError("Prompt cannot be empty")
 
-
-# ============================================================
-# 图生视频节点
-# ============================================================
-
-class AgnesImageToVideo:
-    """
-    Agnes Video V2.0 图生视频节点
-
-    将静态图片转化为动态视频。
-    """
-
-    DESCRIPTION = "Turn an input image into an animated video using the Agnes Video V2.0 model"
-
-    CATEGORY = "UIIIAIII Toolkit/Agnes"
-
-    RETURN_TYPES = ("VIDEO",) if _HAS_VIDEO_SUPPORT else ("STRING",)
-    RETURN_NAMES = ("video",) if _HAS_VIDEO_SUPPORT else ("video_path",)
-
-    FUNCTION = "generate"
-
-    OUTPUT_NODE = True
-
-    @classmethod
-    def INPUT_TYPES(cls):
-        return {
-            "required": {
-                "prompt": (
-                    "STRING",
-                    {
-                        "default": "",
-                        "multiline": True,
-                        "tooltip": "Text description of the video content (what should move)",
-                    },
-                ),
-                "image": (
-                    "IMAGE",
-                    {
-                        "tooltip": "Input image (uploaded to the Agnes API)",
-                    },
-                ),
-                "ratio": (
-                    ["16:9", "9:16", "1:1", "4:3", "3:4"],
-                    {
-                        "default": "16:9",
-                        "tooltip": "Video aspect ratio",
-                    },
-                ),
-                "resolution": (
-                    ["480p", "720p", "1080p"],
-                    {
-                        "default": "720p",
-                        "tooltip": "Video resolution preset",
-                    },
-                ),
-                "duration": (
-                    ["3s", "5s", "10s", "18s"],
-                    {
-                        "default": "5s",
-                        "tooltip": "Video duration (based on num_frames and frame_rate)",
-                    },
-                ),
-                "frame_rate": (
-                    "INT",
-                    {
-                        "default": 24,
-                        "min": 1,
-                        "max": 60,
-                        "tooltip": "Video frame rate (1-60)",
-                    },
-                ),
-            },
-            "optional": {
-                "negative_prompt": (
-                    "STRING",
-                    {
-                        "default": "",
-                        "multiline": True,
-                        "tooltip": "Negative prompt describing what to avoid",
-                    },
-                ),
-                "seed": (
-                    "INT",
-                    {
-                        "default": 0,
-                        "min": 0,
-                        "max": 0xFFFFFFFFFFFFFFFF,
-                        "control_after_generate": True,
-                        "tooltip": "Random seed (0 means not specified)",
-                    },
-                ),
-                "num_inference_steps": (
-                    "INT",
-                    {
-                        "default": 0,
-                        "min": 0,
-                        "max": 200,
-                        "tooltip": "Inference steps (0 uses the default value)",
-                    },
-                ),
-                "poll_interval": (
-                    "INT",
-                    {
-                        "default": 5,
-                        "min": 1,
-                        "max": 60,
-                        "tooltip": "Task polling interval (seconds)",
-                    },
-                ),
-                "max_wait_time": (
-                    "INT",
-                    {
-                        "default": 600,
-                        "min": 60,
-                        "max": 3600,
-                        "tooltip": "Maximum wait time (seconds)",
-                    },
-                ),
-            },
-            "hidden": {
-                "unique_id": "UNIQUE_ID",
-                "prompt_id": "PROMPT_ID",
-            },
-        }
-
-    def generate(
-        self,
-        prompt: str,
-        image,
-        ratio: str = "16:9",
-        resolution: str = "720p",
-        duration: str = "5s",
-        frame_rate: int = 24,
-        negative_prompt: str = "",
-        seed: int = 0,
-        num_inference_steps: int = 0,
-        poll_interval: int = 5,
-        max_wait_time: int = 600,
-        unique_id: Optional[str] = None,
-        prompt_id: Optional[str] = None,
-    ):
-        """执行图生视频"""
-        # 将输入图像转换为 Data URI
-        image_url = _upload_image_to_temp_url(image, unique_id)
-
-        return _generate_video(
-            prompt=prompt,
-            image=image_url,
-            ratio=ratio,
-            resolution=resolution,
-            duration=duration,
-            frame_rate=frame_rate,
-            negative_prompt=negative_prompt,
-            seed=seed,
-            num_inference_steps=num_inference_steps,
-            poll_interval=poll_interval,
-            max_wait_time=max_wait_time,
-            unique_id=unique_id,
-        )
-
-
-# ============================================================
-# 关键帧动画节点
-# ============================================================
-
-class AgnesKeyframeAnimation:
-    """
-    Agnes Video V2.0 关键帧动画节点
-
-    在多个关键帧之间生成流畅过渡视频。
-    """
-
-    DESCRIPTION = "Generate a smooth transition video between multiple keyframes using the Agnes Video V2.0 model"
-
-    CATEGORY = "UIIIAIII Toolkit/Agnes"
-
-    RETURN_TYPES = ("VIDEO",) if _HAS_VIDEO_SUPPORT else ("STRING",)
-    RETURN_NAMES = ("video",) if _HAS_VIDEO_SUPPORT else ("video_path",)
-
-    FUNCTION = "generate"
-
-    OUTPUT_NODE = True
-
-    @classmethod
-    def INPUT_TYPES(cls):
-        return {
-            "required": {
-                "prompt": (
-                    "STRING",
-                    {
-                        "default": "Generate a smooth cinematic transition between the keyframes, maintaining visual consistency and natural camera movement",
-                        "multiline": True,
-                        "tooltip": "Describe the transition between keyframes",
-                    },
-                ),
-                "image1": (
-                    "IMAGE",
-                    {"tooltip": "Keyframe 1 (start frame, required)"},
-                ),
-                "image2": (
-                    "IMAGE",
-                    {"tooltip": "Keyframe 2 (end frame, required)"},
-                ),
-                "ratio": (
-                    ["16:9", "9:16", "1:1", "4:3", "3:4"],
-                    {"default": "16:9", "tooltip": "Video aspect ratio"},
-                ),
-                "resolution": (
-                    ["480p", "720p", "1080p"],
-                    {"default": "720p", "tooltip": "Video resolution preset"},
-                ),
-                "duration": (
-                    ["3s", "5s", "10s", "18s"],
-                    {"default": "5s", "tooltip": "Video duration"},
-                ),
-                "frame_rate": (
-                    "INT",
-                    {"default": 24, "min": 1, "max": 60, "tooltip": "Video frame rate (1-60)"},
-                ),
-            },
-            "optional": {
-                "negative_prompt": (
-                    "STRING",
-                    {
-                        "default": "",
-                        "multiline": True,
-                        "tooltip": "Negative prompt describing what to avoid",
-                    },
-                ),
-                "seed": (
-                    "INT",
-                    {
-                        "default": 0,
-                        "min": 0,
-                        "max": 0xFFFFFFFFFFFFFFFF,
-                        "control_after_generate": True,
-                        "tooltip": "Random seed (0 means not specified)",
-                    },
-                ),
-                "num_inference_steps": (
-                    "INT",
-                    {"default": 0, "min": 0, "max": 200, "tooltip": "Inference steps (0 uses the default value)"},
-                ),
-                "poll_interval": (
-                    "INT",
-                    {"default": 5, "min": 1, "max": 60, "tooltip": "Task polling interval (seconds)"},
-                ),
-                "max_wait_time": (
-                    "INT",
-                    {"default": 600, "min": 60, "max": 3600, "tooltip": "Maximum wait time (seconds)"},
-                ),
-            },
-            "hidden": {
-                "unique_id": "UNIQUE_ID",
-                "prompt_id": "PROMPT_ID",
-            },
-        }
-
-    def generate(
-        self,
-        prompt: str,
-        image1,
-        image2,
-        ratio: str = "16:9",
-        resolution: str = "720p",
-        duration: str = "5s",
-        frame_rate: int = 24,
-        negative_prompt: str = "",
-        seed: int = 0,
-        num_inference_steps: int = 0,
-        poll_interval: int = 5,
-        max_wait_time: int = 600,
-        unique_id: Optional[str] = None,
-        prompt_id: Optional[str] = None,
-    ):
-        """执行关键帧动画"""
-        # 将关键帧图像转换为 Data URI 列表
-        pbar = _update_progress(unique_id, 0, 4, "Encoding keyframe images...")
-
-        keyframe_uris = []
         try:
-            keyframe_uris.append(agnes_client.image_tensor_to_data_uri(image1))
-            pbar = _update_progress(unique_id, 1, 4, "Keyframe 1/2 encoded", pbar)
-            keyframe_uris.append(agnes_client.image_tensor_to_data_uri(image2))
-            pbar = _update_progress(unique_id, 2, 4, "Keyframe 2/2 encoded", pbar)
-        except Exception as e:
-            raise RuntimeError(f"Keyframe image encoding failed: {e}")
+            seconds_int = int(seconds)
+        except (TypeError, ValueError):
+            seconds_int = 5
+        if not 4 <= seconds_int <= 12:
+            raise RuntimeError("seconds must be between 4 and 12")
+
+        # 参考图片：逐级展开的 reference_images_1..5（每个插槽也可接批次）
+        reference_urls = []
+        for i in range(1, agnes_client.VIDEO_MAX_REFERENCE_IMAGES + 1):
+            slot = kwargs.get(f"reference_images_{i}")
+            if slot is None:
+                continue
+            remaining = agnes_client.VIDEO_MAX_REFERENCE_IMAGES - len(reference_urls)
+            if remaining <= 0:
+                break
+            reference_urls.extend(_image_batch_to_data_uris(slot, remaining))
+
+        # 参考音频：逐级展开的 reference_audio_1..3，编码为 WAV Data URI
+        audios = []
+        for i in range(1, agnes_client.VIDEO_MAX_REFERENCE_AUDIOS + 1):
+            slot = kwargs.get(f"reference_audio_{i}")
+            if slot is None:
+                continue
+            remaining = agnes_client.VIDEO_MAX_REFERENCE_AUDIOS - len(audios)
+            if remaining <= 0:
+                break
+            try:
+                audios.extend(
+                    agnes_client.audio_batch_to_data_uris(slot, remaining)
+                )
+            except Exception as e:
+                raise RuntimeError(f"Reference audio encoding failed: {e}")
+
+        has_keyframes = first_frame is not None or last_frame is not None
+        has_reference = bool(reference_urls) or bool(audios)
+
+        # 官方模式规则：keyframe 与 reference 的媒体字段不能混用
+        if has_keyframes and has_reference:
+            raise RuntimeError(
+                "Keyframe inputs (first_frame/last_frame) and reference inputs "
+                "(reference_images_*/reference_audio_*) cannot be used together"
+            )
+
+        first_url = None
+        last_url = None
+
+        if has_keyframes:
+            mode = "keyframe"
+            if first_frame is not None:
+                first_url = _upload_image_to_temp_url(
+                    first_frame, unique_id, text="Encoding first frame...",
+                )
+            if last_frame is not None:
+                last_url = _upload_image_to_temp_url(
+                    last_frame, unique_id, text="Encoding last frame...",
+                )
+        elif has_reference:
+            mode = "reference"
+        else:
+            mode = "text"
 
         return _generate_video(
-            prompt=prompt,
-            image=None,
-            keyframe_images=keyframe_uris,
-            ratio=ratio,
-            resolution=resolution,
-            duration=duration,
-            frame_rate=frame_rate,
-            negative_prompt=negative_prompt,
+            prompt=prompt.strip(),
+            mode=mode,
+            seconds=str(seconds_int),
+            aspect_ratio=aspect_ratio,
             seed=seed,
-            num_inference_steps=num_inference_steps,
+            first_frame=first_url,
+            last_frame=last_url,
+            images=reference_urls or None,
+            audios=audios or None,
             poll_interval=poll_interval,
             max_wait_time=max_wait_time,
             unique_id=unique_id,
@@ -866,23 +625,45 @@ class AgnesKeyframeAnimation:
 # 视频生成辅助函数
 # ============================================================
 
-def _upload_image_to_temp_url(image_tensor, unique_id: Optional[str] = None) -> str:
+def _image_batch_to_data_uris(image_tensor, limit: int) -> List[str]:
     """
-    将输入图像转换为 Data URI 以供 Agnes API 使用
+    将 IMAGE 批次转换为多个 Data URI（用于 reference 模式的多张参考图）
 
-    注意：Agnes Video V2.0 的图生视频需要图像的公共 URL。
-    由于 ComfyUI 通常在本地运行，无法提供公共 URL，
-    因此这里将图像转换为 Data URI 格式作为兜底方案。
-    如果 API 不支持 Data URI，用户需要自行提供公共 URL。
+    Args:
+        image_tensor: ComfyUI IMAGE 张量 [B, H, W, C]
+        limit: 最多转换的图片数量（官方上限 5 张）
+
+    Returns:
+        Data URI 字符串列表
+    """
+    total = int(image_tensor.shape[0]) if len(image_tensor.shape) == 4 else 1
+    count = min(total, limit)
+    if total > limit:
+        logger.warning("参考图片批次包含 %d 张，仅发送前 %d 张（官方上限）", total, limit)
+
+    uris = []
+    for i in range(count):
+        uris.append(agnes_client.image_tensor_to_data_uri(image_tensor[i:i + 1]))
+    return uris
+
+
+def _upload_image_to_temp_url(
+    image_tensor,
+    unique_id: Optional[str] = None,
+    text: str = "Encoding input image...",
+) -> str:
+    """
+    将输入图像转换为 Data URI 以供 Agnes 视频 API 使用
 
     Args:
         image_tensor: ComfyUI IMAGE 张量
         unique_id: 节点 ID
+        text: 进度文案
 
     Returns:
         图像的 Data URI 字符串
     """
-    _update_progress(unique_id, 0, 4, "Encoding input image...")
+    _update_progress(unique_id, 0, 3, text)
 
     try:
         data_uri = agnes_client.image_tensor_to_data_uri(image_tensor)
@@ -893,35 +674,33 @@ def _upload_image_to_temp_url(image_tensor, unique_id: Optional[str] = None) -> 
 
 def _generate_video(
     prompt: str,
-    image: Optional[str] = None,
-    keyframe_images: Optional[List[str]] = None,
-    ratio: str = "16:9",
-    resolution: str = "720p",
-    duration: str = "5s",
-    frame_rate: int = 24,
-    negative_prompt: str = "",
+    mode: str,
+    seconds: str = "5",
+    aspect_ratio: str = "16:9",
     seed: int = 0,
-    num_inference_steps: int = 0,
+    first_frame: Optional[str] = None,
+    last_frame: Optional[str] = None,
+    images: Optional[List[str]] = None,
+    audios: Optional[List[str]] = None,
     poll_interval: int = 5,
     max_wait_time: int = 600,
     unique_id: Optional[str] = None,
 ):
     """
-    视频生成的通用实现（文生视频、图生视频、关键帧动画共用）
+    视频生成的通用实现（text / keyframe / reference 共用）
 
     API Key 自动从 ComfyUI 设置面板读取，无需传入。
 
     Args:
         prompt: 视频内容的文本描述
-        image: 图生视频的输入图片（Data URI 或公共 URL），None 表示非图生视频
-        keyframe_images: 关键帧动画的输入图片列表（Data URI 或公共 URL）
-        ratio: 视频宽高比
-        resolution: 视频分辨率档位
-        duration: 视频时长预设
-        frame_rate: 视频帧率
-        negative_prompt: 反向提示词
+        mode: 生成模式（text / keyframe / reference）
+        seconds: 视频时长（"4"-"12"）
+        aspect_ratio: 视频画幅
         seed: 随机种子（0 表示不指定）
-        num_inference_steps: 推理步数（0 表示使用默认值）
+        first_frame: keyframe 模式首帧（URL / Data URI）
+        last_frame: keyframe 模式尾帧（URL / Data URI）
+        images: reference 模式参考图片列表
+        audios: reference 模式参考音频 URL 列表
         poll_interval: 轮询间隔（秒）
         max_wait_time: 最大等待时间（秒）
         unique_id: 节点 ID
@@ -929,75 +708,38 @@ def _generate_video(
     Returns:
         视频输出（VIDEO 类型或文件路径字符串）
     """
-    # 验证提示词
-    if not prompt or not prompt.strip():
-        raise RuntimeError("Prompt cannot be empty")
+    _update_progress(unique_id, 0, 3, f"Creating Agnes video task ({mode})...")
 
-    # 获取视频分辨率
-    width, height = agnes_client.get_video_resolution(ratio, resolution)
-
-    # 获取时长预设
-    duration_preset = agnes_client.VIDEO_DURATION_PRESETS.get(
-        duration, agnes_client.VIDEO_DURATION_PRESETS["5s"]
-    )
-    num_frames = duration_preset["num_frames"]
-    # 用户指定的 frame_rate 会覆盖预设的 frame_rate
-    effective_frame_rate = frame_rate if frame_rate > 0 else duration_preset["frame_rate"]
-
-    # 验证 num_frames
-    if not agnes_client.validate_num_frames(num_frames):
-        raise RuntimeError(
-            f"num_frames={num_frames} does not satisfy the 8n+1 rule or exceeds the limit of 441"
-        )
-
-    # 准备可选参数
-    opt_seed = seed if seed > 0 else None
-    opt_steps = num_inference_steps if num_inference_steps > 0 else None
-    opt_neg = negative_prompt.strip() if negative_prompt and negative_prompt.strip() else None
-
-    # 判断生成模式
-    if keyframe_images:
-        mode_label = "Keyframe animation"
-    elif image:
-        mode_label = "Image-to-video"
-    else:
-        mode_label = "Text-to-video"
-
-    pbar = _update_progress(unique_id, 0, 3, f"Creating Agnes video task ({mode_label})...")
-
-    # 创建视频任务
-    # 根据官方文档：
-    # - 图生视频：image 放在顶层（字符串）
-    # - 关键帧动画：image 放在 extra_body.image（数组），并设置 extra_body.mode = "keyframes"
-    # API Key 自动从 ComfyUI 设置面板读取
     try:
         task_result = agnes_client.create_video_task(
-            prompt=prompt.strip(),
-            image=image,
-            width=width,
-            height=height,
-            num_frames=num_frames,
-            frame_rate=effective_frame_rate,
-            num_inference_steps=opt_steps,
-            seed=opt_seed,
-            negative_prompt=opt_neg,
-            keyframe_images=keyframe_images,
+            prompt=prompt,
+            mode=mode,
+            seconds=seconds,
+            aspect_ratio=aspect_ratio,
+            seed=seed if seed > 0 else None,
+            first_frame=first_frame,
+            last_frame=last_frame,
+            images=images,
+            audios=audios,
             timeout=agnes_client.DEFAULT_TIMEOUT,
         )
     except Exception as e:
         raise RuntimeError(f"Failed to create Agnes video task: {e}")
 
-    # 提取 video_id
-    video_id = task_result.get("video_id") or task_result.get("task_id")
+    # 提取 video_id（2.5 返回 video_id；兼容 id / task_id）
+    video_id = (
+        task_result.get("video_id")
+        or task_result.get("id")
+        or task_result.get("task_id")
+    )
     if not video_id:
         raise RuntimeError(f"No video_id found in task creation response: {task_result}")
 
-    logger.info("视频任务已创建：video_id=%s", video_id)
+    logger.info("视频任务已创建：video_id=%s, mode=%s", video_id, mode)
 
     pbar = _update_progress(
         unique_id, 1, 3,
         f"Waiting for video generation to finish (video_id={video_id})...",
-        pbar,
     )
 
     # 创建进度回调
@@ -1030,15 +772,12 @@ def _generate_video(
     # 返回 VIDEO 类型（如果支持）或文件路径
     if _HAS_VIDEO_SUPPORT and InputImpl is not None:
         try:
-            # 使用 ComfyUI 的 VideoFromFile 包装视频
             video_output = InputImpl.VideoFromFile(video_buffer)
             return (video_output,)
         except Exception as e:
             logger.warning("VideoFromFile 包装失败，退化为文件路径模式：%s", e)
-            # 退化处理：保存到文件并返回路径
             return _save_video_to_file(video_buffer, video_id)
     else:
-        # 不支持 VIDEO 类型，保存到文件并返回路径
         return _save_video_to_file(video_buffer, video_id)
 
 
@@ -1076,6 +815,26 @@ def _save_video_to_file(video_buffer: BytesIO, task_id: str) -> Tuple[str]:
 # ============================================================
 # Qwen 图像编辑节点（基于 Qwen-Image-Edit-2511）
 # ============================================================
+
+
+def _expand_image_slots(slots, limit: int):
+    """
+    将多个 IMAGE 插槽（每个可含批次）展开为单张图像列表，最多 limit 张
+
+    用于把"逐级展开的多个输入"和"批次输入"统一成同一组参考图。
+    """
+    images = []
+    for slot in slots:
+        if slot is None:
+            continue
+        count = int(slot.shape[0]) if len(slot.shape) == 4 else 1
+        for i in range(count):
+            if len(images) >= limit:
+                break
+            images.append(slot[i:i + 1])
+        if len(images) >= limit:
+            break
+    return images
 
 
 class QwenImageEdit:
@@ -1174,8 +933,8 @@ class QwenImageEdit:
         if not prompt or not prompt.strip():
             raise RuntimeError("Prompt cannot be empty")
 
-        # 收集所有非空的输入图像
-        input_images = [img for img in [image1, image2, image3] if img is not None]
+        # 收集所有非空的输入图像（每个插槽可接批次，最多 3 张）
+        input_images = _expand_image_slots([image1, image2, image3], 3)
 
         if not input_images:
             raise RuntimeError("At least one input image (image1) is required")
@@ -1376,8 +1135,9 @@ class QwenImage21:
         if not prompt or not prompt.strip():
             raise RuntimeError("Prompt cannot be empty")
 
-        # 收集所有非空的输入图像（全部为空 = 文生图）
-        input_images = [img for img in [image1, image2, image3, image4] if img is not None]
+        # 收集所有非空的输入图像（每个插槽可接批次，全部为空 = 文生图）
+        max_refs = qwen_client.QWEN_21_MAX_REFERENCE_IMAGES
+        input_images = _expand_image_slots([image1, image2, image3, image4], max_refs)
 
         # 平台参考图数量上限校验（避免 API 端报错）
         max_refs = qwen_client.QWEN_21_MAX_REFERENCE_IMAGES
@@ -1468,6 +1228,334 @@ class QwenImage21:
         logging.info(
             "Qwen-Image-2.1 完成：输入图数量=%d，返回张量形状 %s，dtype=%s",
             len(input_images), tuple(image_tensor.shape), image_tensor.dtype,
+        )
+
+        _update_progress(unique_id, 100, 100, "Image generation complete", pbar)
+
+        return (image_tensor,)
+
+
+# ============================================================
+# ModelScope 文生图节点（Krea 2 Turbo / Z-Image Turbo）
+# ============================================================
+
+
+class _ModelScopeTextToImage:
+    """ModelScope 文生图节点基类（Krea 2 Turbo / Z-Image Turbo 共用）"""
+
+    MODEL = ""
+    MODEL_LABEL = ""
+    DESCRIPTION = ""
+    CATEGORY = "UIIIAIII Toolkit/Modelscope"
+    RETURN_TYPES = ("IMAGE",)
+    RETURN_NAMES = ("image",)
+    FUNCTION = "generate"
+    OUTPUT_NODE = True
+    RESOLUTION_OPTIONS = qwen_client.TURBO_RESOLUTION_OPTIONS
+
+    @staticmethod
+    def size_for(ratio: str, resolution: str) -> str:
+        return qwen_client.ratio_to_size_turbo(ratio, resolution)
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "prompt": (
+                    "STRING",
+                    {
+                        "multiline": True,
+                        "default": "",
+                        "tooltip": f"Text prompt for {cls.MODEL_LABEL}",
+                    },
+                ),
+                "seed": (
+                    "INT",
+                    {
+                        "default": 0,
+                        "min": 0,
+                        "max": 0xFFFFFFFFFFFFFFFF,
+                        "control_after_generate": True,
+                        "tooltip": "Random seed. 0 means the API picks a random seed. Used to break the ComfyUI execution cache",
+                    },
+                ),
+                "ratio": (
+                    qwen_client.IMAGE_RATIO_OPTIONS_21,
+                    {
+                        "default": "1:1",
+                        "tooltip": f"Output aspect ratio for {cls.MODEL_LABEL}",
+                    },
+                ),
+                "resolution": (
+                    cls.RESOLUTION_OPTIONS,
+                    {
+                        "default": "1K",
+                        "tooltip": "Output resolution: 1K (1024px max edge, faster) or 2K (2048px max edge, higher detail)",
+                    },
+                ),
+            },
+            "hidden": {
+                "unique_id": "UNIQUE_ID",
+                "prompt_id": "PROMPT_ID",
+                "control_after_generate": True,
+            },
+        }
+
+    def generate(
+        self,
+        prompt: str,
+        seed: int = 0,
+        ratio: str = "1:1",
+        resolution: str = "1K",
+        unique_id: Optional[str] = None,
+        prompt_id: Optional[str] = None,
+    ):
+        """执行文生图"""
+        if not prompt or not prompt.strip():
+            raise RuntimeError("Prompt cannot be empty")
+
+        size = self.size_for(ratio, resolution)
+        api_seed = None if seed == 0 else min(seed, 2147483647)
+
+        pbar = _update_progress(
+            unique_id, 0, 100, f"Submitting {self.MODEL_LABEL} task to ModelScope...",
+        )
+
+        def _poll_progress_callback(elapsed, max_poll_time, attempt):
+            progress = min(90, 10 + int(80 * elapsed / max_poll_time))
+            _update_progress(
+                unique_id, progress, 100,
+                f"Generating image... (waited {elapsed:.1f}s, poll attempt {attempt})",
+                pbar,
+            )
+
+        try:
+            image_url = qwen_client.edit_image(
+                prompt=prompt.strip(),
+                image_data_uris=(),
+                size=size,
+                seed=api_seed,
+                timeout=qwen_client.DEFAULT_TIMEOUT,
+                progress_callback=_poll_progress_callback,
+                model=self.MODEL,
+                max_poll_time=qwen_client.MAX_POLL_TIME,
+            )
+        except Exception as e:
+            raise RuntimeError(f"ModelScope {self.MODEL_LABEL} API call failed: {e}")
+
+        pbar = _update_progress(unique_id, 95, 100, "Downloading generated image...", pbar)
+
+        try:
+            image_buffer = qwen_client.download_url_to_bytesio(image_url)
+            image_tensor = qwen_client.bytesio_to_image_tensor(image_buffer)
+        except Exception as e:
+            raise RuntimeError(f"Image download/decode failed: {e}")
+
+        logging.info(
+            "%s 完成：model=%s, size=%s，返回张量形状 %s，dtype=%s",
+            self.MODEL_LABEL, self.MODEL, size,
+            tuple(image_tensor.shape), image_tensor.dtype,
+        )
+
+        _update_progress(unique_id, 100, 100, "Image generation complete", pbar)
+
+        return (image_tensor,)
+
+
+class Krea2Turbo(_ModelScopeTextToImage):
+    """Krea 2 Turbo 文生图节点"""
+
+    MODEL = qwen_client.KREA_2_TURBO_MODEL
+    MODEL_LABEL = "Krea 2 Turbo"
+    DESCRIPTION = "Generate images with the krea/Krea-2-Turbo model (ModelScope API-Inference)"
+
+
+class ZImageTurbo(_ModelScopeTextToImage):
+    """Z-Image Turbo 文生图节点"""
+
+    MODEL = qwen_client.Z_IMAGE_TURBO_MODEL
+    MODEL_LABEL = "Z-Image Turbo"
+    DESCRIPTION = "Generate images with the Tongyi-MAI/Z-Image-Turbo model (ModelScope API-Inference)"
+
+
+class MossImageSFT(_ModelScopeTextToImage):
+    """MOSS-Image-SFT 文生图节点"""
+
+    MODEL = qwen_client.MOSS_IMAGE_SFT_MODEL
+    MODEL_LABEL = "MOSS Image SFT"
+    DESCRIPTION = "Generate images with the openmoss/MOSS-Image-SFT model (ModelScope API-Inference), supporting natural-language, tag and JSON layout prompts"
+    RESOLUTION_OPTIONS = ["1K", "2K"]
+
+    @staticmethod
+    def size_for(ratio: str, resolution: str) -> str:
+        # MOSS-Image 要求宽高必须是 16 的倍数
+        return qwen_client.ratio_to_size_moss(ratio, resolution)
+
+
+# ============================================================
+# MiniMax H3 Image 节点（文生图 + 图像编辑，多参考图）
+# ============================================================
+
+
+class MiniMaxH3Image:
+    """
+    MiniMax H3 Image 节点
+
+    - 不连接参考图：文生图
+    - 连接参考图：图像编辑 / 多图参考（逐级展开，最多 16 张）
+    """
+
+    DESCRIPTION = "Generate or edit images with MiniMax-H3-Image (ModelScope API-Inference); connect reference images for editing (up to 16)"
+
+    CATEGORY = "UIIIAIII Toolkit/Modelscope"
+    RETURN_TYPES = ("IMAGE",)
+    RETURN_NAMES = ("image",)
+    FUNCTION = "generate"
+    OUTPUT_NODE = True
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        max_refs = qwen_client.MINIMAX_MAX_REFERENCE_IMAGES
+        optional = {}
+        for i in range(1, max_refs + 1):
+            optional[f"reference_images_{i}"] = (
+                "IMAGE",
+                {
+                    "display_name": f"Reference image {i}",
+                    "tooltip": (
+                        "Reference image for editing. Connect to reveal the next slot "
+                        f"(up to {max_refs}); leave all empty for text-to-image"
+                    ),
+                },
+            )
+
+        return {
+            "required": {
+                "prompt": (
+                    "STRING",
+                    {
+                        "multiline": True,
+                        "default": "",
+                        "tooltip": "Generation prompt, or the edit instruction when reference images are connected",
+                    },
+                ),
+                "seed": (
+                    "INT",
+                    {
+                        "default": 0,
+                        "min": 0,
+                        "max": 0xFFFFFFFFFFFFFFFF,
+                        "control_after_generate": True,
+                        "tooltip": "Random seed. 0 means the API picks a random seed. Used to break the ComfyUI execution cache",
+                    },
+                ),
+                "ratio": (
+                    ["auto"] + qwen_client.IMAGE_RATIO_OPTIONS_21,
+                    {
+                        "default": "auto",
+                        "tooltip": "Output aspect ratio. 'auto' follows the first reference image, and falls back to 1:1 for text-to-image",
+                    },
+                ),
+                "resolution": (
+                    qwen_client.MINIMAX_RESOLUTION_OPTIONS,
+                    {
+                        "default": "1K",
+                        "tooltip": "Output resolution: 1K (1024px max edge, fastest) or 2K (2048px max edge; ModelScope's platform limit)",
+                    },
+                ),
+            },
+            "optional": optional,
+            "hidden": {
+                "unique_id": "UNIQUE_ID",
+                "prompt_id": "PROMPT_ID",
+                "control_after_generate": True,
+            },
+        }
+
+    def generate(
+        self,
+        prompt: str,
+        seed: int = 0,
+        ratio: str = "auto",
+        resolution: str = "1K",
+        unique_id: Optional[str] = None,
+        prompt_id: Optional[str] = None,
+        **kwargs,
+    ):
+        """执行文生图或图像编辑 / 多图参考"""
+        if not prompt or not prompt.strip():
+            raise RuntimeError("Prompt cannot be empty")
+
+        max_refs = qwen_client.MINIMAX_MAX_REFERENCE_IMAGES
+        slots = [kwargs.get(f"reference_images_{i}") for i in range(1, max_refs + 1)]
+        input_images = _expand_image_slots(slots, max_refs)
+
+        logging.info(
+            "MiniMax H3 Image：%s",
+            f"图像编辑（{len(input_images)} 张参考图）" if input_images else "文生图",
+        )
+
+        pbar = _update_progress(
+            unique_id, 0, 100,
+            f"Encoding {len(input_images)} reference images..." if input_images
+            else "Preparing text-to-image request...",
+        )
+
+        data_uris = []
+        if input_images:
+            try:
+                for idx, img in enumerate(input_images):
+                    data_uris.append(qwen_client.image_tensor_to_data_uri(img))
+                    progress = int(5 * (idx + 1) / len(input_images))
+                    pbar = _update_progress(
+                        unique_id, progress, 100,
+                        f"Encoded {idx + 1}/{len(input_images)} reference images",
+                        pbar,
+                    )
+            except Exception as e:
+                raise RuntimeError(f"Reference image encoding failed: {e}")
+
+        if ratio == "auto":
+            ratio = qwen_client.detect_image_ratio(input_images[0]) if input_images else "1:1"
+        size = qwen_client.ratio_to_size_minimax(ratio, resolution)
+
+        api_seed = None if seed == 0 else min(seed, 2147483647)
+
+        pbar = _update_progress(unique_id, 5, 100, "Submitting task to ModelScope...", pbar)
+
+        def _poll_progress_callback(elapsed, max_poll_time, attempt):
+            progress = min(90, 10 + int(80 * elapsed / max_poll_time))
+            _update_progress(
+                unique_id, progress, 100,
+                f"Generating image... (waited {elapsed:.1f}s, poll attempt {attempt})",
+                pbar,
+            )
+
+        try:
+            image_url = qwen_client.edit_image(
+                prompt=prompt.strip(),
+                image_data_uris=data_uris if data_uris else (),
+                size=size,
+                seed=api_seed,
+                timeout=qwen_client.DEFAULT_TIMEOUT,
+                progress_callback=_poll_progress_callback,
+                model=qwen_client.MINIMAX_H3_IMAGE_MODEL,
+                max_poll_time=qwen_client.MAX_POLL_TIME_21,
+            )
+        except Exception as e:
+            raise RuntimeError(f"ModelScope MiniMax-H3-Image API call failed: {e}")
+
+        pbar = _update_progress(unique_id, 95, 100, "Downloading generated image...", pbar)
+
+        try:
+            image_buffer = qwen_client.download_url_to_bytesio(image_url)
+            image_tensor = qwen_client.bytesio_to_image_tensor(image_buffer)
+        except Exception as e:
+            raise RuntimeError(f"Image download/decode failed: {e}")
+
+        logging.info(
+            "MiniMax H3 Image 完成：输入图数量=%d, size=%s，返回张量形状 %s，dtype=%s",
+            len(input_images), size, tuple(image_tensor.shape), image_tensor.dtype,
         )
 
         _update_progress(unique_id, 100, 100, "Image generation complete", pbar)
@@ -1785,13 +1873,14 @@ class RandomNoiseSeed:
 
 # 节点类映射
 NODE_CLASS_MAPPINGS = {
-    "AgnesTextToImage": AgnesTextToImage,
-    "AgnesImageToImage": AgnesImageToImage,
-    "AgnesTextToVideo": AgnesTextToVideo,
-    "AgnesImageToVideo": AgnesImageToVideo,
-    "AgnesKeyframeAnimation": AgnesKeyframeAnimation,
+    "AgnesImage": AgnesImage,
+    "AgnesVideo": AgnesVideo,
     "QwenImageEdit": QwenImageEdit,
     "QwenImage21": QwenImage21,
+    "Krea2Turbo": Krea2Turbo,
+    "ZImageTurbo": ZImageTurbo,
+    "MossImageSFT": MossImageSFT,
+    "MiniMaxH3Image": MiniMaxH3Image,
     "TextPreview": TextPreview,
     "BackgroundFill": BackgroundFill,
     "RandomNoiseSeed": RandomNoiseSeed,
@@ -1799,13 +1888,14 @@ NODE_CLASS_MAPPINGS = {
 
 # 节点显示名称映射
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "AgnesTextToImage": "Agnes Text to Image (agnes-image-2.1-flash)",
-    "AgnesImageToImage": "Agnes Image to Image (agnes-image-2.1-flash)",
-    "AgnesTextToVideo": "Agnes Text to Video (agnes-video-v2.0)",
-    "AgnesImageToVideo": "Agnes Image to Video (agnes-video-v2.0)",
-    "AgnesKeyframeAnimation": "Agnes Keyframe Animation (agnes-video-v2.0)",
+    "AgnesImage": "Agnes Image (2.5 / 2.1 Flash)",
+    "AgnesVideo": "Agnes Video (2.5 Flash)",
     "QwenImageEdit": "Qwen Image Edit (qwen-image-edit-2511)",
     "QwenImage21": "Qwen Image 2.1 (qwen-image-2.1)",
+    "Krea2Turbo": "Krea 2 Turbo (krea/Krea-2-Turbo)",
+    "ZImageTurbo": "Z-Image Turbo (Tongyi-MAI/Z-Image-Turbo)",
+    "MossImageSFT": "MOSS Image SFT (openmoss/MOSS-Image-SFT)",
+    "MiniMaxH3Image": "MiniMax H3 Image (MiniMax/MiniMax-H3-Image)",
     "TextPreview": "Text Input/Preview",
     "BackgroundFill": "Background Fill",
     "RandomNoiseSeed": "Random Noise Seed",

@@ -1,12 +1,13 @@
 """
 Agnes AI API 客户端封装模块
 
-封装 Agnes Image 2.1 Flash 和 Agnes Video V2.0 两个 API 的调用逻辑：
+封装 Agnes 图像模型（2.5 / 2.1 Flash）和 Agnes Video V2.0 的调用逻辑：
 - 图像 API：文生图、图生图（同步返回结果）
 - 视频 API：文生视频、图生视频、关键帧动画（异步任务，需轮询）
 
 文档参考：
-- https://agnes-ai.cn/zh-Hans/docs/agnes-image-21-flash
+- https://agnes-ai.com/zh-Hans/docs/agnes-image-25-flash
+- https://agnes-ai.com/zh-Hans/docs/agnes-image-21-flash
 - https://agnes-ai.cn/zh-Hans/docs/agnes-video-v20
 """
 
@@ -39,8 +40,10 @@ AGNES_VIDEO_CREATE_ENDPOINT = "/v1/videos"
 AGNES_VIDEO_RESULT_ENDPOINT = "/agnesapi"
 
 # 模型名称
-AGNES_IMAGE_MODEL = "agnes-image-2.1-flash"
-AGNES_VIDEO_MODEL = "agnes-video-v2.0"
+# 图像模型：2.5 Flash 为最新一代（默认），2.1 Flash 保留用于旧工作流与对比
+AGNES_IMAGE_MODELS = ["agnes-image-2.5-flash", "agnes-image-2.1-flash"]
+AGNES_IMAGE_MODEL = AGNES_IMAGE_MODELS[0]
+AGNES_VIDEO_MODEL = "agnes-video-2.5-flash"
 
 # 默认请求超时时间（秒）
 # 文生图通常 30~90 秒，图生图需要上传图像并处理，耗时更长
@@ -61,6 +64,9 @@ IMAGE_RATIO_OPTIONS = ["1:1", "3:4", "4:3", "16:9", "9:16", "2:3", "3:2", "21:9"
 
 # 图生图可用的比例选项（包含 auto 自动检测输入图像比例）
 IMAGE_RATIO_OPTIONS_WITH_AUTO = ["auto"] + IMAGE_RATIO_OPTIONS
+
+# 参考图片数量上限（多图合成）
+IMAGE_MAX_REFERENCE_IMAGES = 5
 
 # 各比例的浮点数值（宽/高），用于匹配最接近的比例
 _RATIO_VALUES = {
@@ -113,25 +119,15 @@ def detect_image_ratio(image_tensor) -> str:
 
     return closest_ratio
 
-# 支持的视频分辨率档位
-VIDEO_RESOLUTION_OPTIONS = ["480p", "720p", "1080p"]
+# 支持的视频时长（字符串秒数，官方支持 "4" 到 "12"）
+VIDEO_SECONDS = [str(i) for i in range(4, 13)]
 
-# 视频宽高比与推荐分辨率的映射
-VIDEO_RATIO_PRESETS = {
-    "16:9": {"480p": (832, 448), "720p": (1280, 704), "1080p": (1920, 1080)},
-    "9:16": {"480p": (448, 832), "720p": (704, 1280), "1080p": (1080, 1920)},
-    "1:1": {"480p": (640, 640), "720p": (960, 960), "1080p": (1280, 1280)},
-    "4:3": {"480p": (768, 576), "720p": (1152, 864), "1080p": (1600, 1200)},
-    "3:4": {"480p": (576, 768), "720p": (864, 1152), "1080p": (1200, 1600)},
-}
+# 支持的视频画幅（2.5 Flash 固定 720P，通过 aspect_ratio 控制输出尺寸）
+VIDEO_ASPECT_RATIOS = ["21:9", "16:9", "4:3", "1:1", "3:4", "9:16"]
 
-# 视频时长预设（基于 num_frames 必须满足 8n+1 规则）
-VIDEO_DURATION_PRESETS = {
-    "3s": {"num_frames": 81, "frame_rate": 24},
-    "5s": {"num_frames": 121, "frame_rate": 24},
-    "10s": {"num_frames": 241, "frame_rate": 24},
-    "18s": {"num_frames": 441, "frame_rate": 24},
-}
+# 参考素材数量上限（2.5 Flash）
+VIDEO_MAX_REFERENCE_IMAGES = 5
+VIDEO_MAX_REFERENCE_AUDIOS = 3
 
 
 # ============================================================
@@ -168,6 +164,7 @@ def get_api_key(api_key: Optional[str] = None) -> str:
 def generate_image(
     api_key: Optional[str] = None,
     prompt: str = "",
+    model: Optional[str] = None,
     size: str = "2K",
     ratio: str = "1:1",
     image_data_uris: Optional[List[str]] = None,
@@ -176,11 +173,13 @@ def generate_image(
     timeout: int = DEFAULT_TIMEOUT,
 ) -> Tuple[Optional[str], Optional[str]]:
     """
-    调用 Agnes Image 2.1 Flash 生成图像（支持文生图和图生图）
+    调用 Agnes Image 模型生成图像（支持文生图和图生图）
 
     Args:
         api_key: Agnes API Key，留空则自动从配置读取
         prompt: 图像生成或编辑的文本指令
+        model: 模型名称（agnes-image-2.5-flash / agnes-image-2.1-flash），
+               留空则使用默认模型（2.5 Flash）
         size: 输出尺寸档位（1K/2K/3K/4K）
         ratio: 宽高比（1:1/3:4/4:3/16:9/9:16/2:3/3:2/21:9）
         image_data_uris: 图生图输入图像列表（Data URI 或公共 URL）
@@ -196,6 +195,9 @@ def generate_image(
     """
     # 自动获取 API Key（优先级：参数 > 配置文件 > 环境变量）
     api_key = get_api_key(api_key)
+
+    # 未指定模型时使用默认模型
+    model = model or AGNES_IMAGE_MODEL
 
     # 构建请求 URL
     url = AGNES_API_BASE_URL + AGNES_IMAGE_ENDPOINT
@@ -213,7 +215,7 @@ def generate_image(
     # - response_format 必须放在 extra_body 中（不是顶层！）
     # - 图生图不需要传递 tags: ["img2img"]
     payload: Dict[str, Any] = {
-        "model": AGNES_IMAGE_MODEL,
+        "model": model,
         "prompt": prompt,
         "size": size,
         "ratio": ratio,
@@ -242,7 +244,8 @@ def generate_image(
     if image_data_uris:
         total_img_size = sum(len(uri) for uri in image_data_uris)
         logger.info(
-            "调用 Agnes 图像 API：mode=%s, size=%s, ratio=%s, 输入图数量=%d, 图像数据总大小=%.2f KB",
+            "调用 Agnes 图像 API：model=%s, mode=%s, size=%s, ratio=%s, 输入图数量=%d, 图像数据总大小=%.2f KB",
+            model,
             "图生图" if image_data_uris else "文生图",
             size,
             ratio,
@@ -251,7 +254,8 @@ def generate_image(
         )
     else:
         logger.info(
-            "调用 Agnes 图像 API：mode=文生图, size=%s, ratio=%s",
+            "调用 Agnes 图像 API：model=%s, mode=文生图, size=%s, ratio=%s",
+            model,
             size,
             ratio,
         )
@@ -293,42 +297,40 @@ def generate_image(
 
 
 # ============================================================
-# 视频 API 调用
+# 视频 API 调用（Agnes Video 2.5 Flash）
 # ============================================================
 
 def create_video_task(
     api_key: Optional[str] = None,
     prompt: str = "",
-    image: Optional[str] = None,
-    width: int = 1152,
-    height: int = 768,
-    num_frames: int = 121,
-    frame_rate: int = 24,
-    num_inference_steps: Optional[int] = None,
+    mode: str = "text",
+    seconds: str = "5",
+    aspect_ratio: str = "16:9",
     seed: Optional[int] = None,
-    negative_prompt: Optional[str] = None,
-    keyframe_images: Optional[List[str]] = None,
+    first_frame: Optional[str] = None,
+    last_frame: Optional[str] = None,
+    images: Optional[List[str]] = None,
+    audios: Optional[List[str]] = None,
     timeout: int = DEFAULT_TIMEOUT,
 ) -> Dict[str, Any]:
     """
-    创建 Agnes Video V2.0 视频生成任务
+    创建 Agnes Video 2.5 Flash 视频生成任务
 
     Args:
         api_key: Agnes API Key
         prompt: 视频内容的文本描述
-        image: 图生视频的输入图片 URL
-        width: 视频宽度
-        height: 视频高度
-        num_frames: 视频帧数（必须 ≤ 441 且满足 8n+1 规则）
-        frame_rate: 视频帧率（1-60）
-        num_inference_steps: 推理步数
-        seed: 随机种子
-        negative_prompt: 反向提示词
-        keyframe_images: 关键帧动画的输入图片 URL 数组
+        mode: 生成模式（text / keyframe / reference）
+        seconds: 视频时长（字符串 "4"-"12"）
+        aspect_ratio: 视频画幅（21:9/16:9/4:3/1:1/3:4/9:16）
+        seed: 随机种子（None 表示不指定）
+        first_frame: keyframe 模式首帧图片 URL / Data URI
+        last_frame: keyframe 模式尾帧图片 URL / Data URI
+        images: reference 模式参考图片列表（最多 5 张）
+        audios: reference 模式参考音频列表（最多 3 段，公共可访问 URL）
         timeout: 请求超时时间（秒）
 
     Returns:
-        任务创建响应字典，包含 task_id 和 video_id
+        任务创建响应字典，包含 video_id / id / task_id
 
     Raises:
         RuntimeError: API 调用失败
@@ -347,55 +349,38 @@ def create_video_task(
         "Connection": "close",
     }
 
-    # 构建请求体
-    # 根据官方文档示例：
-    # - 文生视频：包含 width/height/num_frames/frame_rate
-    # - 图生视频：仅 image/num_frames/frame_rate（不传 width/height，尺寸从图像推导）
-    # - 关键帧动画：仅 extra_body/num_frames/frame_rate（不传 width/height）
+    # 构建请求体（2.5 Flash：size 固定 720P）
     payload: Dict[str, Any] = {
         "model": AGNES_VIDEO_MODEL,
         "prompt": prompt,
-        "num_frames": num_frames,
-        "frame_rate": frame_rate,
+        "mode": mode,
+        "seconds": str(seconds),
+        "size": "720P",
+        "aspect_ratio": aspect_ratio,
     }
 
-    # 文生视频模式才传递 width/height（图生视频和关键帧动画从图像推导尺寸）
-    if not image and not keyframe_images:
-        payload["width"] = width
-        payload["height"] = height
+    if seed is not None and seed > 0:
+        payload["seed"] = int(seed)
 
-    # 图生视频：添加单张图片（顶层 image 字段，字符串类型）
-    if image:
-        payload["image"] = image
+    # 关键帧模式
+    if first_frame:
+        payload["first_frame"] = first_frame
+    if last_frame:
+        payload["last_frame"] = last_frame
 
-    # 可选参数
-    if num_inference_steps is not None:
-        payload["num_inference_steps"] = num_inference_steps
-
-    if seed is not None:
-        payload["seed"] = seed
-
-    if negative_prompt:
-        payload["negative_prompt"] = negative_prompt
-
-    # 关键帧动画模式：extra_body.image（数组）+ extra_body.mode = "keyframes"
-    if keyframe_images:
-        payload["extra_body"] = {
-            "image": keyframe_images,
-            "mode": "keyframes",
-        }
+    # 参考模式
+    if images:
+        payload["images"] = list(images)
+    if audios:
+        payload["audios"] = list(audios)
 
     logger.info(
-        "创建 Agnes 视频任务：mode=%s, size=%dx%d, frames=%d, fps=%d",
-        "关键帧" if keyframe_images else ("图生视频" if image else "文生视频"),
-        width,
-        height,
-        num_frames,
-        frame_rate,
+        "创建 Agnes 视频任务：mode=%s, seconds=%s, aspect_ratio=%s, images=%d, audios=%d",
+        mode, seconds, aspect_ratio,
+        len(images or []), len(audios or []),
     )
 
     # 请求重试机制（针对 429 限流和网络异常）
-    # Agnes 视频 API 限流：1 次/分钟，遇到 429 时等待 65 秒后重试
     max_retries = 3
     retry_interval = 65  # 略大于 60 秒的限流窗口
     last_error: Optional[Exception] = None
@@ -430,8 +415,8 @@ def create_video_task(
                     )
                     break
 
-            # 其他 HTTP 错误：直接抛出，不重试
-            response.raise_for_status()
+            # 其他状态（含 5xx / 4xx 校验错误）：跳出循环，
+            # 由循环后的统一处理提取响应体中的错误详情
             break
 
         except requests.exceptions.Timeout:
@@ -463,7 +448,7 @@ def create_video_task(
                 error_msg += f", response body: {response.text[:500]}"
         error_msg += (
             f"\n\nRetried {max_retries} times (waiting {retry_interval}s each) but still rate limited."
-            f"\nTip: the Agnes video API is limited to 1 request/minute, please wait at least 1 minute before retrying."
+            f"\nTip: the Agnes video API is rate limited, please wait at least 1 minute before retrying."
         )
         raise RuntimeError(error_msg)
 
@@ -495,7 +480,7 @@ def get_video_result(
     timeout: int = DEFAULT_TIMEOUT,
 ) -> Dict[str, Any]:
     """
-    查询 Agnes Video V2.0 视频任务结果（推荐方式：使用 video_id）
+    查询 Agnes Video 2.5 Flash 视频任务结果
 
     Args:
         api_key: Agnes API Key
@@ -503,14 +488,14 @@ def get_video_result(
         timeout: 请求超时时间（秒）
 
     Returns:
-        任务结果字典，包含 status、progress、metadata.url 等字段
+        任务结果字典，包含 status、progress、url 等字段
 
     Raises:
         RuntimeError: API 调用失败
     """
-    # 构建请求 URL（推荐方式：使用 video_id）
+    # 构建请求 URL（2.5 推荐方式：video_id + model_name，适用于全部模式）
     url = AGNES_API_BASE_URL + AGNES_VIDEO_RESULT_ENDPOINT
-    params = {"video_id": video_id}
+    params = {"video_id": video_id, "model_name": AGNES_VIDEO_MODEL}
 
     # 构建请求头
     headers = {
@@ -522,6 +507,7 @@ def get_video_result(
     max_retries = 3
     retry_interval = 2
     last_error: Optional[Exception] = None
+    response = None
 
     for attempt in range(1, max_retries + 1):
         try:
@@ -568,7 +554,7 @@ def poll_video_result(
     progress_callback=None,
 ) -> str:
     """
-    轮询 Agnes Video V2.0 视频任务直到完成
+    轮询 Agnes Video 2.5 Flash 视频任务直到完成
 
     Args:
         api_key: Agnes API Key
@@ -603,7 +589,6 @@ def poll_video_result(
         try:
             result = get_video_result(api_key, video_id, timeout=timeout)
         except RuntimeError as e:
-            # 连接异常：记录日志后继续等待下次轮询
             logger.warning(
                 "视频结果查询失败（已等待 %.1f 秒）：%s，%d 秒后重试...",
                 elapsed, str(e)[:200], poll_interval,
@@ -624,9 +609,7 @@ def poll_video_result(
 
         # 检查任务状态
         if status == "completed":
-            # 任务完成，提取视频 URL
-            # 注意：API 返回的 URL 在顶层 url 字段（不是 metadata.url）
-            # 兼容两种可能的路径
+            # 任务完成，提取视频 URL（顶层 url 字段）
             video_url = result.get("url")
             if not video_url:
                 metadata = result.get("metadata", {})
@@ -637,23 +620,18 @@ def poll_video_result(
             return video_url
 
         elif status == "failed":
-            # 任务失败
             error_info = result.get("error", {})
             error_msg = error_info.get("message") if isinstance(error_info, dict) else str(error_info)
             raise RuntimeError(f"Video task failed: {error_msg or result}")
 
-        elif status in ("queued", "in_progress"):
-            # 继续等待
+        elif status in ("queued", "in_progress", "pending", "processing"):
             logger.debug(
-                "视频任务进行中：status=%s, progress=%d%%, 已等待%.1f秒",
-                status,
-                progress,
-                elapsed,
+                "视频任务进行中：status=%s, progress=%s%%, 已等待%.1f秒",
+                status, progress, elapsed,
             )
             time.sleep(poll_interval)
 
         else:
-            # 未知状态，继续等待
             logger.warning("未知的视频任务状态：%s", status)
             time.sleep(poll_interval)
 
@@ -785,6 +763,96 @@ def image_tensor_to_data_uri(image_tensor) -> str:
     return data_uri
 
 
+def audio_batch_to_data_uris(
+    audio,
+    limit: int = 3,
+    max_seconds: float = 30.0,
+) -> List[str]:
+    """
+    将 ComfyUI AUDIO 输入转换为 WAV Data URI 列表（参考音频上传）
+
+    ComfyUI AUDIO 格式：{"waveform": [B, C, T] float32, "sample_rate": int}
+    批次中的每一段音频会转换为一个 Data URI（最多 limit 段）。
+    过长的音频会截断到 max_seconds，并下混为单声道 / 16kHz，
+    避免请求体过大。
+
+    Args:
+        audio: ComfyUI AUDIO 字典
+        limit: 最多转换的音频段数（官方上限 3 段）
+        max_seconds: 单段音频最长保留秒数
+
+    Returns:
+        Data URI 字符串列表，格式为 "data:audio/wav;base64,..."
+    """
+    if not isinstance(audio, dict):
+        raise RuntimeError("Invalid AUDIO input")
+
+    waveform = audio.get("waveform")
+    sample_rate = int(audio.get("sample_rate") or 0)
+    if waveform is None or sample_rate <= 0:
+        raise RuntimeError("AUDIO input is missing waveform or sample_rate")
+
+    import numpy as np
+    import wave
+
+    if waveform.dim() == 2:
+        waveform = waveform.unsqueeze(0)
+    elif waveform.dim() != 3:
+        raise RuntimeError(f"Unsupported audio waveform shape: {tuple(waveform.shape)}")
+
+    total = int(waveform.shape[0])
+    count = min(total, limit)
+    if total > limit:
+        logger.warning("参考音频批次包含 %d 段，仅发送前 %d 段（官方上限）", total, limit)
+
+    max_samples = max(1, int(sample_rate * max_seconds))
+    uris: List[str] = []
+    target_rate = 16000
+    for i in range(count):
+        data = waveform[i].detach().cpu().float().numpy()
+        if data.ndim == 1:
+            data = data[None, :]
+
+        # 参考音频只需传达节奏/音色：下混为单声道并降到 16kHz，
+        # 显著减小内联 Data URI 的体积
+        if data.shape[0] > 1:
+            data = data.mean(axis=0, keepdims=True)
+        if sample_rate > target_rate and data.shape[-1] > 1:
+            old_len = data.shape[-1]
+            new_len = max(1, int(round(old_len * target_rate / float(sample_rate))))
+            x_old = np.arange(old_len, dtype=np.float64)
+            x_new = np.linspace(0, old_len - 1, new_len, dtype=np.float64)
+            data = np.stack([np.interp(x_new, x_old, ch) for ch in data])
+            sample_rate = target_rate
+            max_samples = max(1, int(sample_rate * max_seconds))
+
+        if data.shape[-1] > max_samples:
+            data = data[:, :max_samples]
+            logger.warning("参考音频超过 %.0f 秒，已截断", max_seconds)
+
+        # [C, T] → [T, C]，转换为 16-bit PCM
+        pcm = np.clip(data.T, -1.0, 1.0)
+        pcm = (pcm * 32767.0).astype(np.int16)
+
+        buffer = BytesIO()
+        with wave.open(buffer, "wb") as wav:
+            wav.setnchannels(int(pcm.shape[1]))
+            wav.setsampwidth(2)
+            wav.setframerate(sample_rate)
+            wav.writeframes(pcm.tobytes())
+
+        raw = buffer.getvalue()
+        b64 = base64.b64encode(raw).decode("utf-8")
+        uris.append(f"data:audio/wav;base64,{b64}")
+        logger.info(
+            "参考音频编码完成：%.2f 秒，WAV 大小 %.2f KB",
+            data.shape[-1] / float(sample_rate),
+            len(raw) / 1024,
+        )
+
+    return uris
+
+
 def bytesio_to_image_tensor(buffer: BytesIO):
     """
     将 BytesIO（包含图像数据）转换为 ComfyUI IMAGE 张量
@@ -816,32 +884,3 @@ def bytesio_to_image_tensor(buffer: BytesIO):
     # 添加批次维度 [B, H, W, C]，并确保内存连续
     tensor = torch.from_numpy(img_np).unsqueeze(0).contiguous()
     return tensor
-
-
-def get_video_resolution(ratio: str, resolution: str) -> Tuple[int, int]:
-    """
-    根据宽高比和分辨率档位获取视频的推荐宽高
-
-    Args:
-        ratio: 宽高比（16:9/9:16/1:1/4:3/3:4）
-        resolution: 分辨率档位（480p/720p/1080p）
-
-    Returns:
-        (width, height) 元组
-    """
-    presets = VIDEO_RATIO_PRESETS.get(ratio, VIDEO_RATIO_PRESETS["16:9"])
-    return presets.get(resolution, presets["720p"])
-
-
-def validate_num_frames(num_frames: int) -> bool:
-    """
-    验证 num_frames 是否满足 8n+1 规则
-
-    Args:
-        num_frames: 帧数
-
-    Returns:
-        是否有效
-    """
-    # num_frames 必须满足 8n+1 规则且 ≤ 441
-    return (num_frames - 1) % 8 == 0 and 1 <= num_frames <= 441

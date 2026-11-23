@@ -434,6 +434,131 @@ export class TUtils {
     } catch (e) { /* 忽略 */ }
   }
 
+  /**
+   * 逐级展开的参考输入定义（接入第 N 个后显示第 N+1 个）
+   *
+   * 后端在 INPUT_TYPES 中声明了全部插槽（图片 5 个、音频 3 个），
+   * 前端初始只保留每组第一个，连接后再补下一个，断开时回收多余的未连接插槽。
+   */
+  static getGrowableInputGroups(classType) {
+    const groups = [];
+    const imageNames = {
+      AgnesImage: [
+        "reference_images_1", "reference_images_2", "reference_images_3",
+        "reference_images_4", "reference_images_5",
+      ],
+      AgnesVideo: [
+        "reference_images_1", "reference_images_2", "reference_images_3",
+        "reference_images_4", "reference_images_5",
+      ],
+      QwenImageEdit: ["image1", "image2", "image3"],
+      QwenImage21: ["image1", "image2", "image3", "image4"],
+      MiniMaxH3Image: Array.from({ length: 16 }, (_, i) => `reference_images_${i + 1}`),
+    };
+    if (imageNames[classType]) {
+      groups.push({ type: "IMAGE", names: imageNames[classType] });
+    }
+    if (classType === "AgnesVideo") {
+      groups.push({
+        type: "AUDIO",
+        names: ["reference_audio_1", "reference_audio_2", "reference_audio_3"],
+      });
+    }
+    return groups;
+  }
+
+  static setupGrowableInputs(node) {
+    try {
+      if (!node) return;
+      if (node._uiiaiii_grow_setup) {
+        this.syncGrowableInputs(node);
+        return;
+      }
+      node._uiiaiii_grow_setup = true;
+
+      const inputType = (typeof LiteGraph !== "undefined" && LiteGraph.INPUT !== undefined)
+        ? LiteGraph.INPUT
+        : 1;
+      const prev = node.onConnectionsChange;
+      node.onConnectionsChange = function (type, index, connected, linkInfo, slot) {
+        let res;
+        if (typeof prev === "function") {
+          res = prev.apply(this, arguments);
+        }
+        try {
+          const name = slot?.name || this.inputs?.[index]?.name;
+          const groups = TUtils.getGrowableInputGroups(
+            this.constructor?.comfyClass || this.constructor?.type
+          );
+          if (type === inputType && groups.some((g) => g.names.includes(name))) {
+            setTimeout(() => TUtils.syncGrowableInputs(this), 0);
+          }
+        } catch (e) { /* 忽略 */ }
+        return res;
+      };
+
+      // 等节点完成初始插槽构建后再裁剪
+      setTimeout(() => this.syncGrowableInputs(node), 0);
+    } catch (e) { /* 忽略 */ }
+  }
+
+  static syncGrowableInputs(node) {
+    try {
+      if (!node || !Array.isArray(node.inputs)) return;
+      const classType = node.constructor?.comfyClass || node.constructor?.type;
+      const groups = this.getGrowableInputGroups(classType);
+      if (!groups.length) return;
+      let changed = false;
+
+      for (const group of groups) {
+        const isConnected = (name) => {
+          const idx = node.inputs.findIndex((inp) => inp && inp.name === name);
+          if (idx === -1) return false;
+          if (typeof node.isInputConnected === "function") {
+            try { return node.isInputConnected(idx); } catch (e) { /* 忽略 */ }
+          }
+          const inp = node.inputs[idx];
+          return inp.link != null || (Array.isArray(inp.links) && inp.links.length > 0);
+        };
+
+        let count = 0;
+        for (const name of group.names) {
+          if (isConnected(name)) count++;
+        }
+        const desired = Math.min(group.names.length, Math.max(1, count + 1));
+
+        // 回收超出 desired 的未连接插槽
+        for (let i = group.names.length - 1; i >= desired; i--) {
+          const name = group.names[i];
+          if (isConnected(name)) continue;
+          const idx = node.inputs.findIndex((inp) => inp && inp.name === name);
+          if (idx !== -1) {
+            node.removeInput(idx);
+            changed = true;
+          }
+        }
+
+        // 补足 desired 以内的插槽
+        for (let i = 0; i < desired; i++) {
+          const name = group.names[i];
+          if (!node.inputs.some((inp) => inp && inp.name === name)) {
+            node.addInput(name, group.type);
+            changed = true;
+          }
+        }
+      }
+
+      if (changed) {
+        if (typeof node.computeSize === "function" && typeof node.setSize === "function") {
+          const size = node.computeSize();
+          node.setSize([node.size?.[0] ?? size[0], size[1]]);
+        }
+        node.graph?.setDirtyCanvas?.(true, true);
+        node.setDirtyCanvas?.(true, true);
+      }
+    } catch (e) { /* 忽略 */ }
+  }
+
   static applyNodeTranslation(node) {
     try {
       if (!node || !node.constructor) return;
@@ -449,6 +574,11 @@ export class TUtils {
       if (this.isSubgraphNode(node)) {
         this.syncSubgraphHostLabels(node);
         return;
+      }
+
+      // Agnes / Qwen 图像节点：参考图插槽逐级展开（AgnesVideo 还含参考音频）
+      if (["AgnesVideo", "AgnesImage", "QwenImageEdit", "QwenImage21", "MiniMaxH3Image"].includes(class_type)) {
+        this.setupGrowableInputs(node);
       }
 
       if (!isTranslationEnabled()) {

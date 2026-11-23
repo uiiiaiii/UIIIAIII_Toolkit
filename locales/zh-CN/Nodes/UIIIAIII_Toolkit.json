@@ -1,137 +1,69 @@
 {
-    "AgnesTextToImage": {
-        "title": "Agnes 文生图 (agnes-image-2.1-flash)",
-        "description": "使用 Agnes Image 2.1 Flash 模型根据文本提示词生成图像",
+    "AgnesImage": {
+        "title": "Agnes 图像（2.5 / 2.1 Flash）",
+        "description": "使用文本提示词生成图像，或基于一张/多张参考图像编辑与合成；通过 model 下拉切换 Agnes Image 2.5 / 2.1 Flash 模型",
+        "inputs": {
+            "reference_images_1": "参考图片 1",
+            "reference_images_2": "参考图片 2",
+            "reference_images_3": "参考图片 3",
+            "reference_images_4": "参考图片 4",
+            "reference_images_5": "参考图片 5",
+            "Reference image for editing / multi-image composition. Connect to reveal the next slot (up to 5)": "用于编辑/多图合成的参考图片。连接后会显示下一个插槽（最多 5 张）",
+            "Reference image for editing / multi-image composition. Up to 5 images are sent": "用于编辑/多图合成的参考图片。最多发送 5 张"
+        },
         "outputs": {
             "image": "图像"
         },
         "widgets": {
-            "Text prompt for image generation": "用于图像生成的文本提示词",
             "prompt": "提示词",
+            "Text prompt for generation, or the edit instruction when an image is connected": "生成用的文本提示词；连接图像后则为编辑指令",
             "seed": "随机种子",
             "Random seed used to break the ComfyUI execution cache (the Agnes Image API does not support seed, so this value is not sent to the API)": "随机种子，用于打破 ComfyUI 执行缓存（Agnes Image API 本身不支持 seed，此参数不会发送给 API）",
             "size": "尺寸",
             "Output size preset": "输出尺寸档位",
             "ratio": "宽高比",
-            "Aspect ratio": "宽高比"
+            "Aspect ratio. 'auto' keeps the reference image ratio when an image is connected, and falls back to 1:1 for text-to-image": "宽高比。连接图像时 'auto' 沿用参考图比例；文生图时回退为 1:1",
+            "model": "模型",
+            "Agnes image model: 2.5 Flash is the newest generation; 2.1 Flash is the previous generation": "Agnes 图像模型：2.5 Flash 为最新一代；2.1 Flash 为上一代"
         }
     },
-    "AgnesImageToImage": {
-        "title": "Agnes 图生图 (agnes-image-2.1-flash)",
-        "description": "使用 Agnes Image 2.1 Flash 模型根据文本指令编辑输入图像",
+    "AgnesVideo": {
+        "title": "Agnes 视频（2.5 Flash）",
+        "description": "使用文本、首尾帧或参考图片/音频生成视频；连接 first_frame/last_frame 使用首尾帧控制，连接参考图片或参考音频使用参考生成",
         "inputs": {
-            "Input image (converted to a Base64 Data URI for the API)": "输入图像（转换为 Base64 数据 URI 以用于 API）",
-            "image": "图像"
-        },
-        "outputs": {
-            "image": "图像"
-        },
-        "widgets": {
-            "Text instruction for image editing": "图像编辑的文本指令",
-            "Aspect ratio. 'auto' detects the input image ratio and keeps it consistent": "宽高比。'auto' 自动检测输入图像的宽高比并保持一致",
-            "prompt": "提示词",
-            "seed": "随机种子",
-            "Random seed used to break the ComfyUI execution cache (the Agnes Image API does not support seed, so this value is not sent to the API)": "随机种子，用于打破 ComfyUI 执行缓存（Agnes Image API 本身不支持 seed，此参数不会发送给 API）",
-            "size": "尺寸",
-            "Output size preset": "输出尺寸档位",
-            "ratio": "宽高比"
-        }
-    },
-    "AgnesTextToVideo": {
-        "title": "Agnes 文生视频 (agnes-video-v2.0)",
-        "description": "使用 Agnes Video V2.0 模型根据文本提示词生成视频",
-        "outputs": {
-            "video": "视频"
-        },
-        "widgets": {
-            "Text description of the video content": "视频内容的文本描述",
-            "Video aspect ratio": "视频宽高比",
-            "Video resolution preset": "视频分辨率预设",
-            "Video duration (based on num_frames and frame_rate)": "视频时长（基于帧数和帧率）",
-            "Video frame rate (1-60)": "视频帧率（1-60）",
-            "poll_interval": "轮询间隔",
-            "Task polling interval (seconds)": "任务轮询间隔（秒）",
-            "max_wait_time": "最大等待时间",
-            "Maximum wait time (seconds)": "最大等待时间（秒）",
-            "prompt": "提示词",
-            "ratio": "宽高比",
-            "resolution": "分辨率",
-            "duration": "持续时间",
-            "frame_rate": "帧率",
-            "negative_prompt": "负面条件",
-            "Negative prompt describing what to avoid": "负面提示词，描述需要避免的内容",
-            "seed": "随机种子",
-            "Random seed (0 means not specified)": "随机种子（0 表示不指定）",
-            "num_inference_steps": "推理步数",
-            "Inference steps (0 uses the default value)": "推理步数（0 表示使用默认值）"
-        }
-    },
-    "AgnesImageToVideo": {
-        "title": "Agnes 图生视频 (agnes-video-v2.0)",
-        "description": "使用 Agnes Video V2.0 模型将输入图像转换为动画视频",
-        "inputs": {
-            "Input image (uploaded to the Agnes API)": "输入图像（上传至 Agnes API）",
-            "image": "图像"
+            "first_frame": "首帧",
+            "Keyframe mode: first frame. Connect first_frame and/or last_frame to use keyframe control": "首尾帧模式：首帧。连接 first_frame 和/或 last_frame 启用首尾帧控制",
+            "last_frame": "尾帧",
+            "Keyframe mode: last frame. Provide first_frame and/or last_frame (at least one)": "首尾帧模式：尾帧。至少提供首帧或尾帧之一",
+            "reference_images_1": "参考图片 1",
+            "reference_images_2": "参考图片 2",
+            "reference_images_3": "参考图片 3",
+            "reference_images_4": "参考图片 4",
+            "reference_images_5": "参考图片 5",
+            "Reference mode: reference image(s). Connect this input to reveal the next slot (up to 5)": "参考模式：参考图片。连接后会显示下一个插槽（最多 5 张）",
+            "Reference mode: reference image(s). Up to 5 images are sent": "参考模式：参考图片。最多发送 5 张",
+            "reference_audio_1": "参考音频 1",
+            "reference_audio_2": "参考音频 2",
+            "reference_audio_3": "参考音频 3",
+            "Reference mode: local audio input (e.g. from LoadAudio). Encoded as mono 16 kHz WAV and sent inline; connect to reveal the next slot (up to 3)": "参考模式：本地音频输入（如 LoadAudio）。编码为单声道 16kHz WAV 内联发送；连接后显示下一个插槽（最多 3 段）",
+            "Reference mode: local audio input (e.g. from LoadAudio). Up to 3 clips are sent": "参考模式：本地音频输入（如 LoadAudio）。最多发送 3 段"
         },
         "outputs": {
             "video": "视频"
         },
         "widgets": {
-            "Text description of the video content (what should move)": "视频内容的文本描述（应移动的部分）",
-            "Video aspect ratio": "视频宽高比",
-            "Video resolution preset": "视频分辨率预设",
-            "Video duration (based on num_frames and frame_rate)": "视频时长（基于帧数和帧率）",
-            "Video frame rate (1-60)": "视频帧率（1-60）",
+            "prompt": "提示词",
+            "Video description. In reference mode use <Picture 1>, <Audio 1>, ... to refer to the reference media": "视频描述。参考模式下可用 <Picture 1>、<Audio 1> 等指代参考素材",
+            "seconds": "时长（秒）",
+            "Video duration in seconds (4-12)": "视频时长（秒，4-12）",
+            "aspect_ratio": "画幅",
+            "Output aspect ratio (Agnes Video 2.5 Flash is fixed at 720P)": "输出画幅（Agnes Video 2.5 Flash 固定 720P）",
+            "seed": "随机种子",
+            "Random seed (0 means not specified)": "随机种子（0 表示不指定）",
             "poll_interval": "轮询间隔",
             "Task polling interval (seconds)": "任务轮询间隔（秒）",
             "max_wait_time": "最大等待时间",
-            "Maximum wait time (seconds)": "最大等待时间（秒）",
-            "prompt": "提示词",
-            "ratio": "宽高比",
-            "resolution": "分辨率",
-            "duration": "持续时间",
-            "frame_rate": "帧率",
-            "negative_prompt": "负面条件",
-            "Negative prompt describing what to avoid": "负面提示词，描述需要避免的内容",
-            "seed": "随机种子",
-            "Random seed (0 means not specified)": "随机种子（0 表示不指定）",
-            "num_inference_steps": "推理步数",
-            "Inference steps (0 uses the default value)": "推理步数（0 表示使用默认值）"
-        }
-    },
-    "AgnesKeyframeAnimation": {
-        "title": "Agnes 关键帧动画 (agnes-video-v2.0)",
-        "description": "使用 Agnes Video V2.0 模型在多个关键帧之间生成平滑过渡视频",
-        "inputs": {
-            "image1": "图像 1",
-            "Keyframe 1 (start frame, required)": "关键帧 1（起始帧，必填）",
-            "image2": "图像 2",
-            "Keyframe 2 (end frame, required)": "关键帧 2（结束帧，必填）"
-        },
-        "outputs": {
-            "video": "视频"
-        },
-        "widgets": {
-            "Video aspect ratio": "视频宽高比",
-            "Video resolution preset": "视频分辨率预设",
-            "Video duration": "视频时长",
-            "Video frame rate (1-60)": "视频帧率（1-60）",
-            "poll_interval": "轮询间隔",
-            "Task polling interval (seconds)": "任务轮询间隔（秒）",
-            "max_wait_time": "最大等待时间",
-            "Maximum wait time (seconds)": "最大等待时间（秒）",
-            "prompt": "提示词",
-            "Describe the transition between keyframes": "描述关键帧之间的过渡效果",
-            "ratio": "宽高比",
-            "resolution": "分辨率",
-            "duration": "持续时间",
-            "frame_rate": "帧率",
-            "negative_prompt": "负面条件",
-            "Negative prompt describing what to avoid": "负面提示词，描述需要避免的内容",
-            "seed": "随机种子",
-            "Random seed (0 means not specified)": "随机种子（0 表示不指定）",
-            "num_inference_steps": "推理步数",
-            "Inference steps (0 uses the default value)": "推理步数（0 表示使用默认值）"
+            "Maximum wait time (seconds)": "最大等待时间（秒）"
         }
     },
     "QwenImageEdit": {
@@ -184,11 +116,98 @@
             "Output resolution. 1K (1024px max edge) is fast and stable and recommended for multi-image editing; 2K (2048px max edge) is the native quality but much slower and may fail with 4 reference images": "输出分辨率。1K（最大边 1024）快速稳定，推荐多图编辑使用；2K（最大边 2048）为原生画质，但耗时显著更长，且 4 张参考图时可能失败"
         }
     },
+    "Krea2Turbo": {
+        "title": "Krea 2 Turbo 文生图（krea/Krea-2-Turbo）",
+        "description": "使用 krea/Krea-2-Turbo 模型（ModelScope API-Inference）根据文本提示词生成图像",
+        "outputs": {
+            "image": "图像"
+        },
+        "widgets": {
+            "prompt": "提示词",
+            "Text prompt for Krea 2 Turbo": "Krea 2 Turbo 的文本提示词",
+            "seed": "随机种子",
+            "Random seed. 0 means the API picks a random seed. Used to break the ComfyUI execution cache": "随机种子。0 表示使用 API 随机种子。用于打破 ComfyUI 执行缓存",
+            "ratio": "宽高比",
+            "Output aspect ratio for Krea 2 Turbo": "Krea 2 Turbo 的输出宽高比",
+            "resolution": "分辨率",
+            "Output resolution: 1K (1024px max edge, faster) or 2K (2048px max edge, higher detail)": "输出分辨率：1K（最大边 1024，更快）或 2K（最大边 2048，细节更多）"
+        }
+    },
+    "ZImageTurbo": {
+        "title": "Z-Image Turbo 文生图（Tongyi-MAI/Z-Image-Turbo）",
+        "description": "使用 Tongyi-MAI/Z-Image-Turbo 模型（ModelScope API-Inference）根据文本提示词生成图像",
+        "outputs": {
+            "image": "图像"
+        },
+        "widgets": {
+            "prompt": "提示词",
+            "Text prompt for Z-Image Turbo": "Z-Image Turbo 的文本提示词",
+            "seed": "随机种子",
+            "Random seed. 0 means the API picks a random seed. Used to break the ComfyUI execution cache": "随机种子。0 表示使用 API 随机种子。用于打破 ComfyUI 执行缓存",
+            "ratio": "宽高比",
+            "Output aspect ratio for Z-Image Turbo": "Z-Image Turbo 的输出宽高比",
+            "resolution": "分辨率",
+            "Output resolution: 1K (1024px max edge, faster) or 2K (2048px max edge, higher detail)": "输出分辨率：1K（最大边 1024，更快）或 2K（最大边 2048，细节更多）"
+        }
+    },
+    "MossImageSFT": {
+        "title": "MOSS Image SFT 文生图（openmoss/MOSS-Image-SFT）",
+        "description": "使用 openmoss/MOSS-Image-SFT 模型（ModelScope API-Inference）根据文本提示词生成图像；支持自然语言、标签序列和 JSON 布局提示词",
+        "outputs": {
+            "image": "图像"
+        },
+        "widgets": {
+            "prompt": "提示词",
+            "Text prompt for MOSS Image SFT": "MOSS Image SFT 的文本提示词（支持自然语言、标签序列或 JSON 布局）",
+            "seed": "随机种子",
+            "Random seed. 0 means the API picks a random seed. Used to break the ComfyUI execution cache": "随机种子。0 表示使用 API 随机种子。用于打破 ComfyUI 执行缓存",
+            "ratio": "宽高比",
+            "Output aspect ratio for MOSS Image SFT": "MOSS Image SFT 的输出宽高比",
+            "resolution": "分辨率",
+            "Output resolution: 1K (1024px max edge, faster) or 2K (2048px max edge, higher detail)": "输出分辨率：1K（最大边 1024，更快）或 2K（最大边 2048，细节更多）"
+        }
+    },
+    "MiniMaxH3Image": {
+        "title": "MiniMax H3 图像（MiniMax/MiniMax-H3-Image）",
+        "description": "使用 MiniMax/MiniMax-H3-Image（ModelScope API-Inference）生成图像，或连接参考图片进行编辑（最多 16 张）",
+        "inputs": {
+            "reference_images_1": "参考图片 1",
+            "reference_images_2": "参考图片 2",
+            "reference_images_3": "参考图片 3",
+            "reference_images_4": "参考图片 4",
+            "reference_images_5": "参考图片 5",
+            "reference_images_6": "参考图片 6",
+            "reference_images_7": "参考图片 7",
+            "reference_images_8": "参考图片 8",
+            "reference_images_9": "参考图片 9",
+            "reference_images_10": "参考图片 10",
+            "reference_images_11": "参考图片 11",
+            "reference_images_12": "参考图片 12",
+            "reference_images_13": "参考图片 13",
+            "reference_images_14": "参考图片 14",
+            "reference_images_15": "参考图片 15",
+            "reference_images_16": "参考图片 16",
+            "Reference image for editing. Connect to reveal the next slot (up to 16); leave all empty for text-to-image": "用于编辑的参考图片。连接后显示下一个插槽（最多 16 张）；全部留空则为文生图"
+        },
+        "outputs": {
+            "image": "图像"
+        },
+        "widgets": {
+            "prompt": "提示词",
+            "Generation prompt, or the edit instruction when reference images are connected": "生成提示词；连接参考图后则为编辑指令",
+            "seed": "随机种子",
+            "Random seed. 0 means the API picks a random seed. Used to break the ComfyUI execution cache": "随机种子。0 表示使用 API 随机种子。用于打破 ComfyUI 执行缓存",
+            "ratio": "宽高比",
+            "Output aspect ratio. 'auto' follows the first reference image, and falls back to 1:1 for text-to-image": "输出宽高比。'auto' 沿用第一张参考图比例；文生图回退为 1:1",
+            "resolution": "分辨率",
+            "Output resolution: 1K (1024px max edge, fastest) or 2K (2048px max edge; ModelScope's platform limit)": "输出分辨率：1K（最大边 1024，最快）或 2K（最大边 2048，ModelScope 平台上限）"
+        }
+    },
     "TextPreview": {
         "title": "文本输入/预览",
         "description": "二合一文本节点：可编辑输入文本，或接收上游文本自动同步到编辑框后修改",
         "inputs": {
-            "source": "复合图像",
+            "source": "文本来源",
             "Optional: connect an upstream text node; its text is synced into the edit box for editing": "可选：连接上游文本节点，文本会自动同步到编辑框供修改"
         },
         "outputs": {
