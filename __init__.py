@@ -50,7 +50,7 @@ from . import translation_writer
 from . import translation_service  # 注册 /translation_node/* 界面翻译端点
 
 # 插件版本
-__version__ = "1.4.1"
+__version__ = "1.4.2"
 
 # 插件信息
 PLUGIN_INFO = {
@@ -215,6 +215,8 @@ try:
                 "nodes": result["nodes"],
                 "not_found": result["not_found"],
                 "categories": categories,
+                # DynamicCombo 选项值（如 scale to multiple）随菜单文本一起翻译
+                "menus": result.get("menus", {}),
                 "node_count": len(result["nodes"]),
             })
         except Exception as e:
@@ -259,6 +261,8 @@ try:
 
             # 同时提取菜单/UI 文本（存在性闸门 + 字段级提取 + 运行时补强）
             menus = node_extractor.extract_plugin_menus(plugin_name, runtime_ui=runtime_ui)
+            # DynamicCombo 选项值来自节点定义，合并进菜单词条一并翻译
+            menus.update(result.get("menus", {}))
 
             return web.json_response({
                 "plugin_name": result["plugin_name"],

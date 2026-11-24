@@ -99,7 +99,8 @@ class TExe {
     this.isScheduling = false;
 
     // 子图区域翻译：已设置 Observer 的 .p-tree 元素集合，避免重复创建
-    this.observedTrees = new Set();
+    // 用 WeakSet：树组件销毁后允许 GC，避免长期运行持有已移除的 DOM
+    this.observedTrees = new WeakSet();
   }
 
   tSkip(node) {
@@ -132,10 +133,8 @@ class TExe {
       if (!node || !node.querySelectorAll) return false;
       if (!node?.classList?.contains("kj-documentation-popup")) return false;
       
-      const allElements = node.querySelectorAll("*");
-      for (const ele of allElements) {
-        this.replaceText(ele);
-      }
+      // 直接递归整棵子树，避免 querySelectorAll 生成大数组
+      this.replaceText(node);
       return true;
     } catch (e) {
       error("翻译KJ弹窗出错:", e);
@@ -179,74 +178,97 @@ class TExe {
     }
   }
 
-  replaceText(target) {
+  replaceText(target, ctx = null) {
     try {
       if (!target) return;
       if (!this.T) return;
-      if (this.tSkip(target)) return;
+
+      const isText = target.nodeType === Node.TEXT_NODE;
+      // 祖先已被排除时直接返回；文本节点继承父元素的判断结果，
+      // 避免对同一父级重复执行 closest
+      const skip = isText ? !!ctx?.skip : (ctx?.skip || this.tSkip(target));
+      if (skip) return;
 
       // 节点库树内的文本按“分类/节点名”语义翻译，不能走全局 Menu 词典
-      const inTree = this.inTreeContext(target);
+      // 父级已确认在树内时子级直接继承，省去逐节点 closest
+      const inTree = isText
+        ? !!ctx?.inTree
+        : (ctx?.inTree === true ? true : this.inTreeContext(target));
       const translate = inTree ? (t) => this.MTTree(t) : (t) => this.MT(t);
-      
-      if (target.textContent && nativeTranslatedSettings.includes(target.textContent)) {
-        return;
+
+      // 官方已翻译的设置项：只检查单个文本节点，
+      // 避免对大子树反复拼接 textContent（深层 DOM 下是 O(N²) 开销）
+      let checkText = null;
+      if (isText) {
+        checkText = target.nodeValue;
+      } else if (target.childNodes?.length === 1
+          && target.firstChild?.nodeType === Node.TEXT_NODE) {
+        checkText = target.firstChild.nodeValue;
       }
-      
+      if (checkText && nativeTranslatedSettings.includes(checkText)) return;
+
       // COMBO 下拉选项翻译开关：ContextMenu 容器内的文本受此开关控制
       if (!isOptionTranslationEnabled()) {
-        const el = target.nodeType === Node.TEXT_NODE ? target.parentElement : target;
+        const el = isText ? target.parentElement : target;
         if (el?.closest?.(".litecontextmenu")) return;
       }
-      
+
       if (target.childNodes && target.childNodes.length) {
+        const childCtx = { skip: false, inTree };
         const childNodes = Array.from(target.childNodes);
         for (const childNode of childNodes) {
-          this.replaceText(childNode);
+          this.replaceText(childNode, childCtx);
         }
       }
-      
-      if (target.nodeType === Node.TEXT_NODE) {
+
+      if (isText) {
         if (target.nodeValue && !isAlreadyTranslatedText(target.nodeValue)) {
           const translated = translate(target.nodeValue);
           if (translated) {
             target.nodeValue = translated;
           }
         }
-      } else if (target.nodeType === Node.ELEMENT_NODE) {
-        if (target.title && !isAlreadyTranslatedText(target.title)) {
-          const titleTranslated = translate(target.title);
-          if (titleTranslated) {
-            target.title = titleTranslated;
-          }
-        }
+        return;
+      }
 
-        if (target.nodeName === "INPUT" && target.type === "button" && 
-            !isAlreadyTranslatedText(target.value)) {
-          const valueTranslated = translate(target.value);
-          if (valueTranslated) {
-            target.value = valueTranslated;
-          }
-        }
+      if (target.nodeType !== Node.ELEMENT_NODE) return;
 
-        if (target.innerText && !isAlreadyTranslatedText(target.innerText) &&
-            (!target.children || target.children.length === 0)) {
-          const innerTextTranslated = translate(target.innerText);
+      if (target.title && !isAlreadyTranslatedText(target.title)) {
+        const titleTranslated = translate(target.title);
+        if (titleTranslated) {
+          target.title = titleTranslated;
+        }
+      }
+
+      if (target.nodeName === "INPUT" && target.type === "button" &&
+          !isAlreadyTranslatedText(target.value)) {
+        const valueTranslated = translate(target.value);
+        if (valueTranslated) {
+          target.value = valueTranslated;
+        }
+      }
+
+      // 叶子元素用 textContent：innerText 会触发同步布局，
+      // 设置面板/长菜单等大子树下开销明显
+      if (!target.children || target.children.length === 0) {
+        const text = target.textContent;
+        if (text && !isAlreadyTranslatedText(text)) {
+          const innerTextTranslated = translate(text);
           if (innerTextTranslated) {
-            target.innerText = innerTextTranslated;
+            target.textContent = innerTextTranslated;
           }
         }
-        
-        if (target.nodeName === "SELECT" && isOptionTranslationEnabled()) {
-          Array.from(target.options).forEach(option => {
-            if (option.text && !isAlreadyTranslatedText(option.text)) {
-              const optionTextTranslated = this.MT(option.text);
-              if (optionTextTranslated) {
-                option.text = optionTextTranslated;
-              }
+      }
+
+      if (target.nodeName === "SELECT" && isOptionTranslationEnabled()) {
+        Array.from(target.options).forEach(option => {
+          if (option.text && !isAlreadyTranslatedText(option.text)) {
+            const optionTextTranslated = this.MT(option.text);
+            if (optionTextTranslated) {
+              option.text = optionTextTranslated;
             }
-          });
-        }
+          }
+        });
       }
     } catch (e) {
       error("替换文本出错:", e);
@@ -261,7 +283,7 @@ class TExe {
         }
       });
       this.observers = [];
-      this.observedTrees.clear();
+      this.observedTrees = new WeakSet();
     } catch (e) {
       error("清理观察者出错:", e);
     }
@@ -303,6 +325,16 @@ function isSearchRelatedElement(node) {
          (node.querySelector && !!node.querySelector(".litesearchbox"));
 }
 
+// 需要「立即翻译」的浮层容器：对话框、右键菜单、顶部菜单、下拉弹层
+const IMMEDIATE_OVERLAY_SELECTOR = [
+  "[data-dialog-key]",
+  "[role='dialog']",
+  "[role='menu']",
+  ".litecontextmenu",
+  ".comfyui-menu",
+  ".comfyui-popup",
+].join(", ");
+
 export function applyMenuTranslation(T) {
   try {
     texe.cleanupObservers();
@@ -311,11 +343,10 @@ export function applyMenuTranslation(T) {
     
     texe.translateAllText(document.querySelector(".litegraph"));
     
-    let _bodyDebounceTimer = null;
+    let _bodyDebounceRaf = null;
     let _bodyPendingMutations = [];
     
-    const bodyObserver = observeFactory(document.querySelector("body.litegraph"), (mutationsList) => {
-      // 【立即检测】在防抖之前，同步检测新增的 .p-tree 元素
+    const bodyObserver = observeFactory(document.querySelector("body.litegraph"), (mutationsList) => {      // 【立即检测】在防抖之前，同步检测新增的 .p-tree 元素
       for (const mutation of mutationsList) {
         for (const node of mutation.addedNodes) {
           if (node.nodeType === Node.ELEMENT_NODE) {
@@ -324,14 +355,41 @@ export function applyMenuTranslation(T) {
             } else if (node.querySelectorAll) {
               node.querySelectorAll('.p-tree').forEach(setupTreeObserver);
             }
+            // 弹窗/设置面板/右键菜单：不等防抖，立即入队翻译
+            // （translateAllText 内部用微任务合批，能在首帧绘制前完成替换）
+            // 兼容旧模态框 .comfy-modal、PrimeVue .p-dialog-mask，
+            // Reka 对话框（[data-dialog-key] / [role="dialog"]），
+            // 以及新版/旧版右键菜单（[role="menu"] / .litecontextmenu）
+            let overlay = null;
+            if (node.classList?.contains("comfy-modal")) {
+              overlay = node;
+            } else if (node.classList?.contains("p-dialog-mask")) {
+              overlay = node.querySelector(".p-dialog") || node;
+            } else if (node.matches?.(IMMEDIATE_OVERLAY_SELECTOR)) {
+              overlay = node;
+            } else if (node.querySelector) {
+              overlay = node.querySelector(IMMEDIATE_OVERLAY_SELECTOR);
+            }
+            if (overlay) {
+              texe.translateAllText(overlay);
+              // 立即注册内部观察者：设置项等后续渲染内容第一时间翻译，
+              // 不再等 body 级 16ms 防抖
+              if (!overlay._uiiaiii_settings_observed) {
+                overlay._uiiaiii_settings_observed = true;
+                const overlayObserver = observeFactory(overlay, handleNewSettingsObserver, true);
+                if (overlayObserver) texe.observers.push(overlayObserver);
+              }
+            }
           }
         }
       }
       
       _bodyPendingMutations.push(...mutationsList);
-      if (_bodyDebounceTimer) clearTimeout(_bodyDebounceTimer);
-      _bodyDebounceTimer = setTimeout(() => {
-        _bodyDebounceTimer = null;
+      if (_bodyDebounceRaf !== null) cancelAnimationFrame(_bodyDebounceRaf);
+      // 用 requestAnimationFrame 而不是 setTimeout(16)：回调在下一帧绘制前
+      // 执行，译文能赶在首帧显示，避免可见的「先英文后中文」
+      _bodyDebounceRaf = requestAnimationFrame(() => {
+        _bodyDebounceRaf = null;
         const mutations = _bodyPendingMutations;
         _bodyPendingMutations = [];
         
@@ -357,6 +415,13 @@ export function applyMenuTranslation(T) {
                 const dialog = node.querySelector(".p-dialog");
                 if (dialog) {
                   texe.translateAllText(dialog);
+                  // 面板内部的新增项（虚拟滚动、切换标签页）立即翻译，
+                  // 不再等 body 级 16ms 防抖
+                  if (!dialog._uiiaiii_settings_observed) {
+                    dialog._uiiaiii_settings_observed = true;
+                    const panelObserver = observeFactory(dialog, handleNewSettingsObserver, true);
+                    if (panelObserver) texe.observers.push(panelObserver);
+                  }
                   observeFactory(dialog, handleSettingsDialog, dialog?.role === "dialog");
                 }
               } else {
@@ -367,8 +432,11 @@ export function applyMenuTranslation(T) {
         } finally {
           setTimeout(() => { _isTranslating = false; }, 0);
         }
-      }, 16);
-    }, true);
+      });
+      // 最后一个参数关闭 attributes：body 子树里的 style/class 高频变化
+      // （Nodes 2.0 拖拽、动画）不再产生无用 mutation 记录；
+      // 回调本身只消费 addedNodes，因此翻译行为不变
+    }, true, false);
     
     texe.observers.push(bodyObserver);
     
@@ -398,13 +466,17 @@ export function applyMenuTranslation(T) {
   }
 }
 
-export function observeFactory(observeTarget, fn, subtree = false) {
+export function observeFactory(observeTarget, fn, subtree = false, observeAttributes = true) {
   if (!observeTarget) return null;
   try {
     const observer = new MutationObserver(function (mutationsList, observer) {
       fn(mutationsList, observer);
     });
-    observer.observe(observeTarget, { childList: true, attributes: true, subtree: subtree });
+    observer.observe(observeTarget, {
+      childList: true,
+      attributes: observeAttributes,
+      subtree: subtree
+    });
     return observer;
   } catch (e) {
     error("创建观察者出错:", e);
@@ -423,7 +495,7 @@ function observeModalNode(node) {
   }
 }
 
-let _menuDebounceTimer = null;
+let _menuDebounceRaf = null;
 let _menuPendingMutations = [];
 
 function handleComfyNewUIMenu(mutationsList) {
@@ -451,9 +523,10 @@ function handleComfyNewUIMenu(mutationsList) {
   }
   
   _menuPendingMutations.push(...mutationsList);
-  if (_menuDebounceTimer) clearTimeout(_menuDebounceTimer);
-  _menuDebounceTimer = setTimeout(() => {
-    _menuDebounceTimer = null;
+  if (_menuDebounceRaf !== null) cancelAnimationFrame(_menuDebounceRaf);
+  // 同样用 rAF：菜单展开时译文赶在首帧绘制前生效，消除右键菜单可见延迟
+  _menuDebounceRaf = requestAnimationFrame(() => {
+    _menuDebounceRaf = null;
     const mutations = _menuPendingMutations;
     _menuPendingMutations = [];
     
@@ -481,7 +554,7 @@ function handleComfyNewUIMenu(mutationsList) {
     } finally {
       setTimeout(() => { _isTranslating = false; }, 0);
     }
-  }, 16);
+  });
 }
 
 function handleHistoryAndQueueButtons() {
@@ -568,27 +641,9 @@ function handleNewSettingsObserver(mutationsList) {
 
 function translateSettingDialog(comfySettingDialog) {
   if (!comfySettingDialog) return;
-  
-  const comfySettingDialogAllElements = comfySettingDialog.querySelectorAll("*");
-  for (const ele of comfySettingDialogAllElements) {
-    if (isAlreadyTranslatedText(ele.innerText) || 
-        nativeTranslatedSettings.includes(ele.innerText)) {
-      continue;
-    }
-    
-    let targetLangText = texe.MT(ele.innerText);
-    let titleText = texe.MT(ele.title);
-    if (titleText) ele.title = titleText;
-    if (!targetLangText) {
-      if (ele.nodeName === "INPUT" && ele.type === "button") {
-        targetLangText = texe.MT(ele.value);
-        if (!targetLangText) continue;
-        ele.value = targetLangText;
-      }
-      continue;
-    }
-    texe.replaceText(ele);
-  }
+  // 统一走递归翻译：替代 querySelectorAll("*") + innerText，
+  // 避免旧版设置面板上的同步布局与重复文本拼接
+  texe.replaceText(comfySettingDialog);
 }
 
 function setupSearchBoxObserver() {
@@ -642,7 +697,7 @@ function setupSearchBoxObserver() {
 // ========== 子图区域（PrimeVue Tree）专用翻译 ==========
 // 绕开 tSkip 的 p-tree 排除，直接遍历翻译树内文本节点
 
-let _treeDebounceTimer = null;
+let _treeDebounceRaf = null;
 
 /**
  * 直接遍历 .p-tree 内的文本节点进行翻译，绕开 tSkip 的 p-tree 排除
@@ -682,11 +737,11 @@ function setupTreeObserver(treeEl) {
 
   // 监听树的变化（展开/收起/切换），16ms 防抖
   const observer = observeFactory(treeEl, () => {
-    if (_treeDebounceTimer) clearTimeout(_treeDebounceTimer);
-    _treeDebounceTimer = setTimeout(() => {
-      _treeDebounceTimer = null;
+    if (_treeDebounceRaf !== null) cancelAnimationFrame(_treeDebounceRaf);
+    _treeDebounceRaf = requestAnimationFrame(() => {
+      _treeDebounceRaf = null;
       translateTreeLabels(treeEl);
-    }, 16);
+    });
   }, true);
 
   if (observer) texe.observers.push(observer);

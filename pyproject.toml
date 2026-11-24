@@ -1,7 +1,7 @@
 [project]
 name = "uiiiaiii-toolkit"
 description = "UIIIAIII Toolkit: a powerful node category manager (rename / move / hide / sort / restore categories in the node library tree), node and plugin UI translation for multiple languages (Nodes 2.0 ready), plus bundled API media nodes: Agnes Image (text-to-image / editing / multi-image composition) and Video, Qwen Image 2.1 / Qwen Image Edit, Krea 2 Turbo, Z-Image Turbo, MOSS Image SFT and MiniMax H3 Image via ModelScope API-Inference, with text input/preview, background fill and random noise seed.\n中文：节点分类管理（在节点库中重命名/移动/隐藏/排序/恢复分类）、节点与插件界面翻译（多语言，兼容 Nodes 2.0），以及内置 API 媒体节点：Agnes 图像（文生图/图像编辑/多图合成）与视频、Qwen Image 2.1 / Qwen Image Edit、Krea 2 Turbo、Z-Image Turbo、MOSS Image SFT、MiniMax H3 Image（ModelScope API-Inference），另有文本输入/预览、背景填充、随机噪波种子。"
-version = "1.4.1"
+version = "1.4.2"
 dependencies = ["requests>=2.28.0"]
 license = { file = "LICENSE" }
 

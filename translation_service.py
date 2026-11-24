@@ -48,14 +48,34 @@ OFFICIAL_LOCALE_MAP = {
 }
 
 
+# JSON 字典文件缓存：{路径: (mtime_ns, 解析结果)}
+# 页面每次刷新/切换语言都会请求 /translation_node/get_translation，
+# 全量字典有几十个文件、数 MB，按 mtime 缓存可避免重复解析；
+# 翻译写回文件后 mtime 变化，缓存自动失效。
+_JSON_FILE_CACHE = {}
+
+
 def try_get_json(path: Path):
-    """尝试使用不同编码读取 JSON 文件"""
+    """尝试使用不同编码读取 JSON 文件（按 mtime 缓存）"""
+    cache_key = str(path)
+    try:
+        mtime = path.stat().st_mtime_ns
+    except OSError:
+        return {}
+
+    cached = _JSON_FILE_CACHE.get(cache_key)
+    if cached is not None and cached[0] == mtime:
+        return cached[1]
+
+    data = {}
     for coding in ["utf-8", "gbk"]:
         try:
-            return json.loads(path.read_text(encoding=coding))
+            data = json.loads(path.read_text(encoding=coding))
+            break
         except Exception:
             continue
-    return {}
+    _JSON_FILE_CACHE[cache_key] = (mtime, data)
+    return data
 
 
 def _iter_locale_json(dir_path: Path, disabled_stems=None):
@@ -359,6 +379,63 @@ def _build_official_outputs(class_name, outputs, node_mappings) -> dict:
     return {str(idx): {"name": value} for idx, value in sorted(ordered.items())}
 
 
+# DynamicCombo 子字段反射结果缓存（按节点类名）：
+# 生成多语言语言包时避免对同一节点重复调用 INPUT_TYPES()
+_DYNAMIC_COMBO_CACHE = {}
+
+
+def _get_dynamic_combo_subfields(node_class, class_name=None) -> dict:
+    """
+    反射节点的 DynamicCombo 输入，返回 {主字段: [子字段, ...]}
+
+    Nodes 2.0 给 DynamicCombo 内嵌控件生成的名称是 "<主字段>.<子字段>"，
+    官方 i18n 键会把点转下划线（<主字段>_<子字段>）。字典里通常只存
+    子字段名，需要在生成语言包时映射到真实键，否则控件名无法翻译。
+    """
+    if node_class is None:
+        return {}
+    cache_key = class_name or id(node_class)
+    if cache_key in _DYNAMIC_COMBO_CACHE:
+        return _DYNAMIC_COMBO_CACHE[cache_key]
+    try:
+        input_types = node_class.INPUT_TYPES()
+    except Exception:
+        _DYNAMIC_COMBO_CACHE[cache_key] = {}
+        return {}
+    if not isinstance(input_types, dict):
+        _DYNAMIC_COMBO_CACHE[cache_key] = {}
+        return {}
+
+    result = {}
+    for section in ("required", "optional"):
+        section_data = input_types.get(section)
+        if not isinstance(section_data, dict):
+            continue
+        for combo_name, spec in section_data.items():
+            if not (isinstance(spec, (tuple, list)) and len(spec) >= 2
+                    and spec[0] == "COMFY_DYNAMICCOMBO_V3"
+                    and isinstance(spec[1], dict)):
+                continue
+            subfields = []
+            for opt in (spec[1].get("options") or []):
+                if not isinstance(opt, dict):
+                    continue
+                opt_inputs = opt.get("inputs")
+                if not isinstance(opt_inputs, dict):
+                    continue
+                for sec in ("required", "optional"):
+                    sub_data = opt_inputs.get(sec)
+                    if not isinstance(sub_data, dict):
+                        continue
+                    for sub_name in sub_data:
+                        if isinstance(sub_name, str) and sub_name and sub_name not in subfields:
+                            subfields.append(sub_name)
+            if subfields:
+                result[combo_name] = subfields
+    _DYNAMIC_COMBO_CACHE[cache_key] = result
+    return result
+
+
 def build_official_node_defs(locale, disabled_plugins=None) -> dict:
     """
     将本插件节点字典转换为 ComfyUI 官方 nodeDefs 语言包结构
@@ -417,6 +494,17 @@ def build_official_node_defs(locale, disabled_plugins=None) -> dict:
                 if _is_field_entry(key, value):
                     # inputs 与 widgets 共用同一命名空间；input 优先
                     fields.setdefault(key, {})["name"] = value
+        # DynamicCombo 内嵌控件：把字典中的子字段译文映射到真实键
+        # （<主字段>_<子字段>，如 resize_type_multiple）
+        node_class = node_mappings.get(class_name) if node_mappings else None
+        for combo_name, subfields in _get_dynamic_combo_subfields(node_class, class_name).items():
+            for sub_name in subfields:
+                prefixed = f"{combo_name}_{sub_name}"
+                if prefixed in fields:
+                    continue
+                source = fields.get(sub_name)
+                if source:
+                    fields[prefixed] = dict(source)
         if fields:
             entry["inputs"] = fields
 

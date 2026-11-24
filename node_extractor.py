@@ -139,6 +139,46 @@ def _is_connection_input(spec: Any) -> bool:
     return True
 
 
+# 明显的文件/模型下拉：选项是文件名或路径，翻译无意义且数量往往很大
+_COMBO_FILE_EXT_RE = re.compile(
+    r"\.(safetensors|ckpt|pt|pth|bin|gguf|onnx|pkl|sft|yaml|yml|json|txt|model)$",
+    re.IGNORECASE,
+)
+
+
+def _get_combo_values(spec: Any) -> List[str]:
+    """取普通 COMBO 的候选值列表（DynamicCombo 由调用方单独处理）"""
+    if not isinstance(spec, (tuple, list)) or len(spec) < 1:
+        return []
+    spec_type = spec[0]
+    if isinstance(spec_type, (list, tuple)):
+        return [v for v in spec_type if isinstance(v, str)]
+    if spec_type == "COMBO" and len(spec) >= 2 and isinstance(spec[1], dict):
+        values = spec[1].get("options")
+        if isinstance(values, list):
+            return [v for v in values if isinstance(v, str)]
+    return []
+
+
+def _should_collect_combo_values(values: List[str]) -> bool:
+    """
+    判断普通 COMBO 的选项值是否值得翻译
+
+    排除模型/文件下拉（路径、扩展名、数量过多）：翻译文件名没有意义，
+    还会把大量条目送进翻译 API。
+    """
+    if not isinstance(values, list) or len(values) < 2 or len(values) > 64:
+        return False
+    for value in values:
+        if not isinstance(value, str) or not value.strip():
+            return False
+        if "/" in value or "\\" in value:
+            return False
+        if _COMBO_FILE_EXT_RE.search(value):
+            return False
+    return True
+
+
 def _extract_node_def(node_class, class_name: str) -> Dict[str, Any]:
     """
     从已加载的节点类反射出翻译所需的字段
@@ -202,6 +242,9 @@ def _extract_node_def(node_class, class_name: str) -> Dict[str, Any]:
     # 界面翻译前端用 tooltip 原文作为 key 在对应字典中查找翻译。
     inputs_map: Dict[str, str] = {}
     widgets_map: Dict[str, str] = {}
+    # DynamicCombo 的选项值（如 scale to multiple）：也是界面文案，
+    # 收集后作为 Menus 词条，由前端显示层文本翻译处理（不改变实际值）
+    options_map: Dict[str, str] = {}
     for section in ("required", "optional"):
         section_data = input_types.get(section, {})
         if not isinstance(section_data, dict):
@@ -225,6 +268,10 @@ def _extract_node_def(node_class, class_name: str) -> Dict[str, Any]:
                 for opt in (spec[1].get("options") or []):
                     if not isinstance(opt, dict):
                         continue
+                    # 选项值本身也是下拉框显示的文案，收集到 Menus 字典
+                    opt_key = opt.get("key")
+                    if isinstance(opt_key, str) and opt_key.strip():
+                        options_map[opt_key.strip()] = opt_key.strip()
                     opt_inputs = opt.get("inputs")
                     if not isinstance(opt_inputs, dict):
                         continue
@@ -233,11 +280,32 @@ def _extract_node_def(node_class, class_name: str) -> Dict[str, Any]:
                         if not isinstance(sd2, dict):
                             continue
                         for sub_name, sub_spec in sd2.items():
+                            # 前端给 DynamicCombo 内嵌控件的真实名称是
+                            # "<主字段>.<子字段>"，官方 i18n 键会把点转下划线，
+                            # 因此必须提供 "<主字段>_<子字段>" 才能命中
+                            prefixed = f"{name}_{sub_name}"
+                            if prefixed not in target_map:
+                                target_map[prefixed] = prefixed
+                            # 保留扁平子字段名：经典渲染/旧字典仍按该键查找
                             if sub_name not in target_map:
                                 target_map[sub_name] = sub_name
                             sub_tip = _get_field_tooltip(sub_spec)
                             if sub_tip and sub_tip not in target_map:
                                 target_map[sub_tip] = sub_tip
+                            # 内嵌字段本身也可能是下拉（如 crop 的 disabled/center）
+                            sub_values = _get_combo_values(sub_spec)
+                            if _should_collect_combo_values(sub_values):
+                                for value in sub_values:
+                                    options_map.setdefault(value, value)
+            # 普通 COMBO：枚举型选项值（如宽高比、缩放方法）也是界面文案，
+            # 同样是下拉框显示文本，收集到 Menus 字典由显示层翻译
+            elif (isinstance(spec, (tuple, list)) and len(spec) >= 1
+                    and not name.endswith("_name")
+                    and (spec[0] == "COMBO" or isinstance(spec[0], (list, tuple)))):
+                combo_values = _get_combo_values(spec)
+                if _should_collect_combo_values(combo_values):
+                    for value in combo_values:
+                        options_map.setdefault(value, value)
 
     # outputs：RETURN_NAMES + OUTPUT_TOOLTIPS
     # 界面翻译前端用输出端口的 tooltip 原文作为 key 在 outputs 字典中查找翻译
@@ -273,6 +341,8 @@ def _extract_node_def(node_class, class_name: str) -> Dict[str, Any]:
         result["inputs"] = inputs_map
     if widgets_map:
         result["widgets"] = widgets_map
+    if options_map:
+        result["options"] = options_map
 
     return result
 
@@ -292,7 +362,8 @@ def extract_selected_nodes(class_names: List[str]) -> Dict[str, Any]:
         {
             "<plugin_name>": "selected",
             "nodes": {ClassName: {title, category, inputs, outputs, widgets}},
-            "not_found": [ClassName, ...]
+            "not_found": [ClassName, ...],
+            "menus": {选项值: 选项值}   # DynamicCombo 下拉选项，作为菜单词条翻译
         }
     """
     import nodes as comfy_nodes
@@ -300,7 +371,7 @@ def extract_selected_nodes(class_names: List[str]) -> Dict[str, Any]:
     node_mappings = comfy_nodes.NODE_CLASS_MAPPINGS
     display_names = getattr(comfy_nodes, "NODE_DISPLAY_NAME_MAPPINGS", {})
 
-    result: Dict[str, Any] = {"nodes": {}, "not_found": []}
+    result: Dict[str, Any] = {"nodes": {}, "not_found": [], "menus": {}}
 
     for class_name in class_names:
         node_class = node_mappings.get(class_name)
@@ -310,6 +381,10 @@ def extract_selected_nodes(class_names: List[str]) -> Dict[str, Any]:
 
         try:
             node_def = _extract_node_def(node_class, class_name)
+            # DynamicCombo 选项值单独作为 Menus 词条翻译，不进入节点字典
+            options = node_def.pop("options", None)
+            if isinstance(options, dict):
+                result["menus"].update(options)
             result["nodes"][class_name] = node_def
         except Exception as e:
             logger.error("提取节点 %s 定义失败：%s", class_name, e)
@@ -585,7 +660,8 @@ def extract_plugin_nodes(plugin_name: str) -> Dict[str, Any]:
             "plugin_name": str,
             "plugin_path": str,
             "nodes": {ClassName: {...}},
-            "not_loaded": [ClassName, ...]  # 已在 AST 中发现但未加载的类
+            "not_loaded": [ClassName, ...],  # 已在 AST 中发现但未加载的类
+            "menus": {选项值: 选项值}          # DynamicCombo 下拉选项词条
         }
     """
     custom_nodes_paths = folder_paths.get_folder_paths("custom_nodes")
@@ -642,6 +718,7 @@ def extract_plugin_nodes(plugin_name: str) -> Dict[str, Any]:
         "plugin_path": plugin_path,
         "nodes": {},
         "not_loaded": [],
+        "menus": {},
     }
 
     for class_name in ast_class_names:
@@ -653,6 +730,10 @@ def extract_plugin_nodes(plugin_name: str) -> Dict[str, Any]:
 
         try:
             node_def = _extract_node_def(node_class, class_name)
+            # DynamicCombo 选项值单独作为 Menus 词条翻译，不进入节点字典
+            options = node_def.pop("options", None)
+            if isinstance(options, dict):
+                result["menus"].update(options)
             result["nodes"][class_name] = node_def
         except Exception as e:
             logger.error("提取节点 %s 定义失败：%s", class_name, e)

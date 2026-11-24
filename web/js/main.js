@@ -98,6 +98,9 @@ export class TUtils {
       // 但 translatedValueSet 已保留，供还原逻辑识别残留译文。
       TUtils.T = enabled ? dict : { Menu: {}, Nodes: {}, NodeCategory: {} };
 
+      // 字典版本号：切换语言/重新同步后，绘制兜底立即重新扫描所有节点
+      TUtils._dictVersion = (TUtils._dictVersion || 0) + 1;
+
       // 暴露当前翻译字典给其他模块（顶部按钮等按字典显示译文）
       window.__UiTranslated = TUtils.T;
 
@@ -114,6 +117,25 @@ export class TUtils {
    * 覆盖场景：插件在运行时反复改写控件 label（如 cw.label = "detector_confidence"），
    * 晚于 nodeCreated 的翻译时机；绘制前兜底可保证界面始终显示译文。
    */
+  /**
+   * 给下拉控件安装选项显示名映射（getOptionLabel）
+   *
+   * 新版前端（1.59+）在渲染下拉列表前会调用该函数，因此选项在弹层打开时
+   * 直接就是译文，不需要等 DOM 插入后再做文本替换（消除可见延迟）。
+   * 只影响显示，控件值/工作流序列化保持英文原值。
+   */
+  static ensureComboOptionLabel(widget) {
+    if (!widget || widget.type !== "combo") return;
+    const options = widget.options;
+    if (!options || typeof options.getOptionLabel === "function") return;
+    options.getOptionLabel = (value) => {
+      if (value === null || value === undefined) return "";
+      const text = String(value);
+      const menu = TUtils.T?.Menu;
+      return (menu && menu[text]) || text;
+    };
+  }
+
   static translateNodeWidgetLabels(node) {
     try {
       const widgets = node?.widgets;
@@ -134,12 +156,26 @@ export class TUtils {
         return;
       }
 
+      // 大工作流下避免每次绘制都全量扫描：同一节点最多每 500ms 兜底一次。
+      // 字典版本变化（切换语言/重新同步）时立即重新扫描。
+      const dictVersion = TUtils._dictVersion || 0;
+      const now = performance.now();
+      if (node._uiiaiii_tl_ver === dictVersion
+          && node._uiiaiii_tl_ts
+          && now - node._uiiaiii_tl_ts < 500) {
+        return;
+      }
+      node._uiiaiii_tl_ver = dictVersion;
+      node._uiiaiii_tl_ts = now;
+
       const menuT = this.T.Menu || {};
       const nodesT = this.T.Nodes || {};
       const classType = node.constructor?.comfyClass || node.constructor?.type;
       const widgetDict = (classType && nodesT[classType]?.widgets) || {};
       for (const w of widgets) {
         if (!w) continue;
+        // 下拉选项：渲染前映射显示名，避免弹层打开后再替换文本
+        this.ensureComboOptionLabel(w);
         // 撤销异常长的控件名（官方语言包/历史脏字典可能把 tooltip 整句写进 label）
         if (typeof w.label === "string" && this.isOversizedFieldLabel(w.name, w.label)) {
           delete w.label;
@@ -619,6 +655,8 @@ export class TUtils {
         const dict = t[key] || {};
         node[key].forEach((item) => {
           if (!item || !item.name) return;
+          // 下拉控件创建时即安装选项显示映射（弹层打开时直接显示译文）
+          if (key === "widgets") TUtils.ensureComboOptionLabel(item);
           // 官方语言包/历史脏字典可能把 tooltip 整句写成控件名：撤销异常 label，
           // 否则 Nodes 2.0 会按文字宽度把节点撑得极长
           if (key === "widgets" && typeof item.label === "string"
@@ -701,6 +739,8 @@ export class TUtils {
         node.addWidget = function (type, name, value, callback, options) {
           // 先让底层创建控件
           let res = addWidget.apply(this, arguments);
+          // 动态创建的控件：若为下拉，立即安装选项显示映射
+          if (res) TUtils.ensureComboOptionLabel(res);
           // 控件创建完毕后立刻检查翻译
           if (isTranslationEnabled() && res && res.name) {
             let class_type = this.constructor.comfyClass || this.constructor.type;
@@ -817,6 +857,25 @@ export class TUtils {
         }
         return res;
       };
+      
+      // 节点右键菜单：同步翻译 Menu 字典中的词条
+      // （官方只处理 contextMenu.* i18n 键，插件自定义词条在这里补，
+      //  避免菜单展开后再做 DOM 文本替换）
+      const getNodeMenuOptions = LGraphCanvas.prototype.getNodeMenuOptions;
+      if (typeof getNodeMenuOptions === "function") {
+        LGraphCanvas.prototype.getNodeMenuOptions = function () {
+          const res = getNodeMenuOptions.apply(this, arguments);
+          const menuT = TUtils.T.Menu;
+          for (let item of res) {
+            if (item == null || !item.hasOwnProperty("content")) continue;
+            if (item.content in menuT) {
+              if (!item._originalContent) item._originalContent = item.content;
+              item.content = menuT[item.content];
+            }
+          }
+          return res;
+        };
+      }
       
       const f2 = LiteGraph.ContextMenu;
       LiteGraph.ContextMenu = function (values, options) {

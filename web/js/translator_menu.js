@@ -765,6 +765,7 @@ function registerTranslatorExtensionWhenReady(tries = 0) {
                 body: JSON.stringify({
                     nodes: extractData.nodes,
                     categories: extractData.categories || {},
+                    menus: extractData.menus || {},
                     plugin_name: "selected_nodes",
                 }),
             });
@@ -1147,6 +1148,7 @@ function registerTranslatorExtensionWhenReady(tries = 0) {
                 body: JSON.stringify({
                     nodes: extractData.nodes,
                     categories: extractData.categories || {},
+                    menus: extractData.menus || {},
                     plugin_name: "selected_nodes",
                 }),
             });

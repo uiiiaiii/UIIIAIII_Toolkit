@@ -1,0 +1,15 @@
+{
+    "H3Int8Backend": {
+        "title": "Licon H3 INT8 Backend",
+        "description": "Use the privately bundled Kitchen 0.2.35 INT8 implementation for this H3 DiT model branch, including ordinary weight patching and forward execution. Native removes this node's selection. Neither mode changes LoRA strength.",
+        "inputs": {
+            "model": "模型"
+        },
+        "outputs": {
+            "MODEL": "模型"
+        },
+        "widgets": {
+            "mode": "模式"
+        }
+    }
+}
