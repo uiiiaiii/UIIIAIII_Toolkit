@@ -49,10 +49,36 @@ async function loadCategorySegments() {
 class TExe {
   static T = null;
   MT(txt) {
+    if (!txt) return null;
     if (isAlreadyTranslatedText(txt)) {
       return null;
     }
-    return this.T?.Menu?.[txt] || this.T?.Menu?.[txt?.trim?.()];
+    const direct = this.T?.Menu?.[txt] || this.T?.Menu?.[txt?.trim?.()];
+    if (direct) return direct;
+
+    // 通用规则：节点属性面板标题 "<节点名> Properties"。
+    // 标题是运行时拼接的（字典里通常只有节点标题），这里按类名去后缀匹配，
+    // 输出 "<节点标题> 属性"；不依赖完整标题词条。
+    const raw = String(txt).trim();
+    if (raw === "Properties") return "属性";
+    if (raw.endsWith(" Properties")) {
+      const base = raw.slice(0, -" Properties".length).trim();
+      if (!base) return null;
+      const menu = this.T?.Menu || {};
+      let baseT = menu[base];
+      if (!baseT) {
+        const nodes = this.T?.Nodes || {};
+        for (const [cls, def] of Object.entries(nodes)) {
+          const clsNorm = String(cls).replace(/\s*\([^)]*\)\s*$/, "").trim();
+          if (clsNorm === base) {
+            baseT = (def && typeof def.title === "string" && def.title) || base;
+            break;
+          }
+        }
+      }
+      if (baseT) return `${baseT} 属性`;
+    }
+    return null;
   }
 
   /**

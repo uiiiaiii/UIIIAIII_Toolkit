@@ -947,6 +947,7 @@ def analyze_plugin_ui(plugin_path: str, registered: bool = False) -> Dict[str, A
 _runtime_extensions: List[Dict[str, Any]] = []
 _runtime_sidebar_tabs: List[Dict[str, Any]] = []
 _runtime_node_widgets: List[Dict[str, Any]] = []
+_runtime_node_properties: List[Dict[str, Any]] = []
 _runtime_dom_texts: set = set()
 _runtime_updated_at: float = 0.0
 
@@ -958,6 +959,7 @@ def update_runtime_extensions(
     extensions: List[Dict[str, Any]],
     sidebar_tabs: Optional[List[Dict[str, Any]]] = None,
     node_widgets: Optional[List[Dict[str, Any]]] = None,
+    node_properties: Optional[List[Dict[str, Any]]] = None,
     dom_texts: Optional[List[str]] = None,
 ) -> int:
     """
@@ -973,19 +975,22 @@ def update_runtime_extensions(
     另有三个补充来源：
     - sidebar_tabs: 侧边栏标签页 [{id, texts}]（按 id 归属插件）
     - node_widgets: 画布节点上的控件文案 [{comfyClass, widgets}]（按 comfyClass 归属）
+    - node_properties: 节点自定义属性面板的字段/候选值
+      [{comfyClass, properties}]（按 comfyClass 归属）
     - dom_texts: 页面当前显示的全局文本集合（终极兜底，用于确认/豁免）
 
     Args:
         extensions: 扩展声明列表
         sidebar_tabs: 侧边栏标签列表（可选）
         node_widgets: 节点控件文案列表（可选）
+        node_properties: 节点属性面板文案列表（可选）
         dom_texts: DOM 全局文案列表（可选）
 
     Returns:
         收录的扩展数量
     """
     global _runtime_extensions, _runtime_sidebar_tabs, _runtime_node_widgets
-    global _runtime_dom_texts, _runtime_updated_at
+    global _runtime_node_properties, _runtime_dom_texts, _runtime_updated_at
 
     cleaned: List[Dict[str, Any]] = []
     for ext in extensions or []:
@@ -1072,6 +1077,19 @@ def update_runtime_extensions(
         if widgets:
             nw_clean.append({"comfyClass": cls, "widgets": widgets})
 
+    # 节点自定义属性面板文案（字段名 + 下拉候选值）
+    np_clean: List[Dict[str, Any]] = []
+    for np_ in node_properties or []:
+        if not isinstance(np_, dict):
+            continue
+        cls = str(np_.get("comfyClass") or "").strip()
+        if not cls:
+            continue
+        props = [str(x).strip() for x in (np_.get("properties") or [])
+                 if isinstance(x, str) and str(x).strip()]
+        if props:
+            np_clean.append({"comfyClass": cls, "properties": props})
+
     # DOM 全局文案集合（兜底：真实显示过的文案）
     dom_clean: set = set()
     for t in dom_texts or []:
@@ -1083,11 +1101,12 @@ def update_runtime_extensions(
     _runtime_extensions = cleaned
     _runtime_sidebar_tabs = tabs_clean
     _runtime_node_widgets = nw_clean
+    _runtime_node_properties = np_clean
     _runtime_dom_texts = dom_clean
     _runtime_updated_at = time.time()
     logger.info(
-        "运行时数据已更新：扩展 %d / 侧边栏 %d / 节点控件 %d / DOM 文案 %d",
-        len(cleaned), len(tabs_clean), len(nw_clean), len(dom_clean),
+        "运行时数据已更新：扩展 %d / 侧边栏 %d / 节点控件 %d / 节点属性 %d / DOM 文案 %d",
+        len(cleaned), len(tabs_clean), len(nw_clean), len(np_clean), len(dom_clean),
     )
     return len(cleaned)
 
@@ -1173,6 +1192,7 @@ def get_runtime_ui_for_plugin(plugin_name: str) -> Dict[str, Any]:
             "badge_texts": [关于页徽章文案...],
             "sidebar_texts": [侧边栏标签文案...],
             "node_widget_texts": [节点上显示的控件文案...],
+            "node_property_texts": [节点属性面板字段名/下拉候选值...],
             "dom_texts": {DOM 全局文案集合},
             "has_settings": bool,
             "has_menu": bool,
@@ -1188,12 +1208,14 @@ def get_runtime_ui_for_plugin(plugin_name: str) -> Dict[str, Any]:
         "badge_texts": [],
         "sidebar_texts": [],
         "node_widget_texts": [],
+        "node_property_texts": [],
         "dom_texts": set(),
         "has_settings": False,
         "has_menu": False,
     }
 
-    if not (_runtime_extensions or _runtime_sidebar_tabs or _runtime_node_widgets or _runtime_dom_texts):
+    if not (_runtime_extensions or _runtime_sidebar_tabs or _runtime_node_widgets
+            or _runtime_node_properties or _runtime_dom_texts):
         return result
 
     plugin_path = _locate_plugin_path(plugin_name)
@@ -1255,6 +1277,21 @@ def get_runtime_ui_for_plugin(plugin_name: str) -> Dict[str, Any]:
             if w and w not in node_widget_texts:
                 node_widget_texts.append(w)
 
+    # 节点自定义属性面板（字段名/下拉候选值）：
+    # 优先按 RELATIVE_PYTHON_MODULE 归属；前端虚拟节点（如 rgthree）没有后端类，
+    # 再用插件名/注册名与类名做模糊匹配兜底
+    node_property_texts: List[str] = []
+    for np_ in _runtime_node_properties:
+        cls = np_.get("comfyClass", "")
+        belongs = _class_belongs_to_plugin(cls, plugin_name)
+        if not belongs:
+            belongs = _extension_matches_names(cls, [plugin_name] + list(registered_names or []))
+        if not belongs:
+            continue
+        for p in np_.get("properties") or []:
+            if p and p not in node_property_texts:
+                node_property_texts.append(p)
+
     result["settings_texts"] = settings_texts
     result["settings_categories"] = settings_categories
     result["commands_texts"] = commands_texts
@@ -1263,6 +1300,7 @@ def get_runtime_ui_for_plugin(plugin_name: str) -> Dict[str, Any]:
     result["badge_texts"] = badge_texts
     result["sidebar_texts"] = sidebar_texts
     result["node_widget_texts"] = node_widget_texts
+    result["node_property_texts"] = node_property_texts
     result["dom_texts"] = _runtime_dom_texts
     result["has_settings"] = bool(settings_texts)
     result["has_menu"] = bool(menu_hooks) or bool(commands_texts) or bool(menu_texts)
@@ -1643,6 +1681,7 @@ def extract_plugin_menus(plugin_name: str, runtime_ui: Optional[Dict[str, Any]] 
         or bool(runtime_ui.get("menu_texts"))
         or bool(runtime_ui.get("sidebar_texts"))
         or bool(runtime_ui.get("node_widget_texts"))
+        or bool(runtime_ui.get("node_property_texts"))
         or bool(runtime_ui.get("badge_texts"))
     )
     if not has_ui:
@@ -1740,6 +1779,7 @@ def extract_plugin_menus(plugin_name: str, runtime_ui: Optional[Dict[str, Any]] 
         + (runtime_ui.get("badge_texts") or [])
         + (runtime_ui.get("sidebar_texts") or [])
         + (runtime_ui.get("node_widget_texts") or [])
+        + (runtime_ui.get("node_property_texts") or [])
     )
     for text in runtime_texts:
         t = str(text).strip()

@@ -1,0 +1,2554 @@
+{
+    "EndRecordCUDAMemoryHistory": {
+        "title": "停止记录 CUDA 显存历史",
+        "description": "Records CUDA memory allocation history between start and end, saves to a file that can be analyzed here: https://docs.pytorch.org/memory_viz or with VisualizeCUDAMemoryHistory node",
+        "inputs": {
+            "input": "输入"
+        },
+        "outputs": {
+            "input": "输入",
+            "output_path": "输出路径"
+        },
+        "widgets": {
+            "output_path": "输出路径"
+        }
+    },
+    "SUPIRApply": {
+        "title": "SUPIRApply",
+        "inputs": {
+            "restore_cfg_s_tmin": "恢复CFG起始时间步",
+            "model": "模型",
+            "model_patch": "模型补丁",
+            "vae": "Vae",
+            "image": "图像",
+            "strength_start": "起始强度",
+            "strength_end": "结束强度",
+            "restore_cfg": "恢复CFG"
+        }
+    },
+    "Painter": {
+        "title": "Painter",
+        "inputs": {
+            "mask": "蒙版"
+        }
+    },
+    "TextEncodeAceStepAudio1.5": {
+        "title": "TextEncodeAceStepAudio1.5",
+        "inputs": {
+            "lyrics": "歌词",
+            "generate_audio_codes": "生成音频编码",
+            "clip": "CLIP",
+            "tags": "标签",
+            "seed": "随机种子",
+            "bpm": "每分钟节拍数",
+            "duration": "持续时间",
+            "timesignature": "拍号",
+            "language": "语言",
+            "keyscale": "音阶种类",
+            "cfg_scale": "CFG缩放",
+            "temperature": "温度",
+            "top_p": "Top-P采样",
+            "top_k": "Top-K 采样",
+            "min_p": "最小概率阈值"
+        },
+        "widgets": {
+            "Enable the LLM that generates audio codes. This can be slow but will increase the quality of the generated audio. Turn this off if you are giving the model an audio reference.": "启用生成音频编码的大语言模型。这可能会较慢，但会提高生成音频的质量。如果向模型提供音频参考，请关闭此选项。"
+        }
+    },
+    "VAEDecodeLoopKJ": {
+        "title": "VAE 解码循环 KJ",
+        "description": "Video latent VAE decoding to fix artifacts on loop seams.",
+        "inputs": {
+            "samples": "Latent",
+            "The latent to be decoded.": "要解码的潜空间。",
+            "vae": "Vae",
+            "The VAE model used for decoding the latent.": "用于解码潜空间的 VAE 模型。"
+        },
+        "outputs": {
+            "IMAGE": "图像",
+            "The decoded images.": "解码后的图像。"
+        },
+        "widgets": {
+            "overlap_latent_frames": "重叠潜空间帧数",
+            "Number of frames to blend for seamless loop, for Wan 2 works and HunyuanVideo 1.5 should use 4": "用于无缝循环混合的帧数，对于 Wan 2 有效，HunyuanVideo 1.5 应使用 4",
+            "The latent to be decoded.": "要解码的潜空间。",
+            "The VAE model used for decoding the latent.": "用于解码潜空间的 VAE 模型。"
+        }
+    },
+    "GeminiNode": {
+        "title": "Google Gemini",
+        "inputs": {
+            "images": "图像",
+            "audio": "音频",
+            "video": "视频",
+            "files": "文件"
+        },
+        "widgets": {
+            "model": "模型",
+            "seed": "随机种子"
+        }
+    },
+    "LoopIteration": {
+        "title": "循环迭代",
+        "inputs": {
+            "iteration_index": "迭代索引",
+            "is_first": "是否首次",
+            "is_last": "是否最后",
+            "reuse_cache": "重用缓存",
+            "list_item": "列表项",
+            "current_iteration_value": "当前迭代值"
+        }
+    },
+    "HeyGenDecisionYesNo": {
+        "title": "HeyGen 决策（是/否）",
+        "description": "针对文本、图像、音频或视频提出一个是/否问题。将 `result` 连接到 If/Else Switch 节点以在两条路径之间选择。",
+        "inputs": {
+            "model": "模型",
+            "question": "问题",
+            "threshold": "阈值",
+            "images": "图片",
+            "audio_1": "音频_1",
+            "video_1": "视频_1",
+            "text": "文本"
+        },
+        "outputs": {
+            "answer": "答案",
+            "probability": "概率",
+            "result": "人脸解析结果"
+        },
+        "widgets": {
+            "A question with a yes or no answer about what is connected. Ask it so that yes is the case you act on. With several inputs, refer to them as image_1, image_2, audio_1 or video_1, for example 'Does image_2 show the same person as image_1?'": "针对所连接内容提出一个答案为是或否的问题。提问时应使“是”对应你希望执行的情况。若有多个输入，请以 image_1、image_2、audio_1 或 video_1 指代它们，例如“image_2 中的人是否与 image_1 相同？”",
+            "The answer is yes when the probability of yes is at least this value. Clear answers are close to 0 or 1.": "当“是”的概率至少达到此值时，答案为“是”。明确的答案接近 0 或 1。",
+            "Up to 4 images in total, counting every frame of a batch. They are numbered image_1 to image_4 in order across the sockets, so a batch of 2 on the first socket is image_1 and image_2.": "总共最多 4 张图像，计入一批中的每一帧。它们按端口顺序编号为 image_1 到 image_4，因此第一个端口上的一批 2 张图像即为 image_1 和 image_2。",
+            "Audio up to 30 minutes.": "音频最长 30 分钟。",
+            "Video up to 60 seconds.": "视频最长 60 秒。",
+            "The text the question is about, such as a prompt or an LLM response.": "问题所针对的文本，例如提示词或大语言模型的响应。"
+        }
+    },
+    "TextEncodeJoyImageEdit": {
+        "title": "TextEncodeJoyImageEdit",
+        "inputs": {
+            "clip": "CLIP",
+            "vae": "Vae"
+        }
+    },
+    "GeminiDecisionChoice": {
+        "title": "Google Gemini 决策（选择）",
+        "description": "针对文本、图像、音频或视频从你的选项中选择一个。将 `choice` 连接到输入携带选项名称的 Branch 节点，或使用 `option_index`。",
+        "inputs": {
+            "model": "模型",
+            "question": "问题",
+            "options": "ReActor设置组",
+            "images": "图片",
+            "audio": "音频",
+            "video": "视频",
+            "text": "文本"
+        },
+        "outputs": {
+            "choice": "选择",
+            "option_index": "选项索引",
+            "confidence": "置信度"
+        },
+        "widgets": {
+            "The question the options answer. With several inputs, use the socket names, for example 'Which season is shown in image_1?'": "选项所回答的问题。若有多个输入，请使用端口名称，例如“image_1 中显示的是哪个季节？”",
+            "One option per line, used exactly as typed. Add an option such as `other` for inputs that fit none of them.": "每行一个选项，按输入原样使用。为不符合任何选项的输入添加一个如 `other` 的选项。",
+            "Optional image(s) to use as context for the model. Up to 16 images.": "可选的图像，用作模型的上下文。最多 16 张图像。",
+            "Optional audio clip to use as context for the model.": "可选的音频片段，用作模型的上下文。",
+            "Optional video clip to use as context for the model.": "可选的视频片段，用作模型的上下文。",
+            "The text the question is about, such as a prompt or an LLM response.": "问题所针对的文本，例如提示词或大语言模型的响应。"
+        }
+    },
+    "ColorMatchV2": {
+        "title": "颜色匹配 V2",
+        "description": "color-matcher enables color transfer across images which comes in handy for automatic  \ncolor-grading of photographs, paintings and film sequences as well as light-field  \nand stopmotion corrections.  \n\nThe methods behind the mappings are based on the approach from Reinhard et al.,  \nthe Monge-Kantorovich Linearization (MKL) as proposed by Pitie et al. and our analytical solution  \nto a Multi-Variate Gaussian Distribution (MVGD) transfer in conjunction with classical histogram   \nmatching. As shown below our HM-MVGD-HM compound outperforms existing methods.   \nhttps://github.com/hahnec/color-matcher/   \n\n'reinhard_lab_gpu' method uses Kornia for GPU-accelerated color transfer in Lab color space.",
+        "inputs": {
+            "image_target": "目标图像",
+            "image_ref": "参考图像"
+        },
+        "outputs": {
+            "image": "图像"
+        },
+        "widgets": {
+            "method": "方法",
+            "strength": "强度",
+            "multithread": "多线程"
+        }
+    },
+    "WanDancerEncodeAudio": {
+        "title": "WanDancerEncodeAudio"
+    },
+    "MiniMaxH3EasySelectedVideoContext": {
+        "title": "MiniMax H3 简易选定视频上下文",
+        "description": "从选定的候选 VIDEO 准备自定义的单分段或多分段计划。将 H3 上下文连接到分段采样，然后连接到分段细化和分段解码。",
+        "inputs": {
+            "h3_bundle": "H3包",
+            "selected_video": "选定视频",
+            "segment_mode": "分段模式",
+            "segment_cuts": "分段切点",
+            "continuity_mode": "连续性模式",
+            "keyframe_role": "关键帧角色",
+            "ref_image_size": "参考图像尺寸",
+            "reference_mention_mode": "参考提及模式",
+            "prompt_optimizer_settings": "提示词优化器设置",
+            "prompt_optimizer_scene_guide": "提示词优化器场景指南",
+            "context_prompt_optimizer_mode": "上下文提示词优化器模式",
+            "context_prompt_optimizer_concurrency": "上下文提示词优化器并发数",
+            "media": "媒体",
+            "prompt_optimizer_resources": "提示词优化器资源",
+            "prompt_optimizer_marker": "提示词优化器标记",
+            "prompt_optimizer_prompt_connected": "提示词优化器提示词已连接",
+            "media_1": "媒体1",
+            "media_type_1": "媒体类型1",
+            "media_2": "媒体2",
+            "media_type_2": "媒体类型2",
+            "media_3": "媒体3",
+            "media_type_3": "媒体类型3",
+            "media_4": "媒体4",
+            "media_type_4": "媒体类型4",
+            "media_5": "媒体5",
+            "media_type_5": "媒体类型5",
+            "media_6": "媒体6",
+            "media_type_6": "媒体类型6",
+            "media_7": "媒体7",
+            "media_type_7": "媒体类型7",
+            "media_8": "媒体8",
+            "media_type_8": "媒体类型8",
+            "media_9": "媒体9",
+            "media_type_9": "媒体类型9",
+            "media_10": "媒体10",
+            "media_type_10": "媒体类型10",
+            "media_11": "媒体11",
+            "media_type_11": "媒体类型11",
+            "media_12": "媒体12",
+            "media_type_12": "媒体类型12",
+            "media_13": "媒体13",
+            "media_type_13": "媒体类型13",
+            "media_14": "媒体14",
+            "media_type_14": "媒体类型14",
+            "media_15": "媒体15",
+            "media_type_15": "媒体类型15",
+            "mode": "模式",
+            "prompt": "提示词",
+            "context_length": "上下文长度",
+            "advanced": "高级"
+        },
+        "outputs": {
+            "model": "模型",
+            "h3_context": "h3 上下文"
+        }
+    },
+    "GeminiDecisionPickImage": {
+        "title": "Google Gemini 决策（选择图像）",
+        "description": "从一批图像中选择一张。将 `index` 连接到 Get Image from Batch 以保留所选图像。",
+        "inputs": {
+            "model": "模型",
+            "question": "问题",
+            "images": "图片",
+            "text": "文本"
+        },
+        "outputs": {
+            "index": "索引",
+            "confidence": "置信度"
+        },
+        "widgets": {
+            "Which image to pick. Connect the prompt to `text` to pick the image that matches it best.": "要选择哪张图像。将提示词连接到 `text` 以选择最匹配的图像。",
+            "The images to choose from, 2 to 64.": "可供选择的图像，2 到 64 张。",
+            "The text the question is about, such as the prompt the images were made from.": "问题所针对的文本，例如生成这些图像所用的提示词。"
+        }
+    },
+    "LoopResult": {
+        "title": "循环结果",
+        "inputs": {
+            "close_id": "关闭ID"
+        }
+    },
+    "FluxProUltraImageNode": {
+        "title": "Flux 1.1 [pro] Ultra 图像"
+    },
+    "KlingAvatarNode": {
+        "title": "Kling Avatar 2.0",
+        "inputs": {
+            "sound_file": "声音文件",
+            "image": "图像",
+            "mode": "模式",
+            "seed": "随机种子",
+            "prompt": "提示词"
+        }
+    },
+    "ByteDanceSeedreamNode": {
+        "title": "ByteDance Seedream 4.5 & 5.0"
+    },
+    "TextEncodeZImageOmni": {
+        "title": "TextEncodeZImageOmni",
+        "inputs": {
+            "auto_resize_images": "自动调整图像大小",
+            "image_encoder": "图像编码器",
+            "clip": "CLIP",
+            "prompt": "提示词",
+            "vae": "Vae",
+            "image1": "图像 1",
+            "image2": "图像 2",
+            "image3": "图像 3"
+        }
+    },
+    "FluxKontextMaxImageNode": {
+        "title": "Flux.1 Kontext [max] 图像",
+        "inputs": {
+            "input_image": "输入图像"
+        },
+        "widgets": {
+            "aspect_ratio": "宽高比",
+            "guidance": "引导系数",
+            "steps": "生成步数",
+            "seed": "随机种子",
+            "prompt_upsampling": "提示词上采样"
+        }
+    },
+    "SDPPP Get Layer By ID": {
+        "title": "SDPPP 按 ID 获取图层",
+        "inputs": {
+            "document": "文档",
+            "layer_or_group": "图层或组"
+        },
+        "outputs": {
+            "layer_or_group": "图层或组",
+            "layer boundary": "图层边界",
+            "layer_info": "图层信息"
+        }
+    },
+    "WanVideoEnhanceAVideoKJ": {
+        "title": "WanVideo 增强视频（原生）",
+        "description": "https://github.com/NUS-HPC-AI-Lab/Enhance-A-Video",
+        "inputs": {
+            "model": "模型",
+            "latent": "潜空间",
+            "Only used to get the latent count": "仅用于获取潜空间数量"
+        },
+        "outputs": {
+            "model": "模型"
+        },
+        "widgets": {
+            "weight": "权重",
+            "Strength of the enhance effect": "增强效果的强度",
+            "Only used to get the latent count": "仅用于获取潜空间数量"
+        }
+    },
+    "SDPoseFaceBBoxes": {
+        "title": "SDPose 面部边界框",
+        "inputs": {
+            "keypoints": "关键点",
+            "scale": "缩放",
+            "force_square": "强制正方形"
+        },
+        "outputs": {
+            "bboxes": "Bboxes"
+        }
+    },
+    "GeminiNanoBanana2": {
+        "title": "Nano Banana 2",
+        "outputs": {
+            "thought_image": "思考图像"
+        }
+    },
+    "EmptyAceStep1.5LatentAudio": {
+        "title": "空 Ace Step 1.5 潜空间音频",
+        "inputs": {
+            "seconds": "时长（秒）",
+            "batch_size": "批次大小"
+        },
+        "widgets": {
+            "The number of latent images in the batch.": "批次中潜空间图像的数量。"
+        }
+    },
+    "MiniMaxH3EasyOutput": {
+        "title": "MiniMax H3 简易输出",
+        "description": "解包 MiniMax H3 条件、AV 潜空间、VAE 和 FPS。",
+        "inputs": {
+            "h3_context": "h3 上下文"
+        },
+        "outputs": {
+            "positive": "正面条件",
+            "latent": "潜空间",
+            "video_vae": "视频VAE",
+            "audio_vae": "音频VAE",
+            "fps": "帧率"
+        }
+    },
+    "easy isNone": {
+        "title": "是否为None",
+        "outputs": {
+            "boolean": "布尔值"
+        },
+        "widgets": {
+            "any": "任意",
+            "Returns true if the input is None, an empty string, or zero.": "如果输入为 None、空字符串或零，则返回真。"
+        },
+        "description": "如果输入为 None、空字符串或零，则返回真。"
+    },
+    "CFGZeroStarAndInit": {
+        "title": "CFG 零点/初始化",
+        "description": "https://github.com/WeichenFan/CFG-Zero-star",
+        "inputs": {
+            "model": "模型"
+        },
+        "outputs": {
+            "MODEL": "模型"
+        },
+        "widgets": {
+            "use_zero_init": "使用零初始化",
+            "zero_init_steps": "零初始化步数",
+            "for zero init, starts from 0 so first step is always zeroed out if use_zero_init enabled": "对于零初始化，从 0 开始，因此如果启用了 use_zero_init，第一步总是被置零"
+        }
+    },
+    "TorchCompileModelWanVideo": {
+        "title": "Torch编译Wan视频模型",
+        "description": "This node has been replaced with TorchCompileModelAdvanced node, please use that instead.",
+        "inputs": {
+            "model": "模型"
+        },
+        "outputs": {
+            "*": "输出"
+        }
+    },
+    "MiniMaxH3EasyImageLoader": {
+        "title": "MiniMax H3 简易图像加载器",
+        "description": "加载 H3 图像变换器、共享的 H3 文本编码器和专用图像 VAE。",
+        "inputs": {
+            "image_model": "图像模型",
+            "image_vae": "图像VAE",
+            "text_encoder": "文本编码器"
+        },
+        "outputs": {
+            "h3_image_bundle": "H3图像包"
+        }
+    },
+    "TorchCompileModelAdvanced": {
+        "title": "TorchCompileModelAdvanced",
+        "description": "用于扩散模型的高级 torch.compile 修补。",
+        "inputs": {
+            "model": "模型"
+        },
+        "outputs": {
+            "MODEL": "模型"
+        },
+        "widgets": {
+            "backend": "后端",
+            "fullgraph": "全图模式",
+            "Enable full graph mode": "启用全图模式",
+            "mode": "模式",
+            "dynamic": "动态",
+            "Use dynamic shape tracing.": "使用动态形状追踪。",
+            "compile_transformer_blocks_only": "仅编译Transformer块",
+            "Compile only transformer blocks, faster compile and less error prone": "仅编译 transformer 块，编译更快且更不易出错",
+            "dynamo_cache_size_limit": "dynamo缓存大小限制",
+            "debug_compile_keys": "调试编译键",
+            "Print the compile keys used for torch.compile": "打印用于 torch.compile 的编译键",
+            "disable_dynamic_vram": "禁用动态显存",
+            "Disable dynamic VRAM feature as it can cause issues with compile": "禁用动态显存功能，因为它可能导致编译问题"
+        }
+    },
+    "CondPassThrough": {
+        "title": "条件传递",
+        "description": "Simply passes through the positive and negative conditioning,\n    workaround for Set node not allowing bypassed inputs.",
+        "inputs": {
+            "positive": "正面条件",
+            "negative": "负面条件"
+        },
+        "outputs": {
+            "positive": "正面条件",
+            "negative": "负面条件"
+        }
+    },
+    "MiniMaxH3MemoryEfficientSageAttentionPatch": {
+        "title": "MiniMax H3 内存高效 Sage 注意力补丁",
+        "description": "EXPERIMENTAL! Activates custom sageattention on the MiniMax H3 self-attention to reduce peak VRAM usage, overrides the attention mode. Requires latest sageattention version.",
+        "inputs": {
+            "model": "模型"
+        },
+        "outputs": {
+            "model": "模型"
+        }
+    },
+    "TorchCompileModelFluxAdvanced": {
+        "title": "Flux模型Torch编译(高级)",
+        "description": "This node has been replaced with TorchCompileModelAdvanced node, please use that instead.",
+        "inputs": {
+            "model": "模型"
+        },
+        "outputs": {
+            "*": "输出"
+        }
+    },
+    "ColorTransfer": {
+        "title": "转移颜色",
+        "inputs": {
+            "source_stats": "源统计",
+            "source_stats_target_index": "源统计目标索引",
+            "image_target": "目标图像",
+            "image_ref": "参考图像",
+            "method": "方法",
+            "strength": "强度"
+        },
+        "outputs": {
+            "image": "图像"
+        }
+    },
+    "SamplerLCM": {
+        "title": "LCM采样器",
+        "inputs": {
+            "s_noise_end": "结束噪声强度",
+            "noise_clip_std": "噪声裁剪标准差",
+            "s_noise": "s噪波"
+        }
+    },
+    "CFGZeroStar": {
+        "title": "CFGZeroStar",
+        "inputs": {
+            "model": "模型"
+        },
+        "outputs": {
+            "patched_model": "优化后的模型"
+        }
+    },
+    "OpenAIGPTImageSVGNode": {
+        "title": "OpenAI GPT Image 2.6 SVG"
+    },
+    "OpenAIGPTImage1": {
+        "title": "OpenAI GPT Image 1",
+        "inputs": {
+            "mask": "遮罩",
+            "custom_width": "自定义宽度",
+            "custom_height": "自定义高度"
+        }
+    },
+    "SDPPP Get Selection": {
+        "title": "SDPPP 获取选区",
+        "inputs": {
+            "document": "文档",
+            "bound": "边界"
+        },
+        "outputs": {
+            "mask": "蒙版"
+        }
+    },
+    "MiniMaxH3Easy": {
+        "title": "MiniMax H3 简易",
+        "description": "一个 MiniMax H3 节点，用于文本、图像、参考视频和数字人工作流。",
+        "inputs": {
+            "h3_bundle": "H3包",
+            "keyframe_role": "关键帧角色",
+            "ref_image_size": "参考图像尺寸",
+            "reference_mention_mode": "参考提及模式",
+            "prompt_optimizer_settings": "提示词优化器设置",
+            "prompt_optimizer_scene_guide": "提示词优化器场景指南",
+            "media": "媒体",
+            "prompt_optimizer_resources": "提示词优化器资源",
+            "prompt_optimizer_marker": "提示词优化器标记",
+            "prompt_optimizer_prompt_connected": "提示词优化器提示词已连接",
+            "media_1": "媒体1",
+            "media_type_1": "媒体类型1",
+            "media_2": "媒体2",
+            "media_type_2": "媒体类型2",
+            "media_3": "媒体3",
+            "media_type_3": "媒体类型3",
+            "media_4": "媒体4",
+            "media_type_4": "媒体类型4",
+            "media_5": "媒体5",
+            "media_type_5": "媒体类型5",
+            "media_6": "媒体6",
+            "media_type_6": "媒体类型6",
+            "media_7": "媒体7",
+            "media_type_7": "媒体类型7",
+            "media_8": "媒体8",
+            "media_type_8": "媒体类型8",
+            "media_9": "媒体9",
+            "media_type_9": "媒体类型9",
+            "media_10": "媒体10",
+            "media_type_10": "媒体类型10",
+            "media_11": "媒体11",
+            "media_type_11": "媒体类型11",
+            "media_12": "媒体12",
+            "media_type_12": "媒体类型12",
+            "media_13": "媒体13",
+            "media_type_13": "媒体类型13",
+            "media_14": "媒体14",
+            "media_type_14": "媒体类型14",
+            "media_15": "媒体15",
+            "media_type_15": "媒体类型15",
+            "mode": "模式",
+            "prompt": "提示词",
+            "resolution": "分辨率",
+            "aspect_ratio": "宽高比",
+            "width": "宽度",
+            "height": "高度",
+            "seconds": "时长（秒）",
+            "advanced": "高级",
+            "fps": "帧率"
+        },
+        "outputs": {
+            "model": "模型",
+            "h3_context": "h3 上下文"
+        }
+    },
+    "MiniMaxH3EasyContextSegments": {
+        "title": "MiniMax H3 简易上下文分段",
+        "description": "为 MiniMax H3 准备上下文分段计划。选择音频模式；数字人模式使用一个媒体音轨作为锁定的外部驱动，或在未提供音频时回退到正常的生成音频/参考处理。将 H3 上下文输出连接到 MiniMax H3 简易分段采样。",
+        "inputs": {
+            "h3_bundle": "H3包",
+            "audio_mode": "音频模式",
+            "segment_seconds": "分段秒数",
+            "continuity_mode": "连续性模式",
+            "keyframe_role": "关键帧角色",
+            "ref_image_size": "参考图像尺寸",
+            "reference_mention_mode": "参考提及模式",
+            "prompt_optimizer_settings": "提示词优化器设置",
+            "prompt_optimizer_scene_guide": "提示词优化器场景指南",
+            "context_prompt_optimizer_mode": "上下文提示词优化器模式",
+            "context_prompt_optimizer_concurrency": "上下文提示词优化器并发数",
+            "media": "媒体",
+            "prompt_optimizer_resources": "提示词优化器资源",
+            "prompt_optimizer_marker": "提示词优化器标记",
+            "prompt_optimizer_prompt_connected": "提示词优化器提示词已连接",
+            "media_1": "媒体1",
+            "media_type_1": "媒体类型1",
+            "media_2": "媒体2",
+            "media_type_2": "媒体类型2",
+            "media_3": "媒体3",
+            "media_type_3": "媒体类型3",
+            "media_4": "媒体4",
+            "media_type_4": "媒体类型4",
+            "media_5": "媒体5",
+            "media_type_5": "媒体类型5",
+            "media_6": "媒体6",
+            "media_type_6": "媒体类型6",
+            "media_7": "媒体7",
+            "media_type_7": "媒体类型7",
+            "media_8": "媒体8",
+            "media_type_8": "媒体类型8",
+            "media_9": "媒体9",
+            "media_type_9": "媒体类型9",
+            "media_10": "媒体10",
+            "media_type_10": "媒体类型10",
+            "media_11": "媒体11",
+            "media_type_11": "媒体类型11",
+            "media_12": "媒体12",
+            "media_type_12": "媒体类型12",
+            "media_13": "媒体13",
+            "media_type_13": "媒体类型13",
+            "media_14": "媒体14",
+            "media_type_14": "媒体类型14",
+            "media_15": "媒体15",
+            "media_type_15": "媒体类型15",
+            "media_16": "媒体16",
+            "media_type_16": "媒体类型16",
+            "media_17": "媒体17",
+            "media_type_17": "媒体类型17",
+            "media_18": "媒体18",
+            "media_type_18": "媒体类型18",
+            "media_19": "媒体19",
+            "media_type_19": "媒体类型19",
+            "media_20": "媒体20",
+            "media_type_20": "媒体类型20",
+            "media_21": "媒体21",
+            "media_type_21": "媒体类型21",
+            "media_22": "媒体22",
+            "media_type_22": "媒体类型22",
+            "media_23": "媒体23",
+            "media_type_23": "媒体类型23",
+            "media_24": "媒体24",
+            "media_type_24": "媒体类型24",
+            "media_25": "媒体25",
+            "media_type_25": "媒体类型25",
+            "media_26": "媒体26",
+            "media_type_26": "媒体类型26",
+            "media_27": "媒体27",
+            "media_type_27": "媒体类型27",
+            "media_28": "媒体28",
+            "media_type_28": "媒体类型28",
+            "media_29": "媒体29",
+            "media_type_29": "媒体类型29",
+            "media_30": "媒体30",
+            "media_type_30": "媒体类型30",
+            "media_31": "媒体31",
+            "media_type_31": "媒体类型31",
+            "media_32": "媒体32",
+            "media_type_32": "媒体类型32",
+            "media_33": "媒体33",
+            "media_type_33": "媒体类型33",
+            "media_34": "媒体34",
+            "media_type_34": "媒体类型34",
+            "media_35": "媒体35",
+            "media_type_35": "媒体类型35",
+            "media_36": "媒体36",
+            "media_type_36": "媒体类型36",
+            "media_37": "媒体37",
+            "media_type_37": "媒体类型37",
+            "media_38": "媒体38",
+            "media_type_38": "媒体类型38",
+            "media_39": "媒体39",
+            "media_type_39": "媒体类型39",
+            "media_40": "媒体40",
+            "media_type_40": "媒体类型40",
+            "media_41": "媒体41",
+            "media_type_41": "媒体类型41",
+            "media_42": "媒体42",
+            "media_type_42": "媒体类型42",
+            "media_43": "媒体43",
+            "media_type_43": "媒体类型43",
+            "media_44": "媒体44",
+            "media_type_44": "媒体类型44",
+            "media_45": "媒体45",
+            "media_type_45": "媒体类型45",
+            "mode": "模式",
+            "prompt": "提示词",
+            "resolution": "分辨率",
+            "aspect_ratio": "宽高比",
+            "width": "宽度",
+            "height": "高度",
+            "seconds": "时长（秒）",
+            "context_length": "上下文长度",
+            "advanced": "高级",
+            "fps": "帧率"
+        },
+        "outputs": {
+            "model": "模型",
+            "h3_context": "h3 上下文"
+        }
+    },
+    "Send Images To Photoshop": {
+        "title": "SDPPP 发送图像到 Photoshop",
+        "inputs": {
+            "layer_or_group": "图层或组",
+            "bound": "边界",
+            "images": "图片"
+        },
+        "outputs": {
+            "layer_or_group": "图层或组"
+        }
+    },
+    "HeyGenDecisionScore": {
+        "title": "HeyGen 决策（评分）",
+        "description": "对文本、图像、音频或视频按 1 到 10 分进行评分。将 `result` 连接到 If/Else Switch 节点以根据评分执行操作。",
+        "inputs": {
+            "model": "模型",
+            "question": "问题",
+            "threshold": "阈值",
+            "images": "图片",
+            "audio_1": "音频_1",
+            "video_1": "视频_1",
+            "text": "文本"
+        },
+        "outputs": {
+            "score": "评分",
+            "result": "人脸解析结果"
+        },
+        "widgets": {
+            "What to rate, on a scale from 1 to 10. Say what 1 and 10 mean, as in the example.": "要评分的内容，按 1 到 10 分制。请像示例中那样说明 1 分和 10 分的含义。",
+            "`result` is true when the score is at least this value. Clean, sharp images score about 7, badly damaged ones about 3 to 5.": "当评分至少达到此值时，`result` 为真。干净、清晰的图像得分约为 7，严重损坏的图像约为 3 到 5。",
+            "Up to 4 images in total, counting every frame of a batch. They are numbered image_1 to image_4 in order across the sockets, so a batch of 2 on the first socket is image_1 and image_2.": "总共最多 4 张图像，计入一批中的每一帧。它们按端口顺序编号为 image_1 到 image_4，因此第一个端口上的一批 2 张图像即为 image_1 和 image_2。",
+            "Audio up to 30 minutes.": "音频最长 30 分钟。",
+            "Video up to 60 seconds.": "视频最长 60 秒。",
+            "The text the question is about, such as a prompt or an LLM response.": "问题所针对的文本，例如提示词或大语言模型的响应。"
+        }
+    },
+    "SDPPP Get Layers In Group": {
+        "title": "SDPPP 获取组内图层",
+        "inputs": {
+            "layer_or_group": "图层或组",
+            "select": "选择"
+        },
+        "outputs": {
+            "layer_or_group": "图层或组",
+            "layer_boundary": "图层边界",
+            "layer_info": "图层信息"
+        }
+    },
+    "WanVideoMemoryEfficientSageAttentionPatch": {
+        "title": "WanVideo 内存高效 Sage 注意力补丁",
+        "description": "EXPERIMENTAL! Activates custom sageattention on the WanVideo self-attention to reduce peak VRAM usage, overrides the attention mode. Requires latest sageattention version.",
+        "inputs": {
+            "model": "模型"
+        },
+        "outputs": {
+            "model": "模型"
+        }
+    },
+    "easy PassOrNone": {
+        "description": "传递输入，或在输入为 None/未提供时传递默认值；当两个输入均为 None/未提供时输出 None。",
+        "inputs": {
+            "anything": "任何东西"
+        },
+        "widgets": {
+            "Passes the input through, or a default value when input is None/not provided, or outputs None when both inputs are None/not provided.": "传递输入，或在输入为 None/未提供时传递默认值；当两个输入均为 None/未提供时输出 None。",
+            "Optional fallback value to use when the input is None/not provided.": "当输入为 None/未提供时使用的可选回退值。"
+        }
+    },
+    "VOIDWarpedNoiseSource": {
+        "title": "VOIDWarpedNoiseSource",
+        "inputs": {
+            "warped_noise": "扭曲噪声"
+        }
+    },
+    "LTXVEnhanceAVideoKJ": {
+        "title": "LTXV 增强视频 KJ",
+        "description": "https://github.com/NUS-HPC-AI-Lab/Enhance-A-Video",
+        "inputs": {
+            "model": "模型",
+            "latent": "潜空间",
+            "Only used to get the latent count": "仅用于获取潜空间数量"
+        },
+        "outputs": {
+            "model": "模型"
+        },
+        "widgets": {
+            "weight": "权重",
+            "Strength of the enhance effect": "增强效果的强度",
+            "Only used to get the latent count": "仅用于获取潜空间数量"
+        }
+    },
+    "UltimateSDUpscaleNoUpscale": {
+        "title": "SD放大(不放大)",
+        "inputs": {
+            "upscaled_image": "放大图像",
+            "model": "模型",
+            "positive": "正面条件",
+            "negative": "负面条件",
+            "vae": "Vae",
+            "cfg": "CFG",
+            "batch_size": "批次大小"
+        },
+        "widgets": {
+            "seed": "随机种",
+            "control_after_generate": "运行后操作",
+            "fixed": "固定",
+            "increment": "增加",
+            "decrement": "减少",
+            "randomize": "随机",
+            "steps": "步数",
+            "cfg": "CFG",
+            "sampler_name": "采样器",
+            "scheduler": "调度器",
+            "denoise": "降噪",
+            "mode_type": "模式类型",
+            "Linear": "线性",
+            "Chess": "棋盘格",
+            "None": "无",
+            "tile_width": "分块宽度",
+            "tile_height": "分块高度",
+            "mask_blur": "模糊",
+            "tile_padding": "分块分区",
+            "seam_fix_mode": "接缝修复模式",
+            "Band Pass": "仅接触",
+            "Half Tile": "偏移半块",
+            "Half Tile + Intersections": "偏移半块+径向交叉",
+            "seam_fix_denoise": "接缝修复降噪",
+            "seam_fix_width": "接缝修复宽度",
+            "seam_fix_mask_blur": "接缝修复模糊",
+            "seam_fix_padding": "接缝修复分区",
+            "force_uniform_tiles": "强制统一分块",
+            "tiled_decode": "分块解码",
+            "The image to upscale.": "要放大的图像。",
+            "The model to use for image-to-image.": "用于图生图的模型。",
+            "The positive conditioning for each tile.": "每个分块的正面条件。",
+            "The negative conditioning for each tile.": "每个分块的负面条件。",
+            "The VAE model to use for tiles.": "用于分块的 VAE 模型。",
+            "The seed to use for image-to-image.": "用于图生图的种子。",
+            "The number of steps to use for each tile.": "每个分块使用的步数。",
+            "The CFG scale to use for each tile.": "每个分块使用的 CFG 引导系数。",
+            "The sampler to use for each tile.": "每个分块使用的采样器。",
+            "The scheduler to use for each tile.": "每个分块使用的调度器。",
+            "The denoising strength to use for each tile.": "每个分块使用的降噪强度。",
+            "The tiling order to use for the redraw step.": "重绘步骤使用的分块顺序。",
+            "The width of each tile.": "每个分块的宽度。",
+            "The height of each tile.": "每个分块的高度。",
+            "The blur radius for the mask.": "遮罩的模糊半径。",
+            "The padding to apply between tiles.": "分块之间应用的内边距。",
+            "The seam fix mode to use.": "使用的接缝修复模式。",
+            "The denoising strength to use for the seam fix.": "接缝修复使用的降噪强度。",
+            "The width of the bands used for the Band Pass seam fix mode.": "Band Pass 接缝修复模式使用的条带宽度。",
+            "The blur radius for the seam fix mask.": "接缝修复遮罩的模糊半径。",
+            "The padding to apply for the seam fix tiles.": "接缝修复分块应用的内边距。",
+            "Force all tiles to be the same as the set tile size, even when tiles could be smaller. This can help prevent the model from working with irregular tile sizes.": "强制所有分块与设定的分块尺寸相同，即使分块本可以更小。这有助于防止模型处理不规则的分块尺寸。",
+            "Whether to use tiled decoding when decoding tiles.": "解码分块时是否使用分块解码。",
+            "The number of tiles to process in a batch. Higher values can reduce processing time but use more VRAM. Yields different results than individual tiles. Only affects the main redraw step, not the seam fix step.": "一批中处理的分块数量。较高的值可减少处理时间，但会占用更多显存。与逐个处理分块的结果不同。仅影响主重绘步骤，不影响接缝修复步骤。"
+        },
+        "outputs": {
+            "IMAGE": "图像"
+        },
+        "description": "对输入图像的分块执行图生图。"
+    },
+    "VOIDInpaintConditioning": {
+        "title": "VOIDInpaintConditioning",
+        "inputs": {
+            "quadmask": "四边形遮罩",
+            "positive": "正面条件",
+            "negative": "负面条件",
+            "vae": "Vae",
+            "video": "视频",
+            "width": "宽度",
+            "height": "高度",
+            "length": "长度",
+            "batch_size": "批次大小"
+        },
+        "outputs": {
+            "positive": "正面条件",
+            "negative": "负面条件",
+            "latent": "潜空间"
+        }
+    },
+    "TorchCompileModelHyVideo": {
+        "title": "Torch编译混合视频模型",
+        "description": "This node has been replaced with TorchCompileModelAdvanced node, please use that instead.",
+        "inputs": {
+            "model": "模型"
+        },
+        "outputs": {
+            "*": "输出"
+        }
+    },
+    "EasyCache": {
+        "title": "EasyCache"
+    },
+    "ReferenceTimbreAudio": {
+        "title": "设置参考音频"
+    },
+    "FreeU_V2": {
+        "title": "FreeU_V2",
+        "inputs": {
+            "b1": "B1",
+            "b2": "B2",
+            "s1": "S1",
+            "s2": "S2"
+        }
+    },
+    "WanVideoNAG": {
+        "title": "WanVideo NAG",
+        "description": "https://github.com/ChenDarYen/Normalized-Attention-Guidance",
+        "inputs": {
+            "model": "模型",
+            "conditioning": "条件"
+        },
+        "outputs": {
+            "model": "模型"
+        },
+        "widgets": {
+            "nag_scale": "NAG缩放",
+            "Strength of negative guidance effect": "负面引导效果的强度",
+            "nag_alpha": "网络_alpha",
+            "Mixing coefficient in that controls the balance between the normalized guided representation and the original positive representation.": "控制归一化引导表示与原始正面表示之间平衡的混合系数。",
+            "nag_tau": "网络_tau",
+            "Clipping threshold that controls how much the guided attention can deviate from the positive attention.": "控制引导注意力与正面注意力偏差程度的裁剪阈值。",
+            "input_type": "输入类型",
+            "Type of the model input": "模型输入类型",
+            "inplace": "原地操作",
+            "If true, modifies tensors in place to save memory. Leads to different numerical results which may change the output slightly.": "如果为 true，则原地修改张量以节省内存。会导致不同的数值结果，可能略微改变输出。"
+        }
+    },
+    "MiniMaxH3EasyModelAdapter": {
+        "title": "MiniMax H3 简易模型适配器",
+        "description": "将标准 ComfyUI MODEL、CLIP 和 VAE 输出组装为 MiniMax H3 包。",
+        "inputs": {
+            "fl2va_model": "FL2VA模型",
+            "ref2va_model": "REF2VA模型",
+            "text_encoder": "文本编码器",
+            "video_vae": "视频VAE",
+            "audio_vae": "音频VAE"
+        },
+        "outputs": {
+            "h3_bundle": "H3包"
+        }
+    },
+    "LoopProgress": {
+        "title": "循环进度",
+        "inputs": {
+            "start_id": "起始ID",
+            "position": "位置",
+            "total": "总量"
+        }
+    },
+    "SDPPP Get Text From Layer": {
+        "title": "SDPPP 从图层获取文本",
+        "inputs": {
+            "layer_or_group": "图层或组"
+        },
+        "outputs": {
+            "text": "文本"
+        }
+    },
+    "TorchCompileModelFluxAdvancedV2": {
+        "title": "TorchCompileModelFluxAdvancedV2",
+        "description": "已弃用，请改用 TorchCompileModelAdvanced。",
+        "inputs": {
+            "model": "模型"
+        },
+        "outputs": {
+            "MODEL": "模型"
+        },
+        "widgets": {
+            "backend": "后端",
+            "fullgraph": "全图模式",
+            "Enable full graph mode": "启用全图模式",
+            "mode": "模式",
+            "double_blocks": "双区块",
+            "Compile double blocks": "编译双块",
+            "single_blocks": "单区块",
+            "Compile single blocks": "编译单块",
+            "dynamic": "动态",
+            "Enable dynamic mode": "启用动态模式",
+            "dynamo_cache_size_limit": "dynamo缓存大小限制",
+            "force_parameter_static_shapes": "强制参数静态形状"
+        }
+    },
+    "LTX2_NAG": {
+        "title": "LTX2 NAG",
+        "description": "https://github.com/ChenDarYen/Normalized-Attention-Guidance",
+        "inputs": {
+            "model": "模型",
+            "nag_cond_video": "NAG 视频条件",
+            "nag_cond_audio": "NAG 音频条件"
+        },
+        "outputs": {
+            "model": "模型"
+        },
+        "widgets": {
+            "nag_scale": "NAG缩放",
+            "Strength of negative guidance effect": "负面引导效果的强度",
+            "nag_alpha": "网络_alpha",
+            "Mixing coefficient in that controls the balance between the normalized guided representation and the original positive representation.": "控制归一化引导表示与原始正面表示之间平衡的混合系数。",
+            "nag_tau": "网络_tau",
+            "Clipping threshold that controls how much the guided attention can deviate from the positive attention.": "控制引导注意力与正面注意力偏差程度的裁剪阈值。",
+            "inplace": "原地操作",
+            "If true, modifies tensors in place to save memory. Leads to different numerical results which may change the output slightly.": "如果为 true，则原地修改张量以节省内存。会导致不同的数值结果，可能略微改变输出。"
+        }
+    },
+    "MiniMaxH3EasySegmentRender": {
+        "title": "MiniMax H3 简易分段采样",
+        "description": "使用 MotionContext 风格的潜空间连续性对上下文分段计划进行采样。将结果连接到分段解码以预览，或连接到分段细化以进行逐段二次细化。",
+        "inputs": {
+            "segment_seeds": "分段种子",
+            "sampling_plan": "采样计划",
+            "h3_context": "h3 上下文",
+            "model": "模型",
+            "sampler": "采样器",
+            "sigmas": "噪声调度",
+            "seed": "随机种子"
+        },
+        "outputs": {
+            "segments": "分段数"
+        }
+    },
+    "SDPoseKeypointExtractor": {
+        "title": "SDPose 关键点提取器",
+        "inputs": {
+            "model": "模型",
+            "vae": "Vae",
+            "image": "图像",
+            "batch_size": "批次大小",
+            "bboxes": "Bboxes"
+        },
+        "outputs": {
+            "keypoints": "关键点"
+        }
+    },
+    "EmptyARVideoLatent": {
+        "title": "空AR视频潜空间",
+        "inputs": {
+            "width": "宽度",
+            "height": "高度",
+            "length": "长度",
+            "batch_size": "批次大小"
+        }
+    },
+    "UltimateSDUpscale": {
+        "title": "SD放大",
+        "inputs": {
+            "image": "图像",
+            "model": "模型",
+            "positive": "正面条件",
+            "negative": "负面条件",
+            "vae": "Vae",
+            "upscale_model": "放大模型",
+            "cfg": "CFG",
+            "batch_size": "批次大小"
+        },
+        "widgets": {
+            "upscale_by": "放大系数",
+            "seed": "随机种",
+            "control_after_generate": "运行后操作",
+            "fixed": "固定",
+            "increment": "增加",
+            "decrement": "减少",
+            "randomize": "随机",
+            "steps": "步数",
+            "cfg": "CFG",
+            "sampler_name": "采样器",
+            "scheduler": "调度器",
+            "denoise": "降噪",
+            "mode_type": "模式类型",
+            "Linear": "线性",
+            "Chess": "棋盘格",
+            "None": "无",
+            "tile_width": "分块宽度",
+            "tile_height": "分块高度",
+            "mask_blur": "模糊",
+            "tile_padding": "分块分区",
+            "seam_fix_mode": "接缝修复模式",
+            "Band Pass": "仅接触",
+            "Half Tile": "偏移半块",
+            "Half Tile + Intersections": "偏移半块+径向交叉",
+            "seam_fix_denoise": "接缝修复降噪",
+            "seam_fix_width": "接缝修复宽度",
+            "seam_fix_mask_blur": "接缝修复模糊",
+            "seam_fix_padding": "接缝修复分区",
+            "force_uniform_tiles": "强制统一分块",
+            "tiled_decode": "分块解码",
+            "The image to upscale.": "要放大的图像。",
+            "The model to use for image-to-image.": "用于图生图的模型。",
+            "The positive conditioning for each tile.": "每个分块的正面条件。",
+            "The negative conditioning for each tile.": "每个分块的负面条件。",
+            "The VAE model to use for tiles.": "用于分块的 VAE 模型。",
+            "The factor to upscale the image by.": "图像放大倍数。",
+            "The seed to use for image-to-image.": "用于图生图的种子。",
+            "The number of steps to use for each tile.": "每个分块使用的步数。",
+            "The CFG scale to use for each tile.": "每个分块使用的 CFG 引导系数。",
+            "The sampler to use for each tile.": "每个分块使用的采样器。",
+            "The scheduler to use for each tile.": "每个分块使用的调度器。",
+            "The denoising strength to use for each tile.": "每个分块使用的降噪强度。",
+            "The upscaler model for upscaling the image.": "用于放大图像的放大器模型。",
+            "The tiling order to use for the redraw step.": "重绘步骤使用的分块顺序。",
+            "The width of each tile.": "每个分块的宽度。",
+            "The height of each tile.": "每个分块的高度。",
+            "The blur radius for the mask.": "遮罩的模糊半径。",
+            "The padding to apply between tiles.": "分块之间应用的内边距。",
+            "The seam fix mode to use.": "使用的接缝修复模式。",
+            "The denoising strength to use for the seam fix.": "接缝修复使用的降噪强度。",
+            "The width of the bands used for the Band Pass seam fix mode.": "Band Pass 接缝修复模式使用的条带宽度。",
+            "The blur radius for the seam fix mask.": "接缝修复遮罩的模糊半径。",
+            "The padding to apply for the seam fix tiles.": "接缝修复分块应用的内边距。",
+            "Force all tiles to be the same as the set tile size, even when tiles could be smaller. This can help prevent the model from working with irregular tile sizes.": "强制所有分块与设定的分块尺寸相同，即使分块本可以更小。这有助于防止模型处理不规则的分块尺寸。",
+            "Whether to use tiled decoding when decoding tiles.": "解码分块时是否使用分块解码。",
+            "The number of tiles to process in a batch. Higher values can reduce processing time but use more VRAM. Yields different results than individual tiles. Only affects the main redraw step, not the seam fix step.": "一批中处理的分块数量。较高的值可减少处理时间，但会占用更多显存。与逐个处理分块的结果不同。仅影响主重绘步骤，不影响接缝修复步骤。"
+        },
+        "outputs": {
+            "IMAGE": "图像"
+        },
+        "description": "放大图像，并对输入图像的分块执行图生图。"
+    },
+    "ModelMergeKrea2": {
+        "title": "ModelMergeKrea2",
+        "inputs": {
+            "model1": "模型1",
+            "model2": "模型2"
+        }
+    },
+    "MiniMaxH3EasySegmentStep": {
+        "title": "MiniMax H3 简易分段步骤",
+        "description": "处理一个上下文分段。仅将采样设置连接到第一个步骤，然后通过前一分段链接每个后续步骤。分段顺序从链中推断；可选择仅覆盖此分段的提示词。",
+        "inputs": {
+            "previous_segment": "前一分段",
+            "prompt_override": "提示词覆盖",
+            "sample_setup": "采样设置",
+            "seed": "随机种子"
+        },
+        "outputs": {
+            "segment": "segment分割"
+        }
+    },
+    "MiniMaxH3EasyImage": {
+        "title": "MiniMax H3 简易图像",
+        "description": "H3 图像：无参考的文生图，带参考的图像编辑。将 H3 图像上下文连接到简易图像输出，然后使用标准采样器，6 步，CFG 1，Euler / Simple。",
+        "inputs": {
+            "h3_image_bundle": "H3图像包",
+            "ref_image_size": "参考图像尺寸",
+            "reference_mention_mode": "参考提及模式",
+            "prompt_optimizer_settings": "提示词优化器设置",
+            "media": "媒体",
+            "prompt_optimizer_resources": "提示词优化器资源",
+            "prompt_optimizer_marker": "提示词优化器标记",
+            "prompt_optimizer_prompt_connected": "提示词优化器提示词已连接",
+            "media_1": "媒体1",
+            "media_type_1": "媒体类型1",
+            "media_2": "媒体2",
+            "media_type_2": "媒体类型2",
+            "media_3": "媒体3",
+            "media_type_3": "媒体类型3",
+            "media_4": "媒体4",
+            "media_type_4": "媒体类型4",
+            "media_5": "媒体5",
+            "media_type_5": "媒体类型5",
+            "media_6": "媒体6",
+            "media_type_6": "媒体类型6",
+            "media_7": "媒体7",
+            "media_type_7": "媒体类型7",
+            "media_8": "媒体8",
+            "media_type_8": "媒体类型8",
+            "media_9": "媒体9",
+            "media_type_9": "媒体类型9",
+            "media_10": "媒体10",
+            "media_type_10": "媒体类型10",
+            "media_11": "媒体11",
+            "media_type_11": "媒体类型11",
+            "media_12": "媒体12",
+            "media_type_12": "媒体类型12",
+            "media_13": "媒体13",
+            "media_type_13": "媒体类型13",
+            "media_14": "媒体14",
+            "media_type_14": "媒体类型14",
+            "media_15": "媒体15",
+            "media_type_15": "媒体类型15",
+            "media_16": "媒体16",
+            "media_type_16": "媒体类型16",
+            "prompt": "提示词",
+            "resolution": "分辨率",
+            "aspect_ratio": "宽高比",
+            "width": "宽度",
+            "height": "高度",
+            "advanced": "高级"
+        },
+        "outputs": {
+            "h3_image_context": "H3图像上下文",
+            "model": "模型"
+        },
+        "widgets": {
+            "Official strategy keeps the VAE reference short edge within 1024-2048 pixels. Fixed short-edge modes resize it to 1024, 1536 or 2048 pixels, including upscaling small pictures. Text-encoder references always use a 1024-pixel short edge. Independent of output resolution.": "官方策略将 VAE 参考短边保持在 1024-2048 像素范围内。固定短边模式会将其调整为 1024、1536 或 2048 像素，包括放大小图。文本编码器参考始终使用 1024 像素短边。与输出分辨率无关。"
+        }
+    },
+    "SDPPP Get Document": {
+        "title": "SDPPP 获取文档",
+        "inputs": {
+            "document_name": "文档名称"
+        },
+        "outputs": {
+            "document": "文档",
+            "document boundary": "文档边界",
+            "selection boundary": "选区边界"
+        }
+    },
+    "IdeogramV3": {
+        "title": "Ideogram V3",
+        "inputs": {
+            "image": "图像",
+            "mask": "遮罩"
+        },
+        "widgets": {
+            "aspect_ratio": "宽高比",
+            "resolution": "分辨率",
+            "magic_prompt_option": "魔法提示词选项",
+            "seed": "随机种子",
+            "num_images": "生成图像数量",
+            "rendering_speed": "渲染速度"
+        }
+    },
+    "MiniMaxH3EasyMediaSplitter": {
+        "title": "MiniMax H3 简易媒体拆分器",
+        "description": "将一个媒体包拆分为标准 IMAGE、VIDEO 和 AUDIO 输出。设置数量以暴露下游要使用的资源；选择缺失的请求输出应保持原始阻断分支行为还是返回 None。",
+        "inputs": {
+            "media_bundle": "媒体包",
+            "video_count": "视频数量",
+            "audio_count": "音频数量",
+            "empty_output_mode": "空输出模式",
+            "image_count": "图像数量"
+        },
+        "outputs": {
+            "image_21": "图像21",
+            "image_22": "图像22",
+            "image_23": "图像23",
+            "image_24": "图像24",
+            "image_25": "图像25",
+            "image_26": "图像26",
+            "image_27": "图像27",
+            "video_2": "视频2",
+            "video_3": "视频3",
+            "video_4": "视频4",
+            "video_5": "视频5",
+            "video_6": "视频6",
+            "video_7": "视频7",
+            "video_8": "视频8",
+            "video_9": "视频9",
+            "audio_5": "音频5",
+            "audio_6": "音频6",
+            "audio_7": "音频7",
+            "audio_8": "音频8",
+            "audio_9": "音频9",
+            "image_1": "图像1",
+            "image_2": "图像2",
+            "image_3": "图像_3",
+            "image_4": "图像_4",
+            "image_5": "图像_5",
+            "image_6": "图像_6",
+            "image_7": "图像_7",
+            "image_8": "图像_8",
+            "image_9": "图像_9",
+            "image_10": "图像_10",
+            "image_11": "图像 11",
+            "image_12": "图像 12",
+            "image_13": "图像 13",
+            "image_14": "图像 14",
+            "image_15": "图像 15",
+            "image_16": "图像 16",
+            "image_17": "图像 17",
+            "image_18": "图像 18",
+            "image_19": "图像 19",
+            "image_20": "图像 20",
+            "video_1": "视频_1",
+            "audio_1": "音频_1",
+            "audio_2": "音频_2",
+            "audio_3": "音频_3",
+            "audio_4": "音频_4"
+        }
+    },
+    "MiniMaxH3EasyLoader": {
+        "title": "MiniMax H3 简易加载器",
+        "description": "加载任一或两个 MiniMax H3 变换器，以及文本编码器和两个 AV VAE。",
+        "inputs": {
+            "fl2va_model": "FL2VA模型",
+            "ref2va_model": "REF2VA模型",
+            "text_encoder": "文本编码器",
+            "video_vae": "视频VAE",
+            "audio_vae": "音频VAE"
+        },
+        "outputs": {
+            "h3_bundle": "H3包"
+        }
+    },
+    "MiniMaxH3EasyMediaLoader": {
+        "title": "MiniMax H3 简易媒体加载器",
+        "description": "按显示顺序从 ComfyUI 输入加载启用的图像、音频和视频参考。禁用的媒体保留在保存列表中而不加载。视频组件通过 ComfyUI 的节点缓存重用。",
+        "inputs": {
+            "media_state": "媒体状态"
+        },
+        "outputs": {
+            "media_bundle": "媒体包"
+        }
+    },
+    "ModelPatchTorchSettings": {
+        "title": "模型补丁 Torch 设置",
+        "description": "Adds callbacks to model to set torch settings before and after running the model.",
+        "inputs": {
+            "model": "模型"
+        },
+        "outputs": {
+            "MODEL": "模型"
+        },
+        "widgets": {
+            "enable_fp16_accumulation": "启用FP16累加",
+            "Enable torch.backends.cuda.matmul.allow_fp16_accumulation, requires pytorch 2.7.0 nightly.": "启用 torch.backends.cuda.matmul.allow_fp16_accumulation，需要 pytorch 2.7.0 夜间版。"
+        }
+    },
+    "GetLatentRangeFromBatch": {
+        "title": "获取Latent范围",
+        "description": "Returns a range of latents from a batch.",
+        "inputs": {
+            "latents": "Latents"
+        },
+        "outputs": {
+            "LATENT": "Latent"
+        },
+        "widgets": {
+            "start_index": "开始索引",
+            "num_frames": "帧数"
+        }
+    },
+    "VHS_SelectLatest": {
+        "title": "选择最新 🎥🅥🅗🅢",
+        "description": "选择最新 🎥🅥🅗🅢<div style=\"font-size: 0.8em\"><div id=VHS_shortdesc>实验性虚拟节点，用于从给定文件夹中选择最近修改的文件</div></div><div style=\"font-size: 0.8em\">协助创建工作流，使一次执行的输出可在后续执行的其他位置使用。</div><div style=\"font-size: 0.8em\"><div vhs_title=\"Inputs\" style=\"display: flex; font-size: 0.8em\" class=\"VHS_collapse\"><div style=\"color: #AAA; height: 1.5em;\">[<span style=\"font-family: monospace\">-</span>]</div><div style=\"width: 100%\">输入：<div vhs_title=\"filename_prefix\" style=\"display: flex; font-size: 1em\" class=\"VHS_collapse\"><div style=\"color: #AAA; height: 1.5em;\">[<span style=\"font-family: monospace\">-</span>]</div><div style=\"width: 100%\">filename_prefix：可由文件夹和前缀组合而成的路径，候选文件必须匹配该前缀</div></div><div vhs_title=\"filename_postfix\" style=\"display: flex; font-size: 1em\" class=\"VHS_collapse\"><div style=\"color: #AAA; height: 1.5em;\">[<span style=\"font-family: monospace\">-</span>]</div><div style=\"width: 100%\">filename_postfix：所选文件必须以其结尾的字符串。可用于限制为目标扩展名。</div></div></div></div><div vhs_title=\"Outputs\" style=\"display: flex; font-size: 0.8em\" class=\"VHS_collapse\"><div style=\"color: #AAA; height: 1.5em;\">[<span style=\"font-family: monospace\">-</span>]</div><div style=\"width: 100%\">输出：<div vhs_title=\"Filename\" style=\"display: flex; font-size: 1em\" class=\"VHS_collapse\"><div style=\"color: #AAA; height: 1.5em;\">[<span style=\"font-family: monospace\">-</span>]</div><div style=\"width: 100%\">Filename：表示最近修改文件路径的字符串。</div></div></div></div></div>",
+        "inputs": {
+            "filename_postfix": "文件名后缀",
+            "filename_prefix": "文件名前缀"
+        },
+        "outputs": {
+            "Filename": "文件名"
+        }
+    },
+    "OpenRouterLLMNode": {
+        "title": "OpenRouter LLM",
+        "inputs": {
+            "model_reasoning_effort": "模型推理强度",
+            "model_images": "模型图像",
+            "model_videos": "模型视频",
+            "model_search_context_size": "模型搜索上下文大小",
+            "prompt": "提示词",
+            "model": "模型",
+            "seed": "随机种子",
+            "system_prompt": "系统提示"
+        }
+    },
+    "ResizeImagesByShorterEdge": {
+        "title": "按短边调整图像大小（已弃用）"
+    },
+    "MiniMaxH3EasySegmentRefine": {
+        "title": "MiniMax H3 简易分段细化",
+        "description": "对每个上下文分段执行分辨率感知的二次处理。每个分段保留自己的提示词和媒体参考，然后将其细化后的尾部传递给下一分段。使用 tiled_low_vram 以空间分块方式采样高分辨率分段。",
+        "inputs": {
+            "refine_mode": "细化模式",
+            "refine_execution": "细化执行",
+            "latent_upscale_scale": "潜空间放大比例",
+            "latent_upscale_device": "潜空间放大设备",
+            "latent_upscale_precision": "潜空间放大精度",
+            "tile_fade": "分块淡入淡出",
+            "segment_seeds": "分段种子",
+            "h3_context": "h3 上下文",
+            "segments": "分段数",
+            "model": "模型",
+            "sampler": "采样器",
+            "sigmas": "噪声调度",
+            "seed": "随机种子",
+            "target_width": "目标宽度",
+            "target_height": "目标高度",
+            "latent_upscale_model": "潜空间放大模型",
+            "tile_width": "瓦片宽度",
+            "tile_height": "瓦片高度",
+            "tile_overlap": "分块重叠"
+        },
+        "outputs": {
+            "refined_segments": "细化分段"
+        }
+    },
+    "VeedFabricNode": {
+        "title": "VEED Fabric 1.0",
+        "inputs": {
+            "model_image": "模型图像",
+            "model_audio": "模型音频"
+        }
+    },
+    "LtxApiVideoReframe": {
+        "title": "LTX Video Reframe",
+        "inputs": {
+            "placement_x": "放置X坐标",
+            "placement_y": "放置Y坐标",
+            "placement_width": "放置宽度"
+        }
+    },
+    "LatentInpaintTTM": {
+        "title": "潜空间修复 TTM",
+        "description": "https://github.com/time-to-move/TTM",
+        "inputs": {
+            "model": "模型",
+            "mask": "蒙版",
+            "Latent mask where white (1.0) is the area to inpaint and black (0.0) is the area to keep unchanged.": "潜空间蒙版，其中白色 (1.0) 为要修复的区域，黑色 (0.0) 为保持不变的区域。"
+        },
+        "outputs": {
+            "MODEL": "模型"
+        },
+        "widgets": {
+            "steps": "步进",
+            "Number of steps to apply TTM inpainting for.": "应用 TTM 修复的步数。",
+            "Latent mask where white (1.0) is the area to inpaint and black (0.0) is the area to keep unchanged.": "潜空间蒙版，其中白色 (1.0) 为要修复的区域，黑色 (0.0) 为保持不变的区域。"
+        }
+    },
+    "ConsolidateMasksKJ": {
+        "title": "合并蒙版",
+        "description": "Consolidates a batch of separate masks by finding the largest group of masks that fit inside a tile of the given width and height (including the padding), and repeating until no more masks can be combined.",
+        "inputs": {
+            "masks": "遮罩"
+        },
+        "outputs": {
+            "MASK": "遮罩"
+        },
+        "widgets": {
+            "width": "宽度",
+            "height": "高度",
+            "padding": "分区"
+        }
+    },
+    "SDPoseDrawKeypoints": {
+        "title": "SDPose 绘制关键点",
+        "inputs": {
+            "draw_face": "绘制面部",
+            "face_point_size": "面部点大小",
+            "keypoints": "关键点",
+            "draw_body": "绘制身体关键点",
+            "draw_hands": "绘制手部关键点",
+            "draw_feet": "绘制脚部关键点",
+            "stick_width": "关键点线宽",
+            "score_threshold": "分数阈值"
+        }
+    },
+    "WanVideoTeaCacheKJ": {
+        "title": "WanVideo Tea Cache（原生）",
+        "description": "DEPRECATED, use the native EasyCache or alternative custom node that's up to date instead of this.",
+        "inputs": {
+            "model": "模型"
+        },
+        "outputs": {
+            "model": "模型"
+        },
+        "widgets": {
+            "rel_l1_thresh": "相对L1阈值",
+            "Threshold for to determine when to apply the cache, compromise between speed and accuracy. When using coefficients a good value range is something between 0.2-0.4 for all but 1.3B model, which should be about 10 times smaller, same as when not using coefficients.": "用于确定何时应用缓存的阈值，在速度和精度之间进行权衡。使用系数时，除 1.3B 模型外，合适的值范围约为 0.2-0.4，1.3B 模型应约小 10 倍，与不使用系数时相同。",
+            "start_percent": "起始百分比",
+            "The start percentage of the steps to use with TeaCache.": "使用 TeaCache 的步数起始百分比。",
+            "end_percent": "结束百分比",
+            "The end percentage of the steps to use with TeaCache.": "使用 TeaCache 的步数结束百分比。",
+            "cache_device": "缓存设备",
+            "Device to cache to": "缓存设备",
+            "coefficients": "系数",
+            "Coefficients for rescaling the relative l1 distance, if disabled the threshold value should be about 10 times smaller than the value used with coefficients.": "用于重新缩放相对 l1 距离的系数，如果禁用，阈值应比使用系数时的值约小 10 倍。"
+        }
+    },
+    "CLIP Text Encode PS Regional": {
+        "title": "CLIP 文本编码 PS 区域",
+        "inputs": {
+            "clip": "CLIP",
+            "texts": "文本",
+            "masks": "遮罩",
+            "strengths": "强度"
+        },
+        "widgets": {
+            "The CLIP model used for encoding the text. only use the first one.": "用于编码文本的 CLIP 模型。仅使用第一个。",
+            "The text to be encoded.": "要编码的文本。"
+        }
+    },
+    "WanInfiniteTalkToVideo": {
+        "title": "WanInfiniteTalkToVideo",
+        "inputs": {
+            "mode_audio_encoder_output_2": "模式音频编码器输出2",
+            "mode_mask_1": "模式遮罩1",
+            "mode_mask_2": "模式遮罩2",
+            "vae": "Vae"
+        },
+        "outputs": {
+            "latent": "潜空间"
+        }
+    },
+    "easy stableDiffusion3API": {
+        "title": "StableDiffusion 3 API",
+        "inputs": {
+            "optional_image": "图像（可选）"
+        },
+        "outputs": {
+            "image": "图像"
+        },
+        "widgets": {
+            "positive": "正面条件",
+            "negative": "负面条件",
+            "model": "模型",
+            "aspect_ratio": "宽高比",
+            "seed": "随机种子",
+            "denoise": "降噪强度"
+        }
+    },
+    "GeminiDecisionYesNo": {
+        "title": "Google Gemini 决策（是/否）",
+        "description": "针对文本、图像、音频或视频提出一个是/否问题。将 `result` 连接到 If/Else Switch 节点以在两条路径之间选择。",
+        "inputs": {
+            "model": "模型",
+            "question": "问题",
+            "threshold": "阈值",
+            "images": "图片",
+            "audio": "音频",
+            "video": "视频",
+            "text": "文本"
+        },
+        "outputs": {
+            "answer": "答案",
+            "probability": "概率",
+            "result": "人脸解析结果"
+        },
+        "widgets": {
+            "A question with a yes or no answer about what is connected. Ask it so that yes is the case you act on. With several inputs, use the socket names, for example 'Does image_2 show the same person as image_1?'": "针对所连接内容提出一个答案为是或否的问题。提问时应使“是”对应你希望执行的情况。若有多个输入，请使用端口名称，例如“image_2 中的人是否与 image_1 相同？”",
+            "The answer is yes when the probability of yes is at least this value. Clear yes answers score about 0.85 to 0.92, so 0.9 or more rejects many of them.": "当“是”的概率至少达到此值时，答案为“是”。明确的“是”答案得分约为 0.85 到 0.92，因此设为 0.9 或更高会拒绝许多此类答案。",
+            "Optional image(s) to use as context for the model. Up to 16 images.": "可选的图像，用作模型的上下文。最多 16 张图像。",
+            "Optional audio clip to use as context for the model.": "可选的音频片段，用作模型的上下文。",
+            "Optional video clip to use as context for the model.": "可选的视频片段，用作模型的上下文。",
+            "The text the question is about, such as a prompt or an LLM response.": "问题所针对的文本，例如提示词或大语言模型的响应。"
+        }
+    },
+    "AddLabel": {
+        "title": "添加标签",
+        "description": "Creates a new with the given text, and concatenates it to  \neither above or below the input image.  \nNote that this changes the input image's height!  \nFonts are loaded from this folder:  \nComfyUI/custom_nodes/ComfyUI-KJNodes/fonts",
+        "inputs": {
+            "image": "图像",
+            "caption": "说明/描述"
+        },
+        "outputs": {
+            "IMAGE": "图像"
+        },
+        "widgets": {
+            "text_x": "位置_X",
+            "text_y": "位置_Y",
+            "height": "高度",
+            "font_size": "字体大小",
+            "font_color": "字体颜色",
+            "label_color": "背景颜色",
+            "font": "字体",
+            "text": "文本",
+            "direction": "方向"
+        }
+    },
+    "ApplyRifleXRoPE_HunuyanVideo": {
+        "title": "应用 RifleXRoPE HunuyanVideo",
+        "description": "Extends the potential frame count of HunyuanVideo using this method: https://github.com/thu-ml/RIFLEx",
+        "inputs": {
+            "model": "模型",
+            "latent": "潜空间",
+            "Only used to get the latent count": "仅用于获取潜空间数量"
+        },
+        "outputs": {
+            "MODEL": "模型"
+        },
+        "widgets": {
+            "k": "k值",
+            "Index of intrinsic frequency": "固有频率索引",
+            "Only used to get the latent count": "仅用于获取潜空间数量"
+        }
+    },
+    "RenormCFG": {
+        "title": "RenormCFG",
+        "widgets": {
+            "cfg_trunc": "配置截断",
+            "renorm_cfg": "重归一化配置系数"
+        }
+    },
+    "WanAnimate2ToVideo": {
+        "title": "WanAnimate2ToVideo",
+        "inputs": {
+            "video_frame_offset": "视频帧偏移",
+            "reference_image_strength": "参考图像强度",
+            "pose_video": "姿态视频",
+            "positive_pose": "正面姿态",
+            "clip_vision_output_pose": "CLIP视觉输出姿态",
+            "continue_motion": "继续运动",
+            "positive": "正面条件",
+            "negative": "负面条件",
+            "vae": "Vae",
+            "width": "宽度",
+            "height": "高度",
+            "length": "长度",
+            "batch_size": "批次大小",
+            "pose_strength": "姿态乘数",
+            "pose_start_percent": "姿态嵌入开始百分比",
+            "pose_end_percent": "姿态嵌入结束百分比",
+            "reference_image": "参考图像",
+            "clip_vision_output": "clip 视觉输出"
+        },
+        "outputs": {
+            "trim_latent": "裁剪潜空间",
+            "trim_image": "裁剪图像",
+            "video_frame_offset": "视频帧偏移",
+            "positive": "正面条件",
+            "negative": "负面条件",
+            "latent": "潜空间"
+        }
+    },
+    "ClaudeNode": {
+        "title": "Anthropic Claude",
+        "inputs": {
+            "model_reasoning_effort": "模型推理强度",
+            "model_temperature": "模型温度",
+            "prompt": "提示词",
+            "model": "模型",
+            "seed": "随机种子",
+            "images": "图片",
+            "system_prompt": "系统提示"
+        }
+    },
+    "MiniMaxH3EasyMediaBridge": {
+        "title": "MiniMax H3 简易媒体桥接",
+        "description": "为 API 友好的 MiniMax H3 工作流收集显式的图像、视频和音频输入。",
+        "inputs": {
+            "video_count": "视频数量",
+            "audio_count": "音频数量",
+            "video_2": "视频2",
+            "video_3": "视频3",
+            "image_count": "图像数量",
+            "image_1": "图像1",
+            "image_2": "图像2",
+            "image_3": "图像_3",
+            "image_4": "图像_4",
+            "image_5": "图像_5",
+            "image_6": "图像_6",
+            "image_7": "图像_7",
+            "image_8": "图像_8",
+            "image_9": "图像_9",
+            "video_1": "视频_1",
+            "audio_1": "音频_1",
+            "audio_2": "音频_2",
+            "audio_3": "音频_3"
+        },
+        "outputs": {
+            "media_bundle": "媒体包"
+        }
+    },
+    "IdeogramV4": {
+        "title": "Ideogram V4"
+    },
+    "MiniMaxH3TurboLoRA": {
+        "title": "MiniMax-H3 Turbo LoRA",
+        "description": "将 MiniMax-H3 Turbo LoRA 应用到 H3 扩散模型。",
+        "inputs": {
+            "model": "模型"
+        },
+        "outputs": {
+            "MODEL": "模型"
+        },
+        "widgets": {
+            "lora_name": "LoRA名称",
+            "strength": "强度",
+            "low_vram": "低显存模式",
+            "OFF (default): apply the LoRA at run time (bypass) — sharpest, but costs extra peak VRAM. ON: merge the LoRA into the weights — lowest VRAM so small GPUs can run, but softer on quantized bases (the delta is partly rounded away). Turn ON only if you OOM.": "关闭（默认）：在运行时应用 LoRA（旁路）——最锐利，但会额外占用峰值显存。开启：将 LoRA 合并到权重中——显存占用最低，小显存显卡也能运行，但在量化底模上效果会变柔和（增量部分会被舍入掉）。仅在显存不足时开启。"
+        }
+    },
+    "CheckpointLoaderKJ": {
+        "title": "CheckpointLoaderKJ",
+        "description": "用于使用 CublasLinear 修补 torch.nn.Linear 的实验性节点。",
+        "outputs": {
+            "MODEL": "模型",
+            "CLIP": "CLIP模型"
+        },
+        "widgets": {
+            "ckpt_name": "模型名称",
+            "The name of the checkpoint (model) to load.": "要加载的检查点（模型）的名称。",
+            "weight_dtype": "权重数据类型",
+            "compute_dtype": "计算数据类型",
+            "The compute dtype to use for the model.": "用于模型的计算数据类型。",
+            "patch_cublaslinear": "CUBlas线性补丁",
+            "Enable or disable the cublas_ops arg": "启用或禁用 cublas_ops 参数",
+            "sage_attention": "SAGE注意力",
+            "Patch comfy attention to use sageattn.": "修补 comfy 注意力以使用 sageattn。",
+            "enable_fp16_accumulation": "启用FP16累加",
+            "Enable torch.backends.cuda.matmul.allow_fp16_accumulation, required minimum pytorch version 2.7.1": "启用 torch.backends.cuda.matmul.allow_fp16_accumulation，需要最低 pytorch 版本 2.7.1"
+        }
+    },
+    "QwenImageDiffsynthControlnet": {
+        "title": "应用 Qwen 图像 DiffSynth ControlNet",
+        "inputs": {
+            "vae": "Vae",
+            "start_percent": "起始百分比",
+            "end_percent": "结束百分比"
+        }
+    },
+    "UltimateSDUpscaleCustomSample": {
+        "title": "SD放大（自定义采样）",
+        "inputs": {
+            "image": "图像",
+            "model": "模型",
+            "positive": "正面条件",
+            "negative": "负面条件",
+            "vae": "Vae",
+            "upscale_model": "放大模型",
+            "custom_sampler": "采样器",
+            "custom_sigmas": "Sigmas",
+            "cfg": "CFG",
+            "batch_size": "批次大小"
+        },
+        "widgets": {
+            "upscale_by": "放大系数",
+            "seed": "随机种",
+            "control_after_generate": "运行后操作",
+            "fixed": "固定",
+            "increment": "增加",
+            "decrement": "减少",
+            "randomize": "随机",
+            "steps": "步数",
+            "cfg": "CFG",
+            "sampler_name": "采样器",
+            "scheduler": "调度器",
+            "denoise": "降噪",
+            "mode_type": "模式类型",
+            "Linear": "线性",
+            "Chess": "棋盘格",
+            "None": "无",
+            "tile_width": "分块宽度",
+            "tile_height": "分块高度",
+            "mask_blur": "模糊",
+            "tile_padding": "分块分区",
+            "seam_fix_mode": "接缝修复模式",
+            "Band Pass": "仅接触",
+            "Half Tile": "偏移半块",
+            "Half Tile + Intersections": "偏移半块+径向交叉",
+            "seam_fix_denoise": "接缝修复降噪",
+            "seam_fix_width": "接缝修复宽度",
+            "seam_fix_mask_blur": "接缝修复模糊",
+            "seam_fix_padding": "接缝修复分区",
+            "force_uniform_tiles": "强制统一分块",
+            "tiled_decode": "分块解码",
+            "The image to upscale.": "要放大的图像。",
+            "The model to use for image-to-image.": "用于图生图的模型。",
+            "The positive conditioning for each tile.": "每个分块的正面条件。",
+            "The negative conditioning for each tile.": "每个分块的负面条件。",
+            "The VAE model to use for tiles.": "用于分块的 VAE 模型。",
+            "The factor to upscale the image by.": "图像放大倍数。",
+            "The seed to use for image-to-image.": "用于图生图的种子。",
+            "The number of steps to use for each tile.": "每个分块使用的步数。",
+            "The CFG scale to use for each tile.": "每个分块使用的 CFG 引导系数。",
+            "The sampler to use for each tile.": "每个分块使用的采样器。",
+            "The scheduler to use for each tile.": "每个分块使用的调度器。",
+            "The denoising strength to use for each tile.": "每个分块使用的降噪强度。",
+            "The tiling order to use for the redraw step.": "重绘步骤使用的分块顺序。",
+            "The width of each tile.": "每个分块的宽度。",
+            "The height of each tile.": "每个分块的高度。",
+            "The blur radius for the mask.": "遮罩的模糊半径。",
+            "The padding to apply between tiles.": "分块之间应用的内边距。",
+            "The seam fix mode to use.": "使用的接缝修复模式。",
+            "The denoising strength to use for the seam fix.": "接缝修复使用的降噪强度。",
+            "The width of the bands used for the Band Pass seam fix mode.": "Band Pass 接缝修复模式使用的条带宽度。",
+            "The blur radius for the seam fix mask.": "接缝修复遮罩的模糊半径。",
+            "The padding to apply for the seam fix tiles.": "接缝修复分块应用的内边距。",
+            "Force all tiles to be the same as the set tile size, even when tiles could be smaller. This can help prevent the model from working with irregular tile sizes.": "强制所有分块与设定的分块尺寸相同，即使分块本可以更小。这有助于防止模型处理不规则的分块尺寸。",
+            "Whether to use tiled decoding when decoding tiles.": "解码分块时是否使用分块解码。",
+            "The number of tiles to process in a batch. Higher values can reduce processing time but use more VRAM. Yields different results than individual tiles. Only affects the main redraw step, not the seam fix step.": "一批中处理的分块数量。较高的值可减少处理时间，但会占用更多显存。与逐个处理分块的结果不同。仅影响主重绘步骤，不影响接缝修复步骤。",
+            "The model to use for upscaling the image. If not provided, a simple Lanczos scaling will be used instead.": "用于放大图像的模型。如果未提供，将改用简单的 Lanczos 缩放。",
+            "A custom sampler to use instead of the built-in ComfyUI sampler specified by sampler_name. Only used if both custom_sampler and custom_sigmas are provided.": "用于替代 sampler_name 指定的内置 ComfyUI 采样器的自定义采样器。仅在同时提供 custom_sampler 和 custom_sigmas 时使用。",
+            "A custom noise schedule to use during sampling. Only used if both custom_sampler and custom_sigmas are provided.": "采样期间使用的自定义噪声调度。仅在同时提供 custom_sampler 和 custom_sigmas 时使用。"
+        },
+        "outputs": {
+            "IMAGE": "图像"
+        },
+        "description": "对输入图像的分块执行图生图。"
+    },
+    "GeminiDecisionScore": {
+        "title": "Google Gemini 决策（评分）",
+        "description": "对文本、图像、音频或视频按 1 到 10 分进行评分。将 `result` 连接到 If/Else Switch 节点以根据评分执行操作。",
+        "inputs": {
+            "model": "模型",
+            "question": "问题",
+            "threshold": "阈值",
+            "images": "图片",
+            "audio": "音频",
+            "video": "视频",
+            "text": "文本"
+        },
+        "outputs": {
+            "score": "评分",
+            "result": "人脸解析结果"
+        },
+        "widgets": {
+            "What to rate, on a scale from 1 to 10. Say what 1 and 10 mean, as in the example.": "要评分的内容，按 1 到 10 分制。请像示例中那样说明 1 分和 10 分的含义。",
+            "`result` is true when the score is at least this value. Clean, sharp images score about 7 to 8, badly damaged ones about 3 to 5.": "当评分至少达到此值时，`result` 为真。干净、清晰的图像得分约为 7 到 8，严重损坏的图像约为 3 到 5。",
+            "Optional image(s) to use as context for the model. Up to 16 images.": "可选的图像，用作模型的上下文。最多 16 张图像。",
+            "Optional audio clip to use as context for the model.": "可选的音频片段，用作模型的上下文。",
+            "Optional video clip to use as context for the model.": "可选的视频片段，用作模型的上下文。",
+            "The text the question is about, such as a prompt or an LLM response.": "问题所针对的文本，例如提示词或大语言模型的响应。"
+        }
+    },
+    "TorchCompileVAE": {
+        "title": "TorchCompileVAE",
+        "inputs": {
+            "vae": "Vae"
+        },
+        "widgets": {
+            "backend": "后端",
+            "fullgraph": "全图模式",
+            "Enable full graph mode": "启用全图模式",
+            "mode": "模式",
+            "compile_encoder": "编译编码器",
+            "Compile encoder": "编译编码器",
+            "compile_decoder": "编译解码器",
+            "Compile decoder": "编译解码器"
+        }
+    },
+    "SeparateMasks": {
+        "title": "分离遮罩",
+        "description": "Separates a mask into multiple masks based on the size of the connected components.",
+        "inputs": {
+            "mask": "蒙版"
+        },
+        "outputs": {
+            "mask": "蒙版"
+        },
+        "widgets": {
+            "size_threshold_width": "宽度尺寸阈值",
+            "size_threshold_height": "高度尺寸阈值",
+            "mode": "模式",
+            "max_poly_points": "最大多边形点数"
+        }
+    },
+    "PreviewLatentNoiseMask": {
+        "title": "预览潜空间噪声蒙版",
+        "description": "Previews the latent noise mask",
+        "inputs": {
+            "latent": "潜空间"
+        },
+        "outputs": {
+            "mask": "蒙版"
+        }
+    },
+    "MiniMaxH3EasySegmentCollect": {
+        "title": "MiniMax H3 简易分段收集",
+        "description": "仅连接最终分段步骤，然后将完整链传递给分段解码。",
+        "inputs": {
+            "final_segment": "最终分段"
+        },
+        "outputs": {
+            "segments": "分段数"
+        }
+    },
+    "TorchCompileLTXModel": {
+        "title": "Torch编译LTX模型",
+        "description": "This node has been replaced with TorchCompileModelAdvanced node, please use that instead.",
+        "inputs": {
+            "model": "模型"
+        },
+        "outputs": {
+            "*": "输出"
+        }
+    },
+    "MiniMaxH3EasySelfLiftStrategy": {
+        "title": "MiniMax H3 简易 SelfLift",
+        "description": "创建渐进分辨率 SelfLift 采样策略。将其连接到 MiniMax H3 简易采样、分段采样或采样设置的可选采样计划输入。",
+        "inputs": {
+            "upscaler_device": "放大器设备",
+            "upscaler_precision": "放大器精度",
+            "upscaler_chunking": "放大器分块",
+            "transition_step": "转换步",
+            "lowres_scale": "低分辨率缩放",
+            "upscaler_model": "放大模型",
+            "advanced": "高级",
+            "cfg": "CFG",
+            "rho": "校正比例",
+            "w_min": "最小权重",
+            "w_max": "最大权重"
+        },
+        "outputs": {
+            "sampling_plan": "采样计划"
+        }
+    },
+    "CreateFadeMaskAdvanced": {
+        "title": "渐隐遮罩(高级)",
+        "description": "Create a batch of masks interpolated between given frames and values. \nUses same syntax as Fizz' BatchValueSchedule.\nFirst value is the frame index (not that this starts from 0, not 1) \nand the second value inside the brackets is the float value of the mask in range 0.0 - 1.0  \n\nFor example the default values:  \n0:(0.0)  \n7:(1.0)  \n15:(0.0)  \n  \nWould create a mask batch fo 16 frames, starting from black, \ninterpolating with the chosen curve to fully white at the 8th frame, \nand interpolating from that to fully black at the 16th frame.",
+        "outputs": {
+            "MASK": "遮罩"
+        },
+        "widgets": {
+            "points_string": "色值点",
+            "invert": "反转",
+            "frames": "分帧",
+            "width": "宽度",
+            "height": "高度",
+            "interpolation": "插值"
+        }
+    },
+    "VOIDQuadmaskPreprocess": {
+        "title": "VOID 四边形遮罩预处理器",
+        "inputs": {
+            "dilate_width": "膨胀宽度",
+            "mask": "蒙版"
+        },
+        "outputs": {
+            "quadmask": "四边形遮罩"
+        }
+    },
+    "CropByBBoxes": {
+        "title": "按边界框裁剪",
+        "inputs": {
+            "image": "图像",
+            "bboxes": "Bboxes",
+            "output_width": "输出宽度",
+            "output_height": "输出高度",
+            "padding": "分区"
+        }
+    },
+    "MiniMaxH3EasySampler": {
+        "title": "MiniMax H3 简易采样",
+        "description": "对普通 MiniMax H3 简易上下文进行采样。没有采样计划时，这等同于普通的 Basic Guider 路径；连接如 SelfLift 的策略以切换执行方式。",
+        "inputs": {
+            "sampling_plan": "采样计划",
+            "h3_context": "h3 上下文",
+            "model": "模型",
+            "sampler": "采样器",
+            "sigmas": "噪声调度",
+            "seed": "随机种子"
+        },
+        "outputs": {
+            "sampled_latent": "采样潜空间"
+        }
+    },
+    "RoundMask": {
+        "title": "舍入遮罩",
+        "description": "Rounds the mask or batch of masks to a binary mask.  \n<img src=\"https://github.com/kijai/ComfyUI-KJNodes/assets/40791699/52c85202-f74e-4b96-9dac-c8bda5ddcc40\" width=\"300\" height=\"250\" alt=\"RoundMask example\">",
+        "inputs": {
+            "mask": "蒙版"
+        },
+        "outputs": {
+            "MASK": "遮罩"
+        }
+    },
+    "VOIDWarpedNoise": {
+        "title": "VOIDWarpedNoise",
+        "inputs": {
+            "optical_flow": "光流数据",
+            "video": "视频",
+            "width": "宽度",
+            "height": "高度",
+            "length": "长度",
+            "batch_size": "批次大小"
+        },
+        "outputs": {
+            "warped_noise": "扭曲噪声"
+        }
+    },
+    "GeminiNodeV3": {
+        "title": "Google Gemini",
+        "inputs": {
+            "model_prompt": "模型提示词",
+            "model_images": "模型图像",
+            "model_audio": "模型音频",
+            "model_video": "模型视频",
+            "model_video_processing": "模型视频处理",
+            "model_thinking_level": "模型思考级别",
+            "model_max_output_tokens": "模型最大输出Token数",
+            "model_system_prompt": "模型系统提示词",
+            "model_files": "模型文件",
+            "model_temperature": "模型温度",
+            "model_top_p": "模型Top P",
+            "model": "模型",
+            "model_seed": "模型种子"
+        }
+    },
+    "H3Int8Backend": {
+        "title": "Licon H3 INT8 后端",
+        "description": "Use the privately bundled Kitchen 0.2.35 INT8 implementation for this H3 DiT model branch, including ordinary weight patching and forward execution. Native removes this node's selection. Neither mode changes LoRA strength.",
+        "inputs": {
+            "model": "模型"
+        },
+        "outputs": {
+            "MODEL": "模型"
+        },
+        "widgets": {
+            "mode": "模式"
+        }
+    },
+    "CreateTextMask": {
+        "title": "文本遮罩",
+        "description": "Creates a text image and mask.  \nLooks for fonts from this folder:  \nComfyUI/custom_nodes/ComfyUI-KJNodes/fonts\n  \nIf start_rotation and/or end_rotation are different values,  \ncreates animation between them.",
+        "outputs": {
+            "IMAGE": "图像",
+            "MASK": "遮罩"
+        },
+        "widgets": {
+            "invert": "反转",
+            "frames": "分帧",
+            "text_x": "位置_X",
+            "text_y": "位置_Y",
+            "font_size": "字体大小",
+            "font_color": "字体颜色",
+            "text": "文本",
+            "font": "字体",
+            "width": "宽度",
+            "height": "高度",
+            "start_rotation": "起始旋转",
+            "end_rotation": "最终旋转"
+        }
+    },
+    "WanAnimate2Cache": {
+        "title": "WanAnimate2Cache",
+        "inputs": {
+            "model": "模型",
+            "device": "设备",
+            "dtype": "数据类型"
+        }
+    },
+    "WanSCAILToVideo": {
+        "title": "WanSCAILToVideo",
+        "inputs": {
+            "video_frame_offset": "视频帧偏移",
+            "previous_frame_count": "前一帧数量",
+            "pose_video_mask": "姿态视频遮罩",
+            "replacement_mode": "替换模式",
+            "reference_image_mask": "参考图像遮罩",
+            "previous_frames": "前一帧",
+            "vae": "Vae"
+        },
+        "outputs": {
+            "video_frame_offset": "视频帧偏移",
+            "latent": "潜空间"
+        }
+    },
+    "FreSca": {
+        "title": "FreSca",
+        "inputs": {
+            "model": "模型"
+        },
+        "widgets": {
+            "scale_low": "尺度下限",
+            "scale_high": "尺度上限",
+            "freq_cutoff": "频率截止值"
+        }
+    },
+    "LtxApiVideoAlphaGen": {
+        "title": "LTX Video AlphaGen"
+    },
+    "ModelMemoryUseReportPatch": {
+        "title": "模型显存占用报告补丁",
+        "description": "Adds callbacks to model to report memory usage during after sampling",
+        "inputs": {
+            "model": "模型"
+        },
+        "outputs": {
+            "MODEL": "模型"
+        }
+    },
+    "SDPPP Select Layer And Run PS Action": {
+        "title": "SDPPP 选择图层并运行 PS 操作",
+        "inputs": {
+            "layer_or_group": "图层或组",
+            "action": "操作"
+        },
+        "outputs": {
+            "layer_or_group": "图层或组"
+        }
+    },
+    "MiniMaxH3EasyImageOutput": {
+        "title": "MiniMax H3 简易图像输出",
+        "description": "解包 H3 图像条件、零负面条件、图像潜空间和 VAE，用于标准采样和解码。",
+        "inputs": {
+            "h3_image_context": "H3图像上下文"
+        },
+        "outputs": {
+            "positive": "正面条件",
+            "negative": "负面条件",
+            "latent": "潜空间",
+            "vae": "Vae"
+        }
+    },
+    "TextEncodeBooguEdit": {
+        "title": "TextEncodeBooguEdit",
+        "inputs": {
+            "clip": "CLIP",
+            "prompt": "提示词",
+            "negative_prompt": "负面条件",
+            "vae": "Vae",
+            "images": "图片"
+        },
+        "outputs": {
+            "positive": "正面条件",
+            "negative": "负面条件"
+        }
+    },
+    "TorchCompileCosmosModel": {
+        "title": "Torch编译Cosmos模型",
+        "description": "This node has been replaced with TorchCompileModelAdvanced node, please use that instead.",
+        "inputs": {
+            "model": "模型"
+        },
+        "outputs": {
+            "*": "输出"
+        }
+    },
+    "VAEMergeKJ": {
+        "title": "VAE 合并 KJ",
+        "description": "Merge two VAEs by weighted-averaging their weights. ratio is the weight toward vae_2 (0.0 = pure vae_1, 1.0 = pure vae_2). Both VAEs must share the same architecture (matching state dict keys and shapes).",
+        "inputs": {
+            "vae_1": "VAE1",
+            "vae_2": "VAE2"
+        },
+        "outputs": {
+            "vae": "Vae"
+        },
+        "widgets": {
+            "ratio": "宽高比"
+        }
+    },
+    "MiniMaxH3EasySegmentSampleSetup": {
+        "title": "MiniMax H3 简易采样设置",
+        "description": "一次性连接上下文、模型、采样器和 sigmas，然后在第一个分段步骤上使用该设置。",
+        "inputs": {
+            "sampling_plan": "采样计划",
+            "h3_context": "h3 上下文",
+            "model": "模型",
+            "sampler": "采样器",
+            "sigmas": "噪声调度"
+        },
+        "outputs": {
+            "setup": "设置"
+        }
+    },
+    "QwenImage21": {
+        "title": "Qwen 图像 2.1 (qwen-image-2.1)",
+        "description": "Unified text-to-image generation and image editing with the Qwen-Image-2.1 model (ModelScope API-Inference), supporting up to 4 reference images",
+        "inputs": {
+            "image1": "图像 1",
+            "Reference image 1 (optional). Connect images for editing; leave all empty for text-to-image": "参考图 1（可选）。连接图片则进行图像编辑；全部留空则为文生图",
+            "image2": "图像 2",
+            "Reference image 2 (optional). Up to 4 reference images per run": "参考图 2（可选）。单次最多 4 张参考图",
+            "image3": "图像 3",
+            "Reference image 3 (optional). Up to 4 reference images per run": "参考图 3（可选）。单次最多 4 张参考图",
+            "image4": "图像4",
+            "Reference image 4 (optional). Up to 4 reference images per run": "参考图 4（可选）。单次最多 4 张参考图"
+        },
+        "outputs": {
+            "image": "图像"
+        },
+        "widgets": {
+            "prompt": "提示词",
+            "Generation prompt, or edit instruction describing the desired change. With multiple images, specify each image's role/position": "生成提示词，或描述期望修改的编辑指令。多图时请说明每张图的角色/位置",
+            "seed": "随机种子",
+            "Random seed. 0 means the API picks a random seed. Used to break the ComfyUI execution cache": "随机种子。0 表示使用 API 随机种子。用于打破 ComfyUI 执行缓存",
+            "ratio": "宽高比",
+            "Output aspect ratio. 'auto' detects the ratio of the first connected image, and falls back to 1:1 for text-to-image": "输出宽高比。auto 会检测首张输入图的比例，文生图时回退为 1:1",
+            "resolution": "分辨率",
+            "Output resolution. 1K (1024px max edge) is fast and stable and recommended for multi-image editing; 2K (2048px max edge) is the native quality but much slower and may fail with 4 reference images": "输出分辨率。1K（最大边 1024）快速稳定，推荐多图编辑使用；2K（最大边 2048）为原生画质，但耗时显著更长，且 4 张参考图时可能失败",
+            "Reference image 1 (optional). Connect images for editing; leave all empty for text-to-image": "参考图 1（可选）。连接图片则进行图像编辑；全部留空则为文生图",
+            "Reference image 2 (optional). Up to 4 reference images per run": "参考图 2（可选）。单次最多 4 张参考图",
+            "Reference image 3 (optional). Up to 4 reference images per run": "参考图 3（可选）。单次最多 4 张参考图",
+            "Reference image 4 (optional). Up to 4 reference images per run": "参考图 4（可选）。单次最多 4 张参考图"
+        }
+    },
+    "FreeU": {
+        "title": "FreeU",
+        "inputs": {
+            "b1": "B1",
+            "b2": "B2",
+            "s1": "S1",
+            "s2": "S2"
+        }
+    },
+    "MiniMaxH3EasySegmentDecode": {
+        "title": "MiniMax H3 简易分段解码",
+        "description": "一次解码一个上下文分段帧，并返回带混流音频的完整 VIDEO。",
+        "inputs": {
+            "segments": "分段数"
+        },
+        "outputs": {
+            "preview": "预览图象"
+        }
+    },
+    "GetLatentSizeAndCount": {
+        "title": "获取Latent大小及数量",
+        "description": "Returns latent tensor dimensions,  \nand passes the latent through unchanged.",
+        "inputs": {
+            "latent": "潜空间"
+        },
+        "outputs": {
+            "latent": "潜空间",
+            "batch_size": "批次大小",
+            "channels": "通道",
+            "frames": "分帧",
+            "height": "高度",
+            "width": "宽度"
+        }
+    },
+    "TextEncodeMageFlowEdit": {
+        "title": "TextEncodeMageFlowEdit",
+        "inputs": {
+            "clip": "CLIP",
+            "prompt": "提示词",
+            "negative_prompt": "负面条件",
+            "images": "图片",
+            "width": "宽度",
+            "height": "高度",
+            "batch_size": "批次大小",
+            "vae": "Vae"
+        },
+        "outputs": {
+            "positive": "正面条件",
+            "negative": "负面条件",
+            "latent": "潜空间"
+        }
+    },
+    "BerniniConditioning": {
+        "title": "Bernini 条件",
+        "inputs": {
+            "positive": "正面条件",
+            "negative": "负面条件",
+            "vae": "Vae"
+        },
+        "outputs": {
+            "positive": "正面条件",
+            "negative": "负面条件",
+            "latent": "潜空间"
+        }
+    },
+    "GeminiNodeV2": {
+        "title": "Google Gemini",
+        "inputs": {
+            "model_images": "模型图像",
+            "model_audio": "模型音频",
+            "model_video": "模型视频",
+            "model_thinking_level": "模型思考级别",
+            "model_max_output_tokens": "模型最大输出Token数",
+            "model_files": "模型文件",
+            "model_temperature": "模型温度",
+            "model_top_p": "模型Top P",
+            "prompt": "提示词",
+            "model": "模型",
+            "seed": "随机种子",
+            "system_prompt": "系统提示"
+        }
+    },
+    "ModelMergeMOSSImage": {
+        "title": "ModelMergeMOSSImage"
+    },
+    "ARVideoI2V": {
+        "title": "ARVideoI2V",
+        "inputs": {
+            "vae": "Vae"
+        }
+    },
+    "WanDancerPadKeyframesList": {
+        "title": "WanDancerPadKeyframesList"
+    },
+    "MiniMaxH3SigmaShift": {
+        "title": "ModelSamplingMiniMaxH3",
+        "inputs": {
+            "model": "模型"
+        }
+    },
+    "FluxKontextProImageNode": {
+        "title": "Flux.1 Kontext [pro] 图像",
+        "inputs": {
+            "input_image": "输入图像"
+        },
+        "widgets": {
+            "aspect_ratio": "宽高比",
+            "guidance": "引导系数",
+            "steps": "生成步数",
+            "seed": "随机种子",
+            "prompt_upsampling": "提示词上采样"
+        }
+    },
+    "WanDancerVideo": {
+        "title": "WanDancerVideo",
+        "inputs": {
+            "vae": "Vae"
+        },
+        "outputs": {
+            "latent": "潜空间"
+        }
+    },
+    "TextGenerateLTX2Prompt": {
+        "title": "生成 LTX2 提示词",
+        "inputs": {
+            "sampling_mode_top_k": "采样模式Top K",
+            "sampling_mode_top_p": "采样模式Top P",
+            "sampling_mode_presence_penalty": "采样模式存在惩罚",
+            "clip": "CLIP",
+            "use_default_template": "使用默认模板",
+            "mtp": "多词元预测"
+        }
+    },
+    "ByteDanceSeedAudio": {
+        "title": "ByteDance Seed Audio 1.0",
+        "inputs": {
+            "reference_mode": "参考模式",
+            "reference_mode_reference_audio_1": "参考模式参考音频1",
+            "reference_mode_reference_audio_2": "参考模式参考音频2",
+            "reference_mode_reference_audio_3": "参考模式参考音频3",
+            "reference_mode_reference_image": "参考模式参考图像",
+            "reference_mode_preset_voice": "参考模式预设音色",
+            "speech_rate": "语速",
+            "loudness_rate": "响度",
+            "pitch_rate": "音调",
+            "text_prompt": "文本提示词",
+            "sample_rate": "采样率",
+            "seed": "随机种子",
+            "model": "模型"
+        }
+    },
+    "Get Image From Photoshop Layer": {
+        "title": "SDPPP 从 Photoshop 获取图像",
+        "inputs": {
+            "layer_or_group": "图层或组",
+            "bound": "边界",
+            "quality": "质量"
+        },
+        "outputs": {
+            "rgb_out": "RGB输出",
+            "alpha_out": "Alpha输出"
+        }
+    },
+    "HeyGenDecisionChoice": {
+        "title": "HeyGen 决策（选择）",
+        "description": "针对文本、图像、音频或视频从你的选项中选择一个。将 `choice` 连接到输入携带选项名称的 Branch 节点，或使用 `option_index`。",
+        "inputs": {
+            "model": "模型",
+            "question": "问题",
+            "options": "ReActor设置组",
+            "images": "图片",
+            "audio_1": "音频_1",
+            "video_1": "视频_1",
+            "text": "文本"
+        },
+        "outputs": {
+            "choice": "选择",
+            "option_index": "选项索引",
+            "confidence": "置信度"
+        },
+        "widgets": {
+            "The question the options answer. With several inputs, refer to them as image_1, image_2, audio_1 or video_1, for example 'Which season is shown in image_1?'": "选项所回答的问题。若有多个输入，请以 image_1、image_2、audio_1 或 video_1 指代它们，例如“image_1 中显示的是哪个季节？”",
+            "One option per line, used exactly as typed. Add an option such as `other` for inputs that fit none of them.": "每行一个选项，按输入原样使用。为不符合任何选项的输入添加一个如 `other` 的选项。",
+            "Up to 4 images in total, counting every frame of a batch. They are numbered image_1 to image_4 in order across the sockets, so a batch of 2 on the first socket is image_1 and image_2.": "总共最多 4 张图像，计入一批中的每一帧。它们按端口顺序编号为 image_1 到 image_4，因此第一个端口上的一批 2 张图像即为 image_1 和 image_2。",
+            "Audio up to 30 minutes.": "音频最长 30 分钟。",
+            "Video up to 60 seconds.": "视频最长 60 秒。",
+            "The text the question is about, such as a prompt or an LLM response.": "问题所针对的文本，例如提示词或大语言模型的响应。"
+        }
+    },
+    "TorchCompileModelWanVideoV2": {
+        "title": "TorchCompileModelWanVideoV2",
+        "description": "已弃用，请改用 TorchCompileModelAdvanced。",
+        "inputs": {
+            "model": "模型"
+        },
+        "outputs": {
+            "MODEL": "模型"
+        },
+        "widgets": {
+            "backend": "后端",
+            "fullgraph": "全图模式",
+            "Enable full graph mode": "启用全图模式",
+            "mode": "模式",
+            "dynamic": "动态",
+            "Enable dynamic mode": "启用动态模式",
+            "compile_transformer_blocks_only": "仅编译Transformer块",
+            "Compile only transformer blocks, faster compile and less error prone": "仅编译 transformer 块，编译更快且更不易出错",
+            "dynamo_cache_size_limit": "dynamo缓存大小限制",
+            "force_parameter_static_shapes": "强制参数静态形状"
+        }
+    },
+    "TorchCompileModelQwenImage": {
+        "title": "千问图像 Torch 编译模型",
+        "description": "This node has been replaced with TorchCompileModelAdvanced node, please use that instead.",
+        "inputs": {
+            "model": "模型"
+        },
+        "outputs": {
+            "*": "输出"
+        }
+    },
+    "LTX2LoraLoaderAdvanced": {
+        "title": "LTX2 LoRA 加载器（高级）",
+        "description": "Advanced LoRA loader with per-block strength control for LTX2 models",
+        "inputs": {
+            "model": "模型",
+            "The diffusion model the LoRA will be applied to.": "将应用 LoRA 的扩散模型。",
+            "opt_lora_path": "选择Lora路径",
+            "Absolute path of the LoRA.": "LoRA 的绝对路径。",
+            "blocks": "模块",
+            "Selected DiT blocks configuration": "选定的 DiT 块配置"
+        },
+        "outputs": {
+            "model": "模型",
+            "rank": "Rank",
+            "loaded_keys_info": "已加载键信息",
+            "The modified diffusion model.": "修改后的扩散模型。",
+            "Possible rank of the LoRA.": "LoRA 可能的秩。",
+            "List of loaded keys and their alpha values.": "已加载键及其 alpha 值的列表。"
+        },
+        "widgets": {
+            "lora_name": "LoRA名称",
+            "The name of the LoRA.": "LoRA 的名称。",
+            "strength_model": "强度",
+            "How strongly to modify the diffusion model. This value can be negative.": "修改扩散模型的强度。此值可以为负。",
+            "video": "视频",
+            "Strength for video attention layers.": "视频注意力层的强度。",
+            "video_to_audio": "视频到音频",
+            "Strength for video to audio cross-attention layers.": "视频到音频交叉注意力层的强度。",
+            "audio": "音频",
+            "Strength for audio attention layers.": "音频注意力层的强度。",
+            "audio_to_video": "音频到视频",
+            "Strength for audio to video cross-attention layers.": "音频到视频交叉注意力层的强度。",
+            "other": "其他",
+            "Strength for layers not caught by other layer filters.": "未被其他层过滤器捕获的层的强度。",
+            "The diffusion model the LoRA will be applied to.": "将应用 LoRA 的扩散模型。",
+            "Absolute path of the LoRA.": "LoRA 的绝对路径。",
+            "Selected DiT blocks configuration": "选定的 DiT 块配置"
+        }
+    },
+    "SDPPP Get Linked Layers": {
+        "title": "SDPPP 获取链接图层",
+        "inputs": {
+            "layer_or_group": "图层或组",
+            "select": "选择"
+        },
+        "outputs": {
+            "layer_or_group": "图层或组",
+            "layer_boundary": "图层边界",
+            "layer_info": "图层信息"
+        }
+    },
+    "ApplyRifleXRoPE_WanVideo": {
+        "title": "应用 RifleXRoPE WanVideo",
+        "description": "Extends the potential frame count of HunyuanVideo using this method: https://github.com/thu-ml/RIFLEx",
+        "inputs": {
+            "model": "模型",
+            "latent": "潜空间",
+            "Only used to get the latent count": "仅用于获取潜空间数量"
+        },
+        "outputs": {
+            "MODEL": "模型"
+        },
+        "widgets": {
+            "k": "k值",
+            "Index of intrinsic frequency": "固有频率索引",
+            "Only used to get the latent count": "仅用于获取潜空间数量"
+        }
+    },
+    "HunyuanRefinerLatent": {
+        "title": "混元潜空间细化",
+        "inputs": {
+            "latent": "潜空间"
+        }
+    },
+    "VOIDSampler": {
+        "title": "VOIDSampler"
+    },
+    "SkipLayerGuidanceWanVideo": {
+        "title": "Wan视频层跳过引导",
+        "description": "Simplified skip layer guidance that only skips the uncond on selected blocks",
+        "inputs": {
+            "model": "模型"
+        },
+        "outputs": {
+            "MODEL": "模型"
+        },
+        "widgets": {
+            "blocks": "模块",
+            "start_percent": "起始百分比",
+            "end_percent": "结束百分比"
+        }
+    },
+    "TextEncodeFibo2": {
+        "title": "TextEncodeFibo2",
+        "inputs": {
+            "clip": "CLIP",
+            "vae": "Vae"
+        }
+    },
+    "GeminiNanoBanana2V2": {
+        "title": "Nano Banana 2.1",
+        "inputs": {
+            "model_aspect_ratio": "模型宽高比",
+            "model_resolution": "模型分辨率",
+            "model_thinking_level": "模型思考级别",
+            "model_images": "模型图像",
+            "model_files": "模型文件",
+            "response_modalities": "响应模态",
+            "prompt": "提示词",
+            "model": "模型",
+            "seed": "随机种子",
+            "system_prompt": "系统提示",
+            "temperature": "温度",
+            "top_p": "Top-P采样"
+        },
+        "outputs": {
+            "thought_image": "思考图像"
+        }
+    },
+    "LTXAVTextEncoderLoader": {
+        "description": "配方：\nltxav：gemma 3 12B 或匹配的 gemma 4 模型"
+    },
+    "SDPPP Parse Layer Info": {
+        "title": "SDPPP 解析图层信息",
+        "inputs": {
+            "layer_info": "图层信息"
+        },
+        "outputs": {
+            "bound_left": "边界左侧",
+            "bound_top": "边界顶部",
+            "bound_width": "边界宽度",
+            "bound_height": "边界高度",
+            "opacity": "不透明度",
+            "name": "名称"
+        }
+    },
+    "SoniloMusic15": {
+        "title": "Sonilo Music 1.5",
+        "inputs": {
+            "duration_seconds": "持续时间秒"
+        }
+    },
+    "WanDancerPadKeyframes": {
+        "title": "WanDancerPadKeyframes"
+    }
+}

@@ -457,6 +457,64 @@ function registerTranslatorExtensionWhenReady(tries = 0) {
     }
 
     /**
+     * 采集节点自定义属性面板的字段名与下拉候选值
+     *
+     * rgthree 等插件用类上的静态 "@字段" 定义属性面板（properties dialog），
+     * 这些字段不在 INPUT_TYPES 中，只能从运行时节点类读取。
+     * 结构：[{comfyClass, properties: [...]}]，归属由后端按 comfyClass 反查插件
+     */
+    function collectNodeProperties() {
+        try {
+            const nodes = app?.graph?._nodes || [];
+            const byClass = new Map();
+            const INTERNAL_KEYS = new Set(["Node name for S&R", "ver", "cnr_id", "aux_id"]);
+            for (const n of nodes) {
+                const cls = n?.comfyClass || n?.type;
+                if (!cls) continue;
+                let set = byClass.get(cls);
+                if (!set) {
+                    set = new Set();
+                    byClass.set(cls, set);
+                }
+                // 1) 类原型链上的 static "@属性名" 定义（rgthree 约定）
+                let ctor = n.constructor;
+                while (ctor && ctor !== Function.prototype) {
+                    for (const key of Object.getOwnPropertyNames(ctor)) {
+                        if (!key.startsWith("@")) continue;
+                        const definition = ctor[key];
+                        const name = key.slice(1).trim();
+                        if (name && name.length <= 100) set.add(name);
+                        if (definition?.type === "combo" && Array.isArray(definition.values)) {
+                            for (const v of definition.values) {
+                                if (typeof v === "string" && v.trim() && v.trim().length <= 100) {
+                                    set.add(v.trim());
+                                }
+                            }
+                        }
+                    }
+                    ctor = Object.getPrototypeOf(ctor);
+                }
+                // 2) 节点实例上已有的属性键（覆盖没有 @ 定义的属性面板）
+                if (n.properties && typeof n.properties === "object") {
+                    for (const key of Object.keys(n.properties)) {
+                        const name = String(key || "").trim();
+                        if (!name || name.length > 100 || INTERNAL_KEYS.has(name)) continue;
+                        set.add(name);
+                    }
+                }
+            }
+            const out = [];
+            for (const [comfyClass, set] of byClass) {
+                const properties = Array.from(set);
+                if (properties.length) out.push({ comfyClass, properties });
+            }
+            return out;
+        } catch (e) {
+            return [];
+        }
+    }
+
+    /**
      * 扫描 DOM 中当前显示的所有文本（文本节点 + placeholder/aria-label/title 属性）
      * 作为终极兜底来源：凡是在页面上真实出现过的文案都会进入集合
      * （快照语义：只有用户当前打开过的界面才有数据；中文译文会被后端过滤）
@@ -506,10 +564,12 @@ function registerTranslatorExtensionWhenReady(tries = 0) {
         // 补充来源：侧边栏标签、节点控件文案、DOM 全局文案（终极兜底）
         let sidebarTabs = [];
         let nodeWidgets = [];
+        let nodeProperties = [];
         let domTexts = [];
         try {
             sidebarTabs = collectSidebarTabs();
             nodeWidgets = collectNodeWidgets();
+            nodeProperties = collectNodeProperties();
             domTexts = scanDomTexts();
         } catch (e) {
             console.warn(`[${TRANSLATOR_NAMESPACE}] 补充 UI 文案采集失败（不影响翻译）：`, e);
@@ -517,7 +577,7 @@ function registerTranslatorExtensionWhenReady(tries = 0) {
         const resp = await api.fetchApi(ENDPOINT_RUNTIME_UI, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ extensions, sidebarTabs, nodeWidgets, domTexts }),
+            body: JSON.stringify({ extensions, sidebarTabs, nodeWidgets, nodeProperties, domTexts }),
         });
         if (!resp.ok) {
             throw new Error(tr("Runtime UI report failed HTTP {code}", { code: resp.status }));

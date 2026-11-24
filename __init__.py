@@ -50,7 +50,7 @@ from . import translation_writer
 from . import translation_service  # 注册 /translation_node/* 界面翻译端点
 
 # 插件版本
-__version__ = "1.4.2"
+__version__ = "1.4.3"
 
 # 插件信息
 PLUGIN_INFO = {
@@ -318,6 +318,7 @@ try:
                 extensions,
                 sidebar_tabs=data.get("sidebarTabs", []),
                 node_widgets=data.get("nodeWidgets", []),
+                node_properties=data.get("nodeProperties", []),
                 dom_texts=data.get("domTexts", []),
             )
             return web.json_response({"status": "ok", "extension_count": count})

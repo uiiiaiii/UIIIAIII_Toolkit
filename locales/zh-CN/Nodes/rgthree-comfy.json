@@ -405,7 +405,7 @@
         "description": "通过悬停滑块或从属性中点击来比较两张图像。",
         "inputs": {
             "image_a": "图像_A",
-            "image_b": "图像_b"
+            "image_b": "图像_B"
         },
         "outputs": {
             "images": "图片"
@@ -453,12 +453,12 @@
             "HEIGHT": "高度"
         },
         "widgets": {
-            "The width of the desired resize. A pixel value if measurement is 'pixels' or a 100% scale percentage value if measurement is 'percentage'. Passing '0' will calculate the dimension based on the height.": "所需调整的宽度。如果测量单位为“像素”，则为像素值；如果测量单位为“百分比”，则为100%缩放百分比值。传入“0”将根据高度计算该尺寸。",
-            "'crop' resizes so the image covers the desired width and height, and center-crops the excess, returning exactly the desired width and height.\n'pad' resizes so the image fits inside the desired width and height, and fills the empty space returning exactly the desired width and height.\n'contain' resizes so the image fits inside the desired width and height, and returns the image with it's new size, with one side liekly smaller than the desired.\n\nNote, if either width or height is '0', the effective fit is 'contain'.": "“裁剪”会调整大小，使图像覆盖所需的宽度和高度，并居中裁剪多余部分，返回恰好所需的宽度和高度。\n“填充”会调整大小，使图像适配在所需的宽度和高度内，并填充空白区域，返回恰好所需的宽度和高度。\n“包含”会调整大小，使图像适配在所需的宽度和高度内，并返回具有新尺寸的图像，其中一侧可能小于所需尺寸。\n\n注意，如果宽度或高度任一为“0”，则实际适配方式为“包含”。",
             "measurement": "模式",
             "width": "宽度",
+            "The width of the desired resize. A pixel value if measurement is 'pixels' or a 100% scale percentage value if measurement is 'percentage'. Passing '0' will calculate the dimension based on the height.": "所需调整的宽度。如果测量单位为“像素”，则为像素值；如果测量单位为“百分比”，则为100%缩放百分比值。传入“0”将根据高度计算该尺寸。",
             "height": "高度",
             "fit": "适应画布",
+            "'crop' resizes so the image covers the desired width and height, and center-crops the excess, returning exactly the desired width and height.\n'pad' resizes so the image fits inside the desired width and height, and fills the empty space returning exactly the desired width and height.\n'contain' resizes so the image fits inside the desired width and height, and returns the image with it's new size, with one side liekly smaller than the desired.\n\nNote, if either width or height is '0', the effective fit is 'contain'.": "“裁剪”会调整大小，使图像覆盖所需的宽度和高度，并居中裁剪多余部分，返回恰好所需的宽度和高度。\n“填充”会调整大小，使图像适配在所需的宽度和高度内，并填充空白区域，返回恰好所需的宽度和高度。\n“包含”会调整大小，使图像适配在所需的宽度和高度内，并返回具有新尺寸的图像，其中一侧可能小于所需尺寸。\n\n注意，如果宽度或高度任一为“0”，则实际适配方式为“包含”。",
             "method": "方法"
         }
     },
