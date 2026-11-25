@@ -1,0 +1,137 @@
+{
+    "PromptExpand": {
+        "title": "✨提示词优化",
+        "description": "使用LLM增强或扩写您的提示词",
+        "inputs": {
+            "rule": "规则预设",
+            "custom_rule": "自定义规则",
+            "custom_rule_content": "自定义规则内容",
+            "user_prompt": "用户提示词",
+            "llm_service": "LLM服务",
+            "ollama_auto_unload": "自动释放显存",
+            "source_text": "原文输入",
+            "seed": "随机种子"
+        },
+        "widgets": {
+            "rule": "规则预设",
+            "custom_rule": "自定义规则",
+            "custom_rule_content": "自定义规则内容",
+            "user_prompt": "用户提示词",
+            "llm_service": "LLM服务",
+            "ollama_auto_unload": "自动释放显存",
+            "source_text": "原文输入",
+            "seed": "随机种子"
+        },
+        "outputs": {
+            "Prompt Output": "提示词输出"
+        }
+    },
+    "ImageCaptionNode": {
+        "title": "✨图像反推提示词",
+        "description": "使用VLM生成图像描述",
+        "inputs": {
+            "image": "图像",
+            "rule": "规则预设",
+            "custom_rule": "自定义规则",
+            "custom_rule_content": "自定义规则内容",
+            "user_prompt": "用户提示词",
+            "vlm_service": "视觉服务",
+            "ollama_auto_unload": "自动释放显存",
+            "seed": "随机种子"
+        },
+        "widgets": {
+            "image": "图像",
+            "rule": "规则预设",
+            "custom_rule": "自定义规则",
+            "custom_rule_content": "自定义规则内容",
+            "user_prompt": "用户提示词",
+            "vlm_service": "视觉服务",
+            "ollama_auto_unload": "自动释放显存",
+            "seed": "随机种子"
+        },
+        "outputs": {
+            "Prompt Output": "提示词输出",
+            "Prompt List": "提示词列表"
+        }
+    },
+    "PromptTranslate": {
+        "title": "✨提示词翻译",
+        "description": "多语言提示词翻译",
+        "inputs": {
+            "source_text": "原文",
+            "target_language": "目标语言",
+            "translate_service": "翻译服务",
+            "ollama_auto_unload": "自动释放显存",
+            "seed": "随机种子"
+        },
+        "widgets": {
+            "source_text": "原文",
+            "target_language": "目标语言",
+            "translate_service": "翻译服务",
+            "ollama_auto_unload": "自动释放显存",
+            "seed": "随机种子"
+        },
+        "outputs": {
+            "Prompt Output": "提示词输出"
+        }
+    },
+    "VideoCaptionNode": {
+        "title": "✨视频反推提示词",
+        "description": "使用VLM生成视频描述",
+        "inputs": {
+            "rule": "规则预设",
+            "custom_rule": "自定义规则",
+            "custom_rule_content": "自定义规则内容",
+            "user_prompt": "用户提示词",
+            "vlm_service": "视觉服务",
+            "sampling_mode": "抽帧策略",
+            "frame_count": "抽帧数量",
+            "manual_indices": "手动帧索引",
+            "ollama_auto_unload": "自动释放显存",
+            "video": "视频",
+            "video_frames": "图像",
+            "seed": "随机种子"
+        },
+        "widgets": {
+            "rule": "规则预设",
+            "custom_rule": "自定义规则",
+            "custom_rule_content": "自定义规则内容",
+            "user_prompt": "用户提示词",
+            "vlm_service": "视觉服务",
+            "sampling_mode": "抽帧策略",
+            "frame_count": "抽帧数量",
+            "manual_indices": "手动帧索引",
+            "ollama_auto_unload": "自动释放显存",
+            "video": "视频",
+            "video_frames": "图像",
+            "seed": "随机种子"
+        },
+        "outputs": {
+            "Prompt Output": "提示词输出",
+            "Preview frames": "预览帧"
+        }
+    },
+    "KontextPresetNode": {
+        "title": "✨Kontext预设",
+        "description": "使用Kontext预设生成创意指令",
+        "inputs": {
+            "image": "图像",
+            "kontext_preset": "预设及其",
+            "user_prompt": "用户提示词",
+            "vlm_service": "视觉服务",
+            "ollama_auto_unload": "自动释放显存",
+            "seed": "随机种子"
+        },
+        "widgets": {
+            "image": "图像",
+            "kontext_preset": "预设及其",
+            "user_prompt": "用户提示词",
+            "vlm_service": "视觉服务",
+            "ollama_auto_unload": "自动释放显存",
+            "seed": "随机种子"
+        },
+        "outputs": {
+            "Prompt Output": "提示词输出"
+        }
+    }
+}

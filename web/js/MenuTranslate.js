@@ -56,6 +56,11 @@ class TExe {
     const direct = this.T?.Menu?.[txt] || this.T?.Menu?.[txt?.trim?.()];
     if (direct) return direct;
 
+    // 官方 main.json 大量文案是 "Add {group}" 这类模板；运行时占位符已被
+    // 替换成实际值，精确匹配失败。这里做模板匹配，保持与官方 i18n 一致。
+    const templated = this.matchTemplate(txt);
+    if (templated) return templated;
+
     // 通用规则：节点属性面板标题 "<节点名> Properties"。
     // 标题是运行时拼接的（字典里通常只有节点标题），这里按类名去后缀匹配，
     // 输出 "<节点标题> 属性"；不依赖完整标题词条。
@@ -79,6 +84,61 @@ class TExe {
       if (baseT) return `${baseT} 属性`;
     }
     return null;
+  }
+
+  /**
+   * 占位符模板匹配：字典键形如 "Add {group}"，实际文本是 "Add Group"。
+   * 懒构建模板索引（按首字符分组，避免每次遍历全部模板）。
+   */
+  matchTemplate(txt) {
+    try {
+      const T = this.T;
+      if (!T || !T.Menu || !txt) return null;
+      const key = String(txt);
+      if (!key) return null;
+
+      if (!this._templateDict || this._templateDict !== T.Menu) {
+        this._templateDict = T.Menu;
+        this._templates = [];
+        const index = new Map();
+        for (const [en, zh] of Object.entries(T.Menu)) {
+          if (typeof en !== "string" || typeof zh !== "string") continue;
+          if (!en.includes("{") || !zh) continue;
+          const names = [];
+          const esc = en.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+          const pattern = esc.replace(/\\\{([A-Za-z0-9_$]+)\\\}/g, (m, name) => {
+            names.push(name);
+            return "(.+?)";
+          });
+          if (!names.length) continue;
+          let re;
+          try { re = new RegExp("^" + pattern + "$"); } catch (e) { continue; }
+          const tpl = { re, names, zh };
+          this._templates.push(tpl);
+          const first = en[0] || "";
+          if (!index.has(first)) index.set(first, []);
+          index.get(first).push(tpl);
+        }
+        this._templateIndex = index;
+      }
+
+      const group = this._templateIndex?.get(key[0]) || this._templates || [];
+      for (const tpl of group) {
+        const m = tpl.re.exec(key);
+        if (!m) continue;
+        let out = tpl.zh;
+        tpl.names.forEach((name, idx) => {
+          out = out.split(`{${name}}`).join(m[idx + 1]);
+        });
+        // 中文模板若使用不同的占位符名，按顺序兜底替换
+        let capture = 1;
+        out = out.replace(/\{[A-Za-z0-9_$]+\}/g, () => m[capture++] ?? "");
+        return out;
+      }
+      return null;
+    } catch (e) {
+      return null;
+    }
   }
 
   /**
@@ -197,6 +257,9 @@ class TExe {
             // 直接把父容器抛给 replaceText，让它利用自带的递归完成 O(N) 的单次遍历。
             this.replaceText(targetNode);
           }
+
+          // 账本过大时清理已脱离文档的节点，避免长期运行积累
+          if (domTextOrig.size + domAttrOrig.size > 3000) pruneDomLedger();
         });
       }
     } catch (e) {
@@ -214,6 +277,14 @@ class TExe {
       // 避免对同一父级重复执行 closest
       const skip = isText ? !!ctx?.skip : (ctx?.skip || this.tSkip(target));
       if (skip) return;
+
+      // 子图容器：用户自定义的接口名称保持原样；但 Enter/Exit subgraph
+      // 这类操作按钮仍要正常翻译，否则开启翻译后按钮要刷新才变中文。
+      const hostEl = isText ? target.parentElement : target;
+      if (hostEl && hostEl.closest && hostEl.closest("[data-uiiaiii-subgraph]")) {
+        const operationButton = hostEl.closest("button, [role='button'], .comfyui-button");
+        if (!operationButton) return;
+      }
 
       // 节点库树内的文本按“分类/节点名”语义翻译，不能走全局 Menu 词典
       // 父级已确认在树内时子级直接继承，省去逐节点 closest
@@ -251,6 +322,7 @@ class TExe {
         if (target.nodeValue && !isAlreadyTranslatedText(target.nodeValue)) {
           const translated = translate(target.nodeValue);
           if (translated) {
+            if (!domTextOrig.has(target)) domTextOrig.set(target, target.nodeValue);
             target.nodeValue = translated;
           }
         }
@@ -262,7 +334,30 @@ class TExe {
       if (target.title && !isAlreadyTranslatedText(target.title)) {
         const titleTranslated = translate(target.title);
         if (titleTranslated) {
+          rememberAttr(target, "title", target.title);
           target.title = titleTranslated;
+        }
+      }
+
+      // 输入框占位符（如 easy-use 账号对话框的 "Enter APIKEY"）
+      if ((target.nodeName === "INPUT" || target.nodeName === "TEXTAREA") &&
+          target.placeholder && !isAlreadyTranslatedText(target.placeholder)) {
+        const placeholderTranslated = translate(target.placeholder);
+        if (placeholderTranslated) {
+          rememberAttr(target, "placeholder", target.placeholder);
+          target.placeholder = placeholderTranslated;
+        }
+      }
+
+      // 无障碍属性 aria-label（部分 2.0 组件的可见文案放在这里）
+      if (target.getAttribute) {
+        const ariaLabel = target.getAttribute("aria-label");
+        if (ariaLabel && !isAlreadyTranslatedText(ariaLabel)) {
+          const ariaTranslated = translate(ariaLabel);
+          if (ariaTranslated) {
+            rememberAttr(target, "aria-label", ariaLabel);
+            target.setAttribute("aria-label", ariaTranslated);
+          }
         }
       }
 
@@ -270,7 +365,20 @@ class TExe {
           !isAlreadyTranslatedText(target.value)) {
         const valueTranslated = translate(target.value);
         if (valueTranslated) {
+          rememberAttr(target, "value", target.value);
           target.value = valueTranslated;
+        }
+      }
+
+      // 设置面板的下拉框常以只读 input 显示当前选中值（如"自动"/"无"），
+      // 翻译后必须记录原文，否则关闭翻译时无法恢复，需要点击一次才刷新
+      const isReadonlyInput = (target.nodeName === "INPUT" || target.nodeName === "TEXTAREA") &&
+        (target.readOnly || target.getAttribute?.("aria-readonly") === "true");
+      if (isReadonlyInput && target.value && !isAlreadyTranslatedText(target.value)) {
+        const readonlyValueTranslated = translate(target.value);
+        if (readonlyValueTranslated) {
+          rememberAttr(target, "value", target.value);
+          target.value = readonlyValueTranslated;
         }
       }
 
@@ -281,6 +389,7 @@ class TExe {
         if (text && !isAlreadyTranslatedText(text)) {
           const innerTextTranslated = translate(text);
           if (innerTextTranslated) {
+            rememberAttr(target, "textContent", target.textContent);
             target.textContent = innerTextTranslated;
           }
         }
@@ -291,6 +400,7 @@ class TExe {
           if (option.text && !isAlreadyTranslatedText(option.text)) {
             const optionTextTranslated = this.MT(option.text);
             if (optionTextTranslated) {
+              rememberAttr(option, "optionText", option.text);
               option.text = optionTextTranslated;
             }
           }
@@ -360,6 +470,115 @@ const IMMEDIATE_OVERLAY_SELECTOR = [
   ".comfyui-menu",
   ".comfyui-popup",
 ].join(", ");
+
+// DOM 原文账本：翻译改写前记录原文，供语言切换/关闭翻译时恢复。
+// 使用 Map 以便遍历；恢复/清理后释放，避免长期持有已销毁节点。
+const domTextOrig = new Map();
+const domAttrOrig = new Map();
+
+function rememberAttr(el, key, value) {
+  const prev = domAttrOrig.get(el) || {};
+  if (!(key in prev)) prev[key] = value;
+  domAttrOrig.set(el, prev);
+}
+
+function pruneDomLedger() {
+  for (const node of domTextOrig.keys()) {
+    if (!node.isConnected) domTextOrig.delete(node);
+  }
+  for (const el of domAttrOrig.keys()) {
+    if (!el.isConnected) domAttrOrig.delete(el);
+  }
+}
+
+export function restoreDomTranslations() {
+  try {
+    // 先恢复文本节点，避免直接替换叶子元素的 textContent 重建 Vue 管理的文本节点
+    for (const [node, orig] of domTextOrig) {
+      if (node.isConnected && node.nodeValue !== orig) node.nodeValue = orig;
+    }
+    for (const [el, orig] of domAttrOrig) {
+      if (!el.isConnected) continue;
+      if (orig.textContent !== undefined && el.textContent !== orig.textContent) {
+        el.textContent = orig.textContent;
+      }
+      if (orig.title !== undefined && el.title !== orig.title) el.title = orig.title;
+      if (orig.value !== undefined && el.value !== orig.value) el.value = orig.value;
+      if (orig.placeholder !== undefined && el.placeholder !== orig.placeholder) el.placeholder = orig.placeholder;
+      if (orig["aria-label"] !== undefined && el.getAttribute?.("aria-label") !== orig["aria-label"]) {
+        el.setAttribute("aria-label", orig["aria-label"]);
+      }
+      if (orig.optionText !== undefined && el.text !== orig.optionText) el.text = orig.optionText;
+    }
+  } catch (e) {
+    error("恢复 DOM 原文失败:", e);
+  } finally {
+    domTextOrig.clear();
+    domAttrOrig.clear();
+  }
+}
+
+export function translateAllDom(T) {
+  try {
+    if (!T) return;
+    texe.T = T;
+    texe.translateAllText(document.body);
+  } catch (e) {
+    error("重新翻译界面失败:", e);
+  }
+}
+
+/**
+ * 关闭翻译后的兜底：直接把节点 DOM 里的中文译文改回英文原文。
+ * Vue/Nodes 2.0 组件可能缓存了译文文本，仅恢复账本不足以刷新；
+ * reverseMap 是「中文译文 → 英文原文」。
+ */
+export function restoreNodeDomText(reverseMap, skipNodeIds) {
+  try {
+    if (!reverseMap || !reverseMap.size) return;
+    const roots = document.querySelectorAll("[data-node-id], .lg-node");
+    for (const root of roots) {
+      const nodeId = root.getAttribute("data-node-id");
+      // 子图容器接口由用户自主命名，关闭翻译时也不能改
+      if (skipNodeIds && nodeId && skipNodeIds.has(nodeId)) continue;
+      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+      let node;
+      while ((node = walker.nextNode())) {
+        // 端口名可能是用户手动改的中文，关闭翻译时不能按字典反向覆盖
+        if (node.parentElement && node.parentElement.closest(".lg-slot")) continue;
+        const value = node.nodeValue;
+        const key = value && value.trim();
+        if (key && reverseMap.has(key)) {
+          node.nodeValue = value.replace(key, reverseMap.get(key));
+        }
+      }
+      for (const el of root.querySelectorAll("[title], [aria-label], [placeholder]")) {
+        for (const attr of ["title", "aria-label", "placeholder"]) {
+          const value = el.getAttribute(attr);
+          if (value && reverseMap.has(value)) {
+            el.setAttribute(attr, reverseMap.get(value));
+          }
+        }
+      }
+    }
+  } catch (e) {
+    error("恢复节点 DOM 原文失败:", e);
+  }
+}
+
+/**
+ * 停止界面翻译：断开所有观察器并清空字典。
+ * 关闭翻译时必须调用，否则已注册的观察器仍会用旧字典翻译新出现的
+ * 面板/菜单，表现为关闭后依然显示译文。
+ */
+export function stopMenuTranslation() {
+  try {
+    texe.cleanupObservers();
+    texe.T = null;
+  } catch (e) {
+    error("停止界面翻译失败:", e);
+  }
+}
 
 export function applyMenuTranslation(T) {
   try {
@@ -448,7 +667,8 @@ export function applyMenuTranslation(T) {
                     const panelObserver = observeFactory(dialog, handleNewSettingsObserver, true);
                     if (panelObserver) texe.observers.push(panelObserver);
                   }
-                  observeFactory(dialog, handleSettingsDialog, dialog?.role === "dialog");
+                  const dialogObserver = observeFactory(dialog, handleSettingsDialog, dialog?.role === "dialog");
+                  if (dialogObserver) texe.observers.push(dialogObserver);
                 }
               } else {
                 texe.translateAllText(node);

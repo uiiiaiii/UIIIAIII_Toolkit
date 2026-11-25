@@ -1,5 +1,5 @@
 {
-    "seed": "随机种子",
+    "seed": "种子",
     "control_after_generate": "运行后操作",
     "cfg": "CFG",
     "transition_step": "转换步",
@@ -9,7 +9,7 @@
     "w_max": "最大权重",
     "upscaler_model": "放大模型",
     "highres_tiling": "高分辨率分块",
-    "tiling_mode": "边缘平铺模式",
+    "tiling_mode": "平铺模式",
     "tiling_tiles": "分块数量",
     "tiling_axis": "分块轴",
     "highres_tiling_mode": "高分辨率分块模式",

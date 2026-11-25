@@ -34,7 +34,6 @@
         }
     },
     "LatentBatch": {
-        "title": "Latent组合批次",
         "inputs": {
             "latent1": "Latent1",
             "latent2": "Latent2"

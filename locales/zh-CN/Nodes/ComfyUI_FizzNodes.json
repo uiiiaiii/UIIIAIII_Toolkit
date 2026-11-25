@@ -137,9 +137,6 @@
             "INT": "整数"
         }
     },
-
-
-
     "PromptSchedule": {
         "title": "提示词调度",
         "inputs": {
@@ -255,9 +252,6 @@
             "CONDITIONING": "条件"
         }
     },
-
-
-
     "BatchPromptSchedule": {
         "title": "提示词调度(批次)",
         "inputs": {
@@ -401,19 +395,15 @@
             "LATENT": "Latent"
         }
     },
-
-
-
     "StringConcatenate": {
-        "title": "字符串连锁",
         "widgets": {
-            "text": "文本_A",
+            "text": "文本",
             "text_b": "文本_B",
             "text_c": "文本_C",
             "text_d": "文本_D",
             "text_e": "文本_E",
             "text_f": "文本_F",
-            "text_g": "文本_G",
+            "text_g": "文本_g",
             "frame_b": "帧_B",
             "frame_c": "帧_C",
             "frame_d": "帧_D",
@@ -467,7 +457,6 @@
             "STRING": "字符串"
         }
     },
-
     "CalculateLatentInterpFrameNumber": {
         "title": "计算Latent帧插值",
         "widgets": {

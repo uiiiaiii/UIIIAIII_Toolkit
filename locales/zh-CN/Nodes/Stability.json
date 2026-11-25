@@ -10,7 +10,6 @@
             "rank": "Rank"
         }
     },
-    
     "ColorBlend": {
         "title": "颜色混合",
         "inputs": {
@@ -21,12 +20,7 @@
             "IMAGE": "图像"
         }
     },
-
     "GetImageSize": {
-        "title": "获取图像尺寸",
-        "inputs": {
-            "image": "图像"
-        },
         "outputs": {
             "width": "宽度",
             "height": "高度"

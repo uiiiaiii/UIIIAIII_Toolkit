@@ -1,21 +1,4 @@
 {
-    "MinimaxTextToVideoNode": {
-        "title": "MiniMax 文本转视频",
-        "widgets": {
-            "model": "模型",
-            "seed": "随机种子"
-        }
-    },
-    "MinimaxImageToVideoNode": {
-        "title": "MiniMax 图像转视频",
-        "inputs": {
-            "image": "图像"
-        },
-        "widgets": {
-            "model": "模型",
-            "seed": "随机种子"
-        }
-    },
     "VeoVideoGenerationNode": {
         "title": "Google Veo2 视频生成",
         "inputs": {
@@ -45,11 +28,8 @@
         }
     },
     "KlingTextToVideoNode": {
-        "title": "Kling 文本转视频",
         "widgets": {
-            "cfg_scale": "CFG缩放",
-            "aspect_ratio": "宽高比",
-            "mode": "模式"
+            "cfg_scale": "cfg 缩放"
         },
         "outputs": {
             "video_id": "视频ID",
@@ -57,16 +37,8 @@
         }
     },
     "KlingImage2VideoNode": {
-        "title": "Kling 图像转视频",
-        "inputs": {
-            "start_frame": "起始帧"
-        },
         "widgets": {
-            "model_name": "模型名称",
-            "cfg_scale": "CFG缩放",
-            "mode": "模式",
-            "aspect_ratio": "宽高比",
-            "duration": "时长"
+            "cfg_scale": "cfg 缩放"
         },
         "outputs": {
             "video_id": "视频ID",
@@ -103,15 +75,11 @@
         }
     },
     "KlingStartEndFrameNode": {
-        "title": "Kling 起止帧生成视频",
         "inputs": {
-            "start_frame": "起始帧",
-            "end_frame": "结束帧"
+            "end_frame": "末帧"
         },
         "widgets": {
-            "cfg_scale": "CFG缩放",
-            "aspect_ratio": "宽高比",
-            "mode": "模式"
+            "cfg_scale": "cfg 缩放"
         },
         "outputs": {
             "video_id": "视频ID",
@@ -217,42 +185,7 @@
             "duration": "时长"
         }
     },
-    "RunwayFirstLastFrameNode": {
-        "title": "Runway 首尾帧转视频",
-        "inputs": {
-            "start_frame": "起始帧",
-            "end_frame": "结束帧"
-        },
-        "widgets": {
-            "duration": "时长",
-            "ratio": "比例",
-            "seed": "随机种子"
-        }
-    },
-    "RunwayImageToVideoNodeGen3a": {
-        "title": "Runway 图像转视频（Gen3a Turbo）",
-        "inputs": {
-            "start_frame": "起始帧"
-        },
-        "widgets": {
-            "duration": "时长",
-            "ratio": "比例",
-            "seed": "随机种子"
-        }
-    },
-    "RunwayImageToVideoNodeGen4": {
-        "title": "Runway 图像转视频（Gen4）",
-        "inputs": {
-            "start_frame": "起始帧"
-        },
-        "widgets": {
-            "duration": "时长",
-            "ratio": "比例",
-            "seed": "随机种子"
-        }
-    },
     "PixverseTemplateNode": {
-        "title": "PixVerse 模板",
         "outputs": {
             "pixverse_template": "PixVerse 模板"
         }

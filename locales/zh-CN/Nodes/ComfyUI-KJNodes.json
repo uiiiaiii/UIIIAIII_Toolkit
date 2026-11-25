@@ -848,16 +848,11 @@
         }
     },
     "SplitImageChannels": {
-        "title": "分离图像通道",
-        "description": "分离图像为单通道图像，alpha通道分离为遮罩。",
-        "inputs": {
-            "image": "图像"
-        },
         "outputs": {
             "red": "红色",
             "green": "绿色",
             "blue": "蓝色",
-            "mask": "遮罩图像"
+            "mask": "遮罩"
         }
     },
     "MergeImageChannels": {

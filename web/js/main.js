@@ -9,7 +9,7 @@
 // ComfyUI 已废弃 /scripts/app.js 等 legacy 导入路径，改用运行时全局对象
 // （window.comfyAPI 由前端在加载扩展前挂载；window.app 兼容更早的版本）
 const app = window.comfyAPI?.app?.app || window.app;
-import { applyMenuTranslation, observeFactory } from "./MenuTranslate.js";
+import { applyMenuTranslation, observeFactory, restoreDomTranslations, restoreNodeDomText, stopMenuTranslation, translateAllDom } from "./MenuTranslate.js";
 import { registerSettings, addPanelButtons, setupPluginManager } from "./SettingsPanel.js";
 import {
   isAlreadyTranslatedText,
@@ -194,7 +194,8 @@ export class TUtils {
           if (w._uiiaiii_tl_orig === undefined) {
             w._uiiaiii_tl_orig = (typeof w.label === "string" && w.label) ? w.label : null;
           }
-          w.label = translated;
+          w._uiiaiii_label = translated;
+          w._uiiaiii_applied = translated;
         }
       }
     } catch (e) { /* 忽略，不影响绘制 */ }
@@ -209,6 +210,17 @@ export class TUtils {
         }
         // 绘制前兜底翻译控件显示名（覆盖插件运行时改写的 label）
         TUtils.translateNodeWidgetLabels(node);
+        // 译文只在绘制期间临时写入 widget.label，绘制后恢复，
+        // 保证工作流序列化数据永远是英文原文
+        const restoreLabels = [];
+        for (const w of node.widgets) {
+          if (!w) continue;
+          const translated = w._uiiaiii_applied ?? w._uiiaiii_label;
+          if (translated === undefined) continue;
+          const hadOwn = Object.prototype.hasOwnProperty.call(w, "label");
+          restoreLabels.push([w, w.label, !hadOwn]);
+          w.label = translated;
+        }
         const widgets = node.widgets.filter((w) => w.type === "slider");
         widgets.forEach((widget) => {
           widget._ori_label = widget.label;
@@ -223,6 +235,10 @@ export class TUtils {
             widget.label = widget._ori_label;
             delete widget._ori_label;
           });
+          for (const [w, oldLabel, remove] of restoreLabels) {
+            if (remove) delete w.label;
+            else w.label = oldLabel;
+          }
         }
         return result;
       };
@@ -239,22 +255,22 @@ export class TUtils {
 
       let class_type = nodeType.comfyClass ? nodeType.comfyClass : nodeType.type;
 
-      // 记录原型层英文原文标题（仅一次），供关闭翻译时还原
+      // 记录原型层英文原文标题（仅一次）。
+      // 绝不修改 nodeType.title：节点序列化会读取 title，修改原型会把译文
+      // 写进工作流；显示层由 _uiiaiii_title + 绘制临时映射完成。
       if (nodeType._uiiaiii_orig_title === undefined) {
         nodeType._uiiaiii_orig_title = nodeType.title;
       }
-      const origTitle = nodeType._uiiaiii_orig_title;
 
-      if (!isTranslationEnabled()) {
-        if (origTitle !== undefined && nodeType.title !== origTitle) {
-          nodeType.title = origTitle;
+      // 节点库菜单/画布标题显示的是 nodeType.title（英文）。把英文显示名
+      // →中文标题加入 Menu，供 DOM 翻译器翻译 2.0 菜单；不修改原型数据。
+      if (isTranslationEnabled() && this.T && this.T.Menu) {
+        const zhTitle = this.T.Nodes?.[class_type]?.title;
+        const enTitle = nodeType.title;
+        if (typeof enTitle === "string" && enTitle && typeof zhTitle === "string"
+            && zhTitle && zhTitle !== enTitle && this.T.Menu[enTitle] === undefined) {
+          this.T.Menu[enTitle] = zhTitle;
         }
-        return;
-      }
-
-      const zhTitle = nodesT.hasOwnProperty(class_type) ? nodesT[class_type]["title"] : null;
-      if (zhTitle && nodeType.title !== zhTitle) {
-        nodeType.title = zhTitle;
       }
     } catch (e) {
       error(`为节点类型 ${nodeName} 应用翻译失败:`, e);
@@ -263,13 +279,25 @@ export class TUtils {
 
   static applyVueNodeDisplayNameTranslation(nodeDef) {
     try {
-      const nodesT = TUtils.T.Nodes;
-      const class_type = nodeDef.name;
-      if (nodesT.hasOwnProperty(class_type)) {
-        const hasNativeTranslation = nodeDef.display_name && isAlreadyTranslatedText(nodeDef.display_name);
-        if (!hasNativeTranslation && nodesT[class_type]["title"]) {
-          nodeDef.display_name = nodesT[class_type]["title"];
-        }
+      if (!nodeDef || typeof nodeDef.name !== "string") return;
+      // 记录节点定义层的英文显示名（仅一次）
+      if (nodeDef._uiiaiii_orig_display_name === undefined) {
+        nodeDef._uiiaiii_orig_display_name = nodeDef.display_name;
+      }
+      const orig = nodeDef._uiiaiii_orig_display_name;
+      const zhTitle = TUtils.T.Nodes?.[nodeDef.name]?.title;
+
+      // 不修改 nodeDef.display_name：它是节点定义对象，关闭翻译后无法自动恢复，
+      // 会导致节点标题/菜单一直残留中文。只把英文显示名→中文标题加入 Menu，
+      // 由 DOM 翻译器在显示层翻译。
+      if (isTranslationEnabled() && TUtils.T && TUtils.T.Menu
+          && typeof orig === "string" && orig && typeof zhTitle === "string"
+          && zhTitle && zhTitle !== orig && TUtils.T.Menu[orig] === undefined) {
+        TUtils.T.Menu[orig] = zhTitle;
+      }
+      // 把历史版本可能写入的中文显示名恢复为英文原文
+      if (orig !== undefined && nodeDef.display_name !== orig) {
+        nodeDef.display_name = orig;
       }
     } catch (e) {
       error(`为Vue节点 ${nodeDef?.name} 应用显示名称翻译失败:`, e);
@@ -323,7 +351,9 @@ export class TUtils {
       if (!item._original_name) {
         item._original_name = item.name;
       }
-      item.label = translation;
+      item._uiiaiii_applied = translation;
+      // 只写显示层自定义属性，绝不写 item.label（会被序列化进工作流）
+      item._uiiaiii_label = translation;
     }
   }
 
@@ -391,10 +421,9 @@ export class TUtils {
     if (!item || !translation || translation === item.name) return;
     if (this.isOversizedFieldLabel(item.name, translation)) return;
 
-    // 历史污染：label 曾是被写进工作流的译文 → 内存中恢复英文原名，改由 _uiiaiii_label 承担显示
-    if (typeof item.label === "string" && item.label !== item.name && isAlreadyTranslatedText(item.label)) {
-      item.label = item.name;
-    }
+    // 不再根据「label 是否在译文集合」改写 slot.label：
+    // slot.label 会被 LiteGraph 序列化，且用户可能把端口手动命名为中文
+    // （恰好与字典译文相同）。译文只写显示层自定义属性，由绘制层临时映射。
     item._uiiaiii_label = translation;
   }
 
@@ -422,49 +451,23 @@ export class TUtils {
    * 不一致。这里以子图边界的 label 为唯一权威来源做一次纠正。
    */
   static syncSubgraphHostLabels(node) {
+    // 子图容器的提升接口是用户可自主编辑名称的数据：插件完全不翻译、
+    // 不覆盖、不恢复。这里只清理插件自己留下的显示层标记，并给容器 DOM
+    // 打标记，供 DOM 翻译器跳过整个容器子树。
     try {
-      const sub = node?.subgraph;
-      if (!sub || !Array.isArray(sub.inputs) || !Array.isArray(node.inputs)) return;
-
-      const boundary = new Map();
-      for (const slot of sub.inputs) {
-        if (slot && typeof slot.name === "string") boundary.set(slot.name, slot);
-      }
-
-      for (const inp of node.inputs) {
-        if (!inp || typeof inp.name !== "string") continue;
-        const def = boundary.get(inp.name);
-        if (!def) continue;
-        const label = (typeof def.label === "string" && def.label) ? def.label : undefined;
-
-        // Nodes 2.0 的提升控件通过 _widget 投影读写（同时同步 input.label 与控件状态）
-        const proj = inp._widget;
-        if (proj) {
-          if (label !== undefined) {
-            if (proj.label !== label) proj.label = label;
-          } else if (proj.label !== undefined && isAlreadyTranslatedText(proj.label)) {
-            proj.label = undefined;
-            delete inp.label;
-          }
-          continue;
-        }
-
-        if (label !== undefined) {
-          if (inp.label !== label) inp.label = label;
-        } else if (inp.label !== undefined) {
-          delete inp.label;
-        }
-
-        // 显示层控件（Nodes 2.0 从 widget.label 取显示名）
-        if (inp.widget?.name && Array.isArray(node.widgets)) {
-          const w = node.widgets.find((item) => item && item.name === inp.widget.name);
-          if (!w) continue;
-          if (label !== undefined) {
-            if (w.label !== label) w.label = label;
-          } else if (w.label !== undefined && isAlreadyTranslatedText(w.label)) {
-            // 边界没有自定义名：只撤销旧译文，保留用户可能的自定义名
-            delete w.label;
-          }
+      delete node?._uiiaiii_title;
+      const root = document.querySelector(`[data-node-id="${node?.id}"]`);
+      if (root) root.setAttribute("data-uiiaiii-subgraph", "1");
+      for (const key of ["inputs", "outputs", "widgets"]) {
+        const arr = node?.[key];
+        if (!Array.isArray(arr)) continue;
+        for (const item of arr) {
+          if (!item) continue;
+          delete item._uiiaiii_label;
+          delete item._uiiaiii_tl;
+          delete item._uiiaiii_applied;
+          delete item._uiiaiii_tl_orig;
+          delete item._original_name;
         }
       }
     } catch (e) { /* 忽略 */ }
@@ -595,6 +598,552 @@ export class TUtils {
     } catch (e) { /* 忽略 */ }
   }
 
+  /**
+   * 恢复单个节点的显示层译文，不触碰工作流数据。
+   * 用于语言切换/关闭翻译时清掉旧语言残留。
+   */
+  static restoreNodeDisplay(node) {
+    if (!node) return;
+    // 子图容器由用户定义：只按子图定义的 name 修正历史译文显示，绝不写持久字段
+    if (this.isSubgraphNode(node)) {
+      this.syncSubgraphHostLabels(node);
+      return;
+    }
+    delete node._uiiaiii_title;
+    // 标题还原：历史工作流可能残留旧译文标题，或原型标题仍是译文
+    if (!node._translation_custom_title && node.title && isAlreadyTranslatedText(node.title)) {
+      node.title = node._original_title
+        || node.constructor?._uiiaiii_orig_title
+        || node.constructor?.comfyClass
+        || node.constructor?.type
+        || node.title;
+    }
+    delete node._original_title;
+    for (const key of ["inputs", "outputs", "widgets"]) {
+      const arr = node[key];
+      if (!Array.isArray(arr)) continue;
+      for (const item of arr) {
+        if (!item) continue;
+        const applied = item._uiiaiii_applied ?? item._uiiaiii_label;
+        const userChanged = typeof item.label === "string"
+          && applied !== undefined && item.label !== applied;
+        if (userChanged) {
+          // 用户手动改过显示名：保留用户输入，只清理我们的标记
+          delete item._original_name;
+          delete item._uiiaiii_tl_orig;
+          delete item._uiiaiii_tl;
+          delete item._uiiaiii_label;
+          delete item._uiiaiii_applied;
+          continue;
+        }
+        delete item._uiiaiii_label;
+        delete item._uiiaiii_tl;
+        // localized_name 是节点端口的翻译显示字段，旧工作流会把它序列化保存；
+        // 关闭翻译后必须清掉，否则端口仍显示旧译文
+        if (typeof item.localized_name === "string" && isAlreadyTranslatedText(item.localized_name)) {
+          delete item.localized_name;
+        }
+        if (item._original_name) {
+          item.label = item._original_name;
+          delete item._original_name;
+        } else if (item._uiiaiii_tl_orig !== undefined) {
+          if (item._uiiaiii_tl_orig === null) delete item.label;
+          else item.label = item._uiiaiii_tl_orig;
+        }
+        delete item._uiiaiii_tl_orig;
+        delete item._uiiaiii_applied;
+      }
+    }
+  }
+
+  /**
+   * 保证工作流序列化数据干净。
+   * 保存期间临时移除翻译显示字段和插件内部标记，保存后立即恢复；
+   * 绝不把译文、localized_name 或 _uiiaiii_* 写进工作流 JSON。
+   */
+  static patchSerialization() {
+    try {
+      if (typeof LGraph === "undefined" || !LGraph.prototype || LGraph.prototype._uiiaiii_serialize_patched) return;
+      const origSerialize = LGraph.prototype.serialize;
+      if (typeof origSerialize !== "function") return;
+
+      const CLEAN_KEYS = [
+        "localized_name",
+        "_uiiaiii_label",
+        "_uiiaiii_title",
+        "_uiiaiii_tl",
+        "_uiiaiii_tl_orig",
+        "_uiiaiii_applied",
+        "_original_name",
+        "_original_title",
+        "_translation_custom_title",
+      ];
+      const clean = (obj, restore) => {
+        if (!obj || typeof obj !== "object") return;
+        for (const key of CLEAN_KEYS) {
+          if (Object.prototype.hasOwnProperty.call(obj, key)) {
+            restore.push([obj, key, obj[key]]);
+            delete obj[key];
+          }
+        }
+      };
+
+      LGraph.prototype.serialize = function () {
+        const restore = [];
+        try {
+          for (const node of this._nodes || []) {
+            clean(node, restore);
+            for (const key of ["inputs", "outputs", "widgets"]) {
+              const arr = node?.[key];
+              if (Array.isArray(arr)) {
+                for (const item of arr) clean(item, restore);
+              }
+            }
+          }
+          return origSerialize.apply(this, arguments);
+        } finally {
+          for (const [obj, key, value] of restore) obj[key] = value;
+        }
+      };
+      LGraph.prototype._uiiaiii_serialize_patched = true;
+    } catch (e) {
+      error("拦截工作流序列化失败:", e);
+    }
+  }
+
+  /**
+   * 实时切换词典语言：恢复旧译文 → 重新加载字典 → 重新应用。
+   * 不刷新页面，不修改工作流数据。
+   */
+  static async switchLocale(locale) {
+    try {
+      currentConfig.locale = locale;
+      const graph = (window.comfyAPI?.app?.app || window.app)?.graph;
+      const nodes = this.collectAllNodes(graph);
+
+      // 必须先停掉旧字典的观察器：否则恢复后的英文会在等待 syncTranslation
+      // 的异步期间被旧观察器重新翻译，且原文账本已清，之后就再也恢复不了。
+      stopMenuTranslation();
+      TUtils._dragObserver?.disconnect?.();
+      TUtils._dragObserver = null;
+
+      restoreDomTranslations();
+      for (const node of nodes) this.restoreNodeDisplay(node);
+
+      await this.syncTranslation();
+
+      // 节点原型标题按新状态/语言重新应用（关闭时恢复英文）
+      this.applyNodeTypeTranslation(window.comfyAPI?.app?.app || window.app);
+
+      if (isTranslationEnabled()) {
+        for (const node of nodes) {
+          if (this.isSubgraphNode(node)) continue;
+          this.applyNodeTranslation(node);
+        }
+        applyMenuTranslation(this.T);
+        translateAllDom(this.T);
+      }
+      // 触发下拉控件重新计算显示值（Nodes 2.0 缓存需要响应式更新）
+      this.refreshComboWidgets(nodes);
+      this.syncComboDomLabels(nodes);
+      this.syncNodeDomLabels(nodes);
+      graph?.setDirtyCanvas?.(true, true);
+      // 节点画布/下拉控件：强制重绘，避免关闭翻译后控件显示值要点击一次才更新
+      if (graph?._nodes) {
+        for (const node of graph._nodes) node?.setDirtyCanvas?.(true, true);
+      }
+      const comfyApp = window.comfyAPI?.app?.app || window.app;
+      comfyApp?.canvas?.setDirty?.(true, true);
+      comfyApp?.canvas?.draw?.(true, true);
+      // 节点渲染器/组件更新是异步的：下一帧再强制重绘一次，
+      // 确保下拉当前值不会停留在旧语言的画面缓存里
+      requestAnimationFrame(() => {
+        this.syncComboDomLabels(nodes);
+        this.syncNodeDomLabels(nodes);
+      this.syncNodeDomLabels(nodes);
+        graph?.setDirtyCanvas?.(true, true);
+        comfyApp?.canvas?.setDirty?.(true, true);
+        comfyApp?.canvas?.draw?.(true, true);
+      });
+      window.dispatchEvent(new CustomEvent("uiiaiii-locale-changed", { detail: { locale } }));
+      window.dispatchEvent(new CustomEvent("uiiaiii-translation-state-changed", {
+        detail: { enabled: isTranslationEnabled() }
+      }));
+    } catch (e) {
+      error("切换语言失败:", e);
+    }
+  }
+
+  /**
+   * 实时启用/关闭翻译：恢复原文后按开关重新应用。
+   */
+  static async setTranslationEnabled(enabled) {
+    try {
+      const graph = (window.comfyAPI?.app?.app || window.app)?.graph;
+      const nodes = this.collectAllNodes(graph);
+
+      // 关闭前保存「中文译文 → 英文原文」，用于关闭后强制刷新 Nodes 2.0 DOM
+      const reverse = new Map();
+      try {
+        const dict = this.T || {};
+        for (const [en, zh] of Object.entries(dict.Menu || {})) {
+          if (typeof en === "string" && typeof zh === "string" && en && zh && en !== zh && !reverse.has(zh)) {
+            reverse.set(zh, en);
+          }
+        }
+        for (const nd of Object.values(dict.Nodes || {})) {
+          if (!nd || typeof nd !== "object") continue;
+          for (const sec of ["inputs", "outputs", "widgets", "options"]) {
+            for (const [k, v] of Object.entries(nd[sec] || {})) {
+              if (typeof v === "string" && v && v !== k && !reverse.has(v)) reverse.set(v, k);
+            }
+          }
+        }
+      } catch (e) { /* 忽略 */ }
+
+      // 必须先停掉旧字典的观察器：否则恢复后的英文会在等待 syncTranslation
+      // 的异步期间被旧观察器重新翻译，且原文账本已清，之后就再也恢复不了。
+      stopMenuTranslation();
+      TUtils._dragObserver?.disconnect?.();
+      TUtils._dragObserver = null;
+
+      restoreDomTranslations();
+      for (const node of nodes) this.restoreNodeDisplay(node);
+
+      await this.syncTranslation();
+
+      // 节点原型标题按新状态/语言重新应用（关闭时恢复英文）
+      this.applyNodeTypeTranslation(window.comfyAPI?.app?.app || window.app);
+
+      if (enabled && isTranslationEnabled()) {
+        for (const node of nodes) {
+          if (this.isSubgraphNode(node)) continue;
+          this.applyNodeTranslation(node);
+        }
+        applyMenuTranslation(this.T);
+        translateAllDom(this.T);
+      } else {
+        // 关闭后立即、下一帧和稍后再强制恢复节点 DOM，
+        // 覆盖 Nodes 2.0 组件缓存的标题/控件名译文
+        const skipSubgraphIds = new Set(
+          nodes.filter(node => this.isSubgraphNode(node)).map(node => String(node.id))
+        );
+        const syncDom = () => {
+          restoreNodeDomText(reverse, skipSubgraphIds);
+          this.restoreNodeDomToEnglish(nodes);
+        };
+        syncDom();
+        requestAnimationFrame(syncDom);
+        setTimeout(syncDom, 80);
+        setTimeout(syncDom, 250);
+      }
+      // 触发下拉控件重新计算显示值（Nodes 2.0 缓存需要响应式更新）
+      this.refreshComboWidgets(nodes);
+      this.syncComboDomLabels(nodes);
+      this.syncNodeDomLabels(nodes);
+      graph?.setDirtyCanvas?.(true, true);
+      // 节点画布/下拉控件：强制重绘，避免关闭翻译后控件显示值要点击一次才更新
+      if (graph?._nodes) {
+        for (const node of graph._nodes) node?.setDirtyCanvas?.(true, true);
+      }
+      const comfyApp = window.comfyAPI?.app?.app || window.app;
+      comfyApp?.canvas?.setDirty?.(true, true);
+      comfyApp?.canvas?.draw?.(true, true);
+      // 节点渲染器/组件更新是异步的：下一帧再强制重绘一次，
+      // 确保下拉当前值不会停留在旧语言的画面缓存里
+      requestAnimationFrame(() => {
+        this.syncComboDomLabels(nodes);
+        this.syncNodeDomLabels(nodes);
+      this.syncNodeDomLabels(nodes);
+        graph?.setDirtyCanvas?.(true, true);
+        comfyApp?.canvas?.setDirty?.(true, true);
+        comfyApp?.canvas?.draw?.(true, true);
+      });
+      window.dispatchEvent(new CustomEvent("uiiaiii-translation-state-changed", {
+        detail: { enabled: isTranslationEnabled() }
+      }));
+    } catch (e) {
+      error("切换翻译状态失败:", e);
+    }
+  }
+
+  /**
+   * 触发下拉控件的响应式刷新。
+   * Nodes 2.0 / Vue 渲染的节点会缓存下拉当前值的显示文本，关闭翻译或
+   * 切换语言后仅重绘画布不会更新，必须让组件重新计算一次。
+   */
+  static refreshComboWidgets(nodes) {
+    for (const node of nodes || []) {
+      const widgets = node?.widgets;
+      if (!Array.isArray(widgets)) continue;
+      for (const w of widgets) {
+        if (!w || w.type !== "combo") continue;
+        if (w.options && Array.isArray(w.options.values)) {
+          // 重新赋值数组引用，触发 Vue 的响应式依赖更新
+          w.options.values = w.options.values.slice();
+        }
+        // 替换 getOptionLabel 引用（内部仍调用原函数），让依赖它的
+        // 下拉组件重新计算当前值；每次切换都换新引用以触发更新
+        if (w.options && typeof w.options.getOptionLabel === "function") {
+          const base = w.options.getOptionLabel._uiiaiii_base || w.options.getOptionLabel;
+          const wrapped = (value) => base(value);
+          wrapped._uiiaiii_base = base;
+          w.options.getOptionLabel = wrapped;
+        }
+      }
+    }
+  }
+
+  /**
+   * 取节点字段的译文：节点级字典优先，全局 Menu 兜底。
+   * 2.0 和经典模式必须共用这一个入口，保证同一字段只出现一种译文。
+   */
+  static getNodeFieldTranslation(node, section, name) {
+    try {
+      if (!name || !this.T) return null;
+      const cls = node?.constructor?.comfyClass || node?.constructor?.type;
+      const dict = cls && this.T.Nodes ? this.T.Nodes[cls] : null;
+      const lookup = (key) => {
+        const value = dict?.[section]?.[key];
+        return (typeof value === "string" && value) ? value : null;
+      };
+      let translated = lookup(name);
+      if (!translated && String(name).includes(".")) {
+        translated = lookup(String(name).split(".").pop());
+      }
+      if (!translated) translated = this.T.Menu?.[name] || null;
+      return translated;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /**
+   * 2.0 节点 DOM 文本覆盖：控件名、输入/输出端口名直接使用节点级字典译文。
+   * 插件自带的英文/中文 label 不作为最终显示，保证与经典模式一致。
+   */
+  static syncNodeDomLabels(nodes) {
+    if (!isTranslationEnabled()) return;
+    try {
+      const allNodes = this.collectAllNodes({ _nodes: nodes });
+      for (const node of allNodes) {
+        if (!node || node.id === undefined) continue;
+        const root = document.querySelector(`[data-node-id="${node.id}"]`);
+        if (!root) continue;
+        if (this.isSubgraphNode(node)) {
+          // 子图自定义接口不翻译，但容器底部的 Enter subgraph 操作按钮要翻译
+          const enterText = root.querySelector('[data-testid="subgraph-enter-button"] span');
+          if (enterText) {
+            const translated = this.T?.Menu?.["Enter subgraph"] || this.T?.Menu?.["enterSubgraph"];
+            if (translated && enterText.textContent !== translated) {
+              enterText.textContent = translated;
+            }
+          }
+          continue;
+        }
+
+        // 控件名标签
+        for (const wEl of root.querySelectorAll('[data-testid="node-widget"][data-widget-name]')) {
+          const name = wEl.getAttribute("data-widget-name");
+          const labelEl = wEl.querySelector('[data-testid="widget-layout-field-label"]');
+          if (!labelEl || !name) continue;
+          const widget = (node.widgets || []).find(item => item && item.name === name);
+          if (this.isUserCustomLabel(widget)) continue;
+          const translated = this.getNodeFieldTranslation(node, "widgets", name);
+          if (translated && labelEl.textContent !== translated) {
+            labelEl.textContent = translated;
+          }
+        }
+
+        // 输入/输出端口名
+        for (const slotEl of root.querySelectorAll(".lg-slot--input, .lg-slot--output")) {
+          const dot = slotEl.querySelector("[data-slot-key]");
+          const key = dot?.getAttribute("data-slot-key") || "";
+          const isInput = slotEl.classList.contains("lg-slot--input");
+          const match = key.match(isInput ? /-in-(\d+)$/ : /-out-(\d+)$/);
+          if (!match) continue;
+          const index = parseInt(match[1], 10);
+          const slot = (isInput ? node.inputs : node.outputs)?.[index];
+          if (!slot || typeof slot.name !== "string") continue;
+          if (this.isUserCustomLabel(slot)) continue;
+          const translated = this.getNodeFieldTranslation(node, isInput ? "inputs" : "outputs", slot.name);
+          if (!translated) continue;
+          const labelEl = slotEl.querySelector(".editable-text span") || slotEl.querySelector("span");
+          if (labelEl && labelEl.textContent !== translated) {
+            labelEl.textContent = translated;
+          }
+        }
+      }
+    } catch (e) { /* 忽略 */ }
+  }
+
+  /** 用户手动改过的端口/控件名：有自定义 label 且不是插件写入的译文标记 */
+  static isUserCustomLabel(item) {
+    if (!item) return false;
+    if (item._uiiaiii_label !== undefined || item._uiiaiii_applied !== undefined) return false;
+    const label = item.label;
+    if (typeof label !== "string" || !label || label === item.name) return false;
+    // 命中字典译文的 label 是翻译残留，不是用户自定义，关闭时要恢复
+    if (isAlreadyTranslatedText(label)) return false;
+    return true;
+  }
+
+  /**
+   * 关闭翻译时按节点数据强制恢复英文：
+   * 端口名/控件名直接使用 name（或插件的英文 label），不依赖反向字典。
+   * 用户手动改过的中文 label 保留。
+   */
+  static restoreNodeDomToEnglish(nodes) {
+    try {
+      for (const node of nodes || []) {
+        if (!node || node.id === undefined) continue;
+        const root = document.querySelector(`[data-node-id="${node.id}"]`);
+        if (!root) continue;
+        if (this.isSubgraphNode(node)) {
+          // 子图接口保持用户命名，只恢复容器的 Enter subgraph 操作按钮
+          const enterText = root.querySelector('[data-testid="subgraph-enter-button"] span');
+          if (enterText && enterText.textContent !== "Enter subgraph") {
+            enterText.textContent = "Enter subgraph";
+          }
+          continue;
+        }
+
+        // 节点标题：把已知译文恢复为英文原名（2.0 标题是 DOM 文本）
+        if (!node._translation_custom_title) {
+          const header = root.querySelector('[data-testid^="node-header-"]');
+          if (header) {
+            const englishTitle = node.constructor?._uiiaiii_orig_title
+              || node.constructor?.comfyClass
+              || node.constructor?.type;
+            if (englishTitle) {
+              const walker = document.createTreeWalker(header, NodeFilter.SHOW_TEXT);
+              let textNode;
+              while ((textNode = walker.nextNode())) {
+                const value = textNode.nodeValue;
+                const key = value && value.trim();
+                if (key && isAlreadyTranslatedText(key)) {
+                  textNode.nodeValue = value.replace(key, englishTitle);
+                }
+              }
+            }
+          }
+        }
+
+        for (const wEl of root.querySelectorAll('[data-testid="node-widget"][data-widget-name]')) {
+          const name = wEl.getAttribute("data-widget-name");
+          const labelEl = wEl.querySelector('[data-testid="widget-layout-field-label"]');
+          if (!labelEl || !name) continue;
+          const widget = (node.widgets || []).find(item => item && item.name === name);
+          if (this.isUserCustomLabel(widget)) continue;
+          const label = widget?.label;
+          const english = (typeof label === "string" && label && !isAlreadyTranslatedText(label))
+            ? label
+            : (widget?.name || name);
+          if (labelEl.textContent !== english) labelEl.textContent = english;
+        }
+
+        for (const slotEl of root.querySelectorAll(".lg-slot--input, .lg-slot--output")) {
+          const dot = slotEl.querySelector("[data-slot-key]");
+          const key = dot?.getAttribute("data-slot-key") || "";
+          const isInput = slotEl.classList.contains("lg-slot--input");
+          const match = key.match(isInput ? /-in-(\d+)$/ : /-out-(\d+)$/);
+          if (!match) continue;
+          const index = parseInt(match[1], 10);
+          const slot = (isInput ? node.inputs : node.outputs)?.[index];
+          if (!slot || typeof slot.name !== "string") continue;
+          if (this.isUserCustomLabel(slot)) continue;
+          const labelEl = slotEl.querySelector(".editable-text span") || slotEl.querySelector("span");
+          if (labelEl && labelEl.textContent !== slot.name) {
+            labelEl.textContent = slot.name;
+          }
+        }
+      }
+      // 下拉当前值恢复为英文
+      this.syncComboDomLabels(nodes);
+    } catch (e) { /* 忽略 */ }
+  }
+
+  /**
+   * 直接同步节点下拉控件在 DOM 中显示的当前值。
+   * 新版 Nodes 2.0 的 combo 控件由 DOM/渲染器缓存显示文本，数据层恢复后
+   * 画面仍可能停留在旧语言；这里按 widget 的当前值直接修正可见文本。
+   */
+  static syncComboDomLabels(nodes) {
+    try {
+      const menu = window.__UiTranslated?.Menu || {};
+      const enabled = isTranslationEnabled();
+      for (const node of nodes || []) {
+        if (!node || node.id === undefined) continue;
+        if (this.isSubgraphNode(node)) continue;
+        const root = document.querySelector(`[data-node-id="${node.id}"]`);
+        if (!root) continue;
+        for (const w of node.widgets || []) {
+          if (!w || w.type !== "combo" || typeof w.name !== "string" || !w.name) continue;
+          let text;
+          if (enabled) {
+            text = this.getNodeFieldTranslation(node, "options", String(w.value));
+            if (text === undefined || text === null) text = menu[w.value];
+            if (text === undefined && typeof w.options?.getOptionLabel === "function") {
+              try { text = w.options.getOptionLabel(w.value); } catch (e) { /* ignore */ }
+            }
+          }
+          if (text === undefined || text === null || text === "") {
+            text = w._displayValue ?? w.value;
+          }
+          if (text === undefined || text === null) continue;
+          const escapedName = (typeof CSS !== "undefined" && CSS.escape)
+            ? CSS.escape(w.name)
+            : String(w.name).replace(/["\\]/g, "\\$&");
+          const selector = `button[aria-label="${escapedName}"]`;
+          const btn = root.querySelector(selector);
+          if (!btn) continue;
+          const span = btn.querySelector("span");
+          if (span && span.textContent !== String(text)) {
+            span.textContent = String(text);
+          }
+        }
+      }
+    } catch (e) { /* 忽略，不影响切换 */ }
+  }
+
+  /**
+   * 收集主图 + 子图内部的全部节点。
+   * 子图容器本身跳过翻译，但内部节点需要正常翻译。
+   */
+  static collectAllNodes(graph) {
+    const result = [];
+    const seen = new Set();
+    const walk = (list) => {
+      for (const node of list || []) {
+        if (!node || seen.has(node)) continue;
+        seen.add(node);
+        result.push(node);
+        if (node.subgraph && Array.isArray(node.subgraph._nodes)) {
+          walk(node.subgraph._nodes);
+        }
+      }
+    };
+    walk(graph?._nodes);
+    return result;
+  }
+
+  /**
+   * 关闭翻译启动/刷新工作流时，清理工作流里持久化的已知译文标题/端口名。
+   * 不修改文件，只恢复显示层；用户自定义中文（不在字典中）保留。
+   */
+  static restoreDisabledGraphTranslations() {
+    if (isTranslationEnabled()) return;
+    try {
+      const app = window.comfyAPI?.app?.app || window.app;
+      const allNodes = this.collectAllNodes(app?.graph);
+      for (const node of allNodes) {
+        this.applyNodeTranslation(node);
+      }
+      // 同步刷新 DOM，避免 2.0 组件仍缓存中文标题/控件名
+      this.restoreNodeDomToEnglish(allNodes);
+    } catch (e) { /* 忽略 */ }
+  }
+
   static applyNodeTranslation(node) {
     try {
       if (!node || !node.constructor) return;
@@ -624,6 +1173,10 @@ export class TUtils {
           node[key].forEach((item) => {
             if (!item) return;
             delete item._uiiaiii_label;   // 撤销显示层译文（序列化数据本就不受影响）
+            // 清理工作流中残留的翻译显示名
+            if (typeof item.localized_name === "string" && isAlreadyTranslatedText(item.localized_name)) {
+              delete item.localized_name;
+            }
             if (item._original_name) {
               this.restoreOriginalTranslation(item);
             } else if (typeof item.label === "string" && item.label !== item.name && isAlreadyTranslatedText(item.label)) {
@@ -647,7 +1200,26 @@ export class TUtils {
       
       // 即使该节点类型没有 Nodes 字典条目也继续：前端动态创建的控件文案可能只在 Menu 字典中
       var t = (nodesT && nodesT[class_type]) || {};
-      
+
+      // 把在场节点类的字段名→译文合并进 Menu。
+      // Nodes 2.0 在英文界面下不会加载官方 nodeDefs，控件名/端口名只能靠
+      // DOM 翻译器查 Menu；不合并时 bit_depth/codec 等会一直显示英文。
+      if (t && this.T && this.T.Menu) {
+        for (const section of ["inputs", "outputs", "widgets", "options"]) {
+          const kv = t[section];
+          if (!kv || typeof kv !== "object") continue;
+          for (const [fieldKey, fieldValue] of Object.entries(kv)) {
+            if (typeof fieldKey !== "string" || typeof fieldValue !== "string") continue;
+            if (!fieldKey || !fieldValue || fieldKey === fieldValue) continue;
+            if (fieldKey.length > 64 || fieldValue.length > 60) continue;
+            if (fieldKey.includes(" ") && fieldKey.length > 40) continue;
+            if (this.T.Menu[fieldKey] === undefined) {
+              this.T.Menu[fieldKey] = fieldValue;
+            }
+          }
+        }
+      }
+
       for (let key of keys) {
         if (!node.hasOwnProperty(key)) continue;
         if (!node[key] || !Array.isArray(node[key])) continue;
@@ -675,7 +1247,8 @@ export class TUtils {
           }
           if (translation) {
             if (key === "widgets") {
-              // widgets 的 label 不参与序列化，可直接改写
+              // widgets 译文也只写 _uiiaiii_label，绘制时临时映射；
+              // 不持久改写 label，避免任何序列化污染
               const hasNativeTranslation = item.label && isAlreadyTranslatedText(item.label) && !item._original_name;
               if (!hasNativeTranslation) {
                 this.safeApplyTranslation(item, translation);
@@ -823,7 +1396,9 @@ export class TUtils {
       
       const dragHandle = app.ui.menuContainer.querySelector(".drag-handle");
       if (dragHandle && dragHandle.childNodes[1]) {
-        observeFactory(dragHandle.childNodes[1], (mutationsList, observer) => {
+        // 该观察器独立于 MenuTranslate 的观察器集合，需单独保存以便关闭时断开
+        TUtils._dragObserver?.disconnect?.();
+        TUtils._dragObserver = observeFactory(dragHandle.childNodes[1], (mutationsList, observer) => {
           for (let mutation of mutationsList) {
             for (let node of mutation.addedNodes) {
               var match = node.data?.match(/(Queue size:) (\w+)/);
@@ -1072,6 +1647,9 @@ const ext = {
   
   async init(app) {
     try {
+      // 暴露给设置面板/顶部按钮，用于实时切换语言与翻译开关
+      window.__UiUtils = TUtils;
+      window.__UiConfig = currentConfig;
       await initConfig();
       await registerSettings(app);
 
@@ -1088,6 +1666,8 @@ const ext = {
 
       // 绘制瞬间把译文映射到 label / title（绘制后还原），译文本身永不写入这些会被序列化的字段
       TUtils.patchNodeDrawing();
+      // 保存工作流时临时剥离翻译字段，保证 JSON 干净
+      TUtils.patchSerialization();
 
       // 节点标题按开关应用或还原（函数内部自行判断开关）
       TUtils.applyNodeTypeTranslation(app);
@@ -1130,10 +1710,21 @@ const ext = {
       const nodeT = TUtils.T.Nodes[node.constructor.comfyClass || node.constructor.type];
       const translatedTitle = nodeT?.title;
 
-      if (origTitle !== undefined && node.title && node.title !== origTitle && node.title !== translatedTitle) {
+      // 已知译文标题是历史残留，不能当成用户自定义标题；
+      // 否则刷新工作流后关闭翻译也恢复不回来。
+      if (origTitle !== undefined && node.title && node.title !== origTitle
+          && node.title !== translatedTitle && !isAlreadyTranslatedText(node.title)) {
         node._translation_custom_title = true;
       }
       TUtils.applyNodeTranslation(node);
+      // 关闭翻译时刷新工作流：等所有节点加载完后，统一清理工作流里
+      // 持久化的已知译文标题/端口名（不修改文件，只恢复显示）。
+      if (!isTranslationEnabled()) {
+        clearTimeout(TUtils._graphRestoreTimer);
+        TUtils._graphRestoreTimer = setTimeout(() => TUtils.restoreDisabledGraphTranslations(), 300);
+      }
+      // Nodes 2.0 DOM 渲染完成后，用节点字典覆盖端口/控件名
+      setTimeout(() => TUtils.syncNodeDomLabels([node]), 300);
     } catch (e) {
       error(`加载图表节点处理失败 (${node?.title || '未知'}):`, e);
     }
@@ -1147,6 +1738,7 @@ const ext = {
       setTimeout(() => {
         try {
           TUtils.applyNodeTranslation(node);
+          TUtils.syncNodeDomLabels([node]);
         } catch (e) { /* 忽略重试错误 */ }
       }, 300);
     } catch (e) {

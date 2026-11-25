@@ -121,7 +121,7 @@ export async function toggleTranslation() {
     const newEnabled = !currentConfig.translation_enabled;
     const success = await saveConfig(newEnabled);
     if (success) {
-        setTimeout(() => location.reload(), 100);
+        await window.__UiUtils?.setTranslationEnabled?.(newEnabled);
     } else {
         error("切换翻译状态失败");
     }

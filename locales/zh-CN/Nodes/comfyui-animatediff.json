@@ -1,14 +1,13 @@
 {
     "LoadVideo": {
-        "title": "加载视频",
         "widgets": {
             "video": "视频",
-            "choose file to upload": "选择文件上传",
+            "choose file to upload": "选择要上传的文件",
             "frame_start": "起始帧",
             "frame_limit": "帧数限制"
         },
         "outputs": {
-            "frames": "帧",
+            "frames": "帧数",
             "frame_count": "帧数"
         }
     },

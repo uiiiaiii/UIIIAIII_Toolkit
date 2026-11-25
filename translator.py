@@ -286,11 +286,15 @@ def load_translation_dict(target_lang: str) -> Dict[str, Any]:
                         cached["description"] = desc
                     if cached:
                         by_class[class_name] = cached
-                    # inputs/outputs/widgets 的 key（字段名/tooltip 原句）→ 译文
-                    for field in ("inputs", "outputs", "widgets"):
+                    # inputs/outputs/widgets/options 的 key（字段名/选项原文）→ 译文
+                    for field in ("inputs", "outputs", "widgets", "options"):
                         kv = node_def.get(field)
                         if isinstance(kv, dict):
                             for k, v in kv.items():
+                                # 纯数字键是 outputs 的输出索引（语言包原生结构），
+                                # 不能作为全局词条，否则会把文本 "0" 误译为"图像"
+                                if k.isdigit():
+                                    continue
                                 if isinstance(v, str) and v and v != k:
                                     terms[k] = v
             else:

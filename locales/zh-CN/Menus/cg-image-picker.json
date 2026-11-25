@@ -4,6 +4,5 @@
     "Only pause if batch": "仅批次暂停",
     "Pass through": "忽略",
     "Take First n": "选择前N项",
-    "Take Last n": "选择后N项",
-    "Cancel current run": "取消当前任务"
+    "Take Last n": "选择后N项"
 }

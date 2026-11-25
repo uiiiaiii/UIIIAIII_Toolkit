@@ -1,10 +1,9 @@
 {
-    "style": "样式",
+    "style": "风格",
     "confidence": "置信度",
     "select": "选择",
-    "video": "视频",
-    "feather": "羽化值",
-    "blend": "混合",
+    "feather": "羽化",
+    "blend": "混合方式",
     "shot": "镜头类型",
     "Click to choose the subject": "点击选择主体",
     "No video. Use Browse to choose one, or paste a path into video.": "没有视频。使用“浏览”选择一个，或将路径粘贴到视频中。",

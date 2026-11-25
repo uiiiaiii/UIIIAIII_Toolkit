@@ -317,6 +317,9 @@ def _is_field_entry(key, value) -> bool:
     （值为译文）。ComfyUI 端口/控件名只会以真实字段名查询官方 i18n，
     因此这里按"字段名不含空格且长度有限"过滤，避免把大段 tooltip
     原文写进官方语言包（会显著增大 /api/i18n 响应体积）。
+
+    下拉选项/按钮文案（如 "Just Resize"）由字典的 options 字段单独
+    处理，不经过本函数，避免把 tooltip 短句误当作选项。
     """
     if not isinstance(key, str) or not isinstance(value, str):
         return False
@@ -339,7 +342,16 @@ def _build_official_outputs(class_name, outputs, node_mappings) -> dict:
     因此必须把输出名映射回 RETURN_TYPES 中的位置；节点类未加载时
     退化为按字典写入顺序编号（字典由提取器按 RETURN_TYPES 顺序生成）。
     """
-    items = [(k, v) for k, v in (outputs or {}).items() if _is_field_entry(k, v)]
+    items = []
+    for k, v in (outputs or {}).items():
+        if not isinstance(k, str) or not isinstance(v, str):
+            continue
+        if not k or not v or k == v:
+            continue
+        # 输出名允许含空格（如 "X or Y"），不能用字段名规则过滤
+        if len(k) > 64 or len(v) > 60:
+            continue
+        items.append((k, v))
     if not items:
         return {}
 
@@ -358,23 +370,35 @@ def _build_official_outputs(class_name, outputs, node_mappings) -> dict:
         names = None
 
     ordered = {}
+    used = set()
+    # 语言包原生索引结构（{"0": "图像"}）：直接按索引写入
+    numeric_items = [(k, v) for k, v in items if k.isdigit()]
+    for key, value in numeric_items:
+        idx = int(key)
+        ordered[idx] = value
+        used.add(idx)
+    rest_items = [(k, v) for k, v in items if not k.isdigit()]
+
     if names:
-        used = set()
         # 先按输出名精确匹配
-        for key, value in items:
+        for key, value in rest_items:
             if key in names:
                 idx = names.index(key)
                 if idx not in used:
                     ordered[idx] = value
                     used.add(idx)
         # 未匹配的（如字典里用类型名作 key）按顺序填入空闲输出位
-        rest = [(k, v) for k, v in items if k not in names]
+        rest = [(k, v) for k, v in rest_items if k not in names]
         free = [i for i in range(len(names)) if i not in used]
         for (_, value), idx in zip(rest, free):
             ordered[idx] = value
     else:
-        for idx, (_, value) in enumerate(items):
-            ordered[idx] = value
+        next_idx = 0
+        for _, value in rest_items:
+            while next_idx in used:
+                next_idx += 1
+            ordered[next_idx] = value
+            used.add(next_idx)
 
     return {str(idx): {"name": value} for idx, value in sorted(ordered.items())}
 
@@ -382,6 +406,8 @@ def _build_official_outputs(class_name, outputs, node_mappings) -> dict:
 # DynamicCombo 子字段反射结果缓存（按节点类名）：
 # 生成多语言语言包时避免对同一节点重复调用 INPUT_TYPES()
 _DYNAMIC_COMBO_CACHE = {}
+# 节点输入 tooltip 反射结果缓存
+_INPUT_TOOLTIP_CACHE = {}
 
 
 def _get_dynamic_combo_subfields(node_class, class_name=None) -> dict:
@@ -436,6 +462,54 @@ def _get_dynamic_combo_subfields(node_class, class_name=None) -> dict:
     return result
 
 
+def _get_input_tooltips(node_class, class_name=None) -> dict:
+    """
+    反射节点输入的 tooltip，返回 {字段名: tooltip 原文}
+
+    DynamicCombo 内嵌字段使用真实键 "<主字段>_<子字段>"，
+    与前端 i18n 的 inputs 键保持一致。
+    """
+    if node_class is None:
+        return {}
+    cache_key = class_name or id(node_class)
+    if cache_key in _INPUT_TOOLTIP_CACHE:
+        return _INPUT_TOOLTIP_CACHE[cache_key]
+    try:
+        input_types = node_class.INPUT_TYPES()
+    except Exception:
+        _INPUT_TOOLTIP_CACHE[cache_key] = {}
+        return {}
+    if not isinstance(input_types, dict):
+        _INPUT_TOOLTIP_CACHE[cache_key] = {}
+        return {}
+
+    result = {}
+    for section in ("required", "optional"):
+        section_data = input_types.get(section)
+        if not isinstance(section_data, dict):
+            continue
+        for field, spec in section_data.items():
+            if not (isinstance(spec, (tuple, list)) and len(spec) >= 2
+                    and isinstance(spec[1], dict)):
+                continue
+            tip = spec[1].get("tooltip")
+            if isinstance(tip, str) and tip.strip():
+                result[field] = tip.strip()
+            if spec[0] == "COMFY_DYNAMICCOMBO_V3":
+                for opt in (spec[1].get("options") or []):
+                    if not isinstance(opt, dict):
+                        continue
+                    for sec in ("required", "optional"):
+                        for sub, sub_spec in ((opt.get("inputs") or {}).get(sec) or {}).items():
+                            if (isinstance(sub_spec, (tuple, list)) and len(sub_spec) >= 2
+                                    and isinstance(sub_spec[1], dict)):
+                                sub_tip = sub_spec[1].get("tooltip")
+                                if isinstance(sub_tip, str) and sub_tip.strip():
+                                    result[f"{field}_{sub}"] = sub_tip.strip()
+    _INPUT_TOOLTIP_CACHE[cache_key] = result
+    return result
+
+
 def build_official_node_defs(locale, disabled_plugins=None) -> dict:
     """
     将本插件节点字典转换为 ComfyUI 官方 nodeDefs 语言包结构
@@ -461,6 +535,8 @@ def build_official_node_defs(locale, disabled_plugins=None) -> dict:
     nodes_dict = get_nodes_translation(locale, disabled_plugins)
     if not nodes_dict:
         return {}
+    # 全局菜单词条（含 tooltip 原文 → 译文），供 tooltip 查找
+    menu_lookup = get_menu_translation(locale)
 
     try:
         import nodes as comfy_nodes
@@ -494,6 +570,19 @@ def build_official_node_defs(locale, disabled_plugins=None) -> dict:
                 if _is_field_entry(key, value):
                     # inputs 与 widgets 共用同一命名空间；input 优先
                     fields.setdefault(key, {})["name"] = value
+        # 下拉选项/按钮文案（如 "Just Resize"、"Select to add LoRA"）：
+        # 与 easy-use 官方语言包结构一致，写入 inputs 供 Nodes 2.0 按文本匹配；
+        # 这些键不是真实字段名，只影响显示，不参与字段名查询。
+        options = node_def.get("options")
+        if isinstance(options, dict):
+            for key, value in options.items():
+                if not isinstance(key, str) or not isinstance(value, str):
+                    continue
+                if not key or not value or key == value:
+                    continue
+                if len(key) > 64 or len(value) > 60:
+                    continue
+                fields.setdefault(key, {})["name"] = value
         # DynamicCombo 内嵌控件：把字典中的子字段译文映射到真实键
         # （<主字段>_<子字段>，如 resize_type_multiple）
         node_class = node_mappings.get(class_name) if node_mappings else None
@@ -505,6 +594,22 @@ def build_official_node_defs(locale, disabled_plugins=None) -> dict:
                 source = fields.get(sub_name)
                 if source:
                     fields[prefixed] = dict(source)
+
+        # tooltip：从节点字典（字段/tooltip 原文）或全局 Menus 词条取译文。
+        # 只写 tooltip 字段，不参与 name，避免把长句当控件名。
+        text_lookup = {}
+        for section in ("inputs", "widgets"):
+            raw = node_def.get(section)
+            if not isinstance(raw, dict):
+                continue
+            for key, value in raw.items():
+                if isinstance(key, str) and isinstance(value, str) and key != value:
+                    text_lookup[key] = value
+        for field_name, tip in _get_input_tooltips(node_class, class_name).items():
+            translated_tip = text_lookup.get(tip) or menu_lookup.get(tip)
+            if isinstance(translated_tip, str) and translated_tip and translated_tip != tip:
+                fields.setdefault(field_name, {})["tooltip"] = translated_tip
+
         if fields:
             entry["inputs"] = fields
 

@@ -106,8 +106,7 @@ export async function registerSettings(app) {
       if (!isSettingsRegistered) return;
       if (newVal && newVal !== currentConfig.locale) {
         await saveConfig(currentConfig.translation_enabled, newVal, "plain");
-        alert(`Language set to ${newVal}. The page will reload.`);
-        location.reload();
+        await window.__UiUtils?.switchLocale?.(newVal);
       }
     }
   });
@@ -123,7 +122,7 @@ export async function registerSettings(app) {
       if (!isSettingsRegistered) return;
       if (newVal !== currentConfig.translate_options) {
         await saveConfig(currentConfig.translation_enabled, currentConfig.locale, "plain", currentConfig.disabled_plugins, newVal);
-        location.reload();
+        await window.__UiUtils?.switchLocale?.(currentConfig.locale);
       }
     }
   });
@@ -173,24 +172,85 @@ export async function registerSettings(app) {
 
 // ─── 翻译按钮 ─────────────────────────────────────────────
 
+const TOGGLE_ACTIVE_CLASS = "translation-active-plain";
+const TOGGLE_INACTIVE_CLASS = "translation-inactive-plain";
+
+/** 按钮状态文案（跟随当前语言与字典） */
+function getToggleButtonTexts() {
+  const locale = currentConfig.locale;
+  const menuT = window.__UiTranslated?.Menu || {};
+  const onBase = menuT["Translation ON"] || "Translation ON";
+  const offBase = menuT["Translation OFF"] || "Translation OFF";
+  return { on: `${onBase} (${locale})`, off: `${offBase} (${locale})` };
+}
+
+/**
+ * 就地同步翻译开关按钮（图标 / tooltip / 弱化状态），不重建按钮。
+ * 参考旧实现：按钮只创建一次，状态变化只更新现有元素。
+ * @returns {boolean} 是否找到按钮
+ */
+function syncToggleButtonState() {
+  const enabled = isTranslationEnabled();
+  const { on, off } = getToggleButtonTexts();
+  const text = enabled ? on : off;
+  const icon = enabled ? "translate" : "translate-off";
+
+  // 旧版菜单按钮
+  const legacy = document.getElementById("toggle-translation-button");
+  if (legacy) {
+    legacy.classList.toggle(TOGGLE_ACTIVE_CLASS, enabled);
+    legacy.classList.toggle(TOGGLE_INACTIVE_CLASS, !enabled);
+    legacy.title = text;
+  }
+
+  // 新版 ComfyButton
+  const btn = window.__UIIIAIII_TRANSLATE_BTN__;
+  const el = btn?.element || document.querySelector(".toggle-translation-button");
+  if (!el) return !!legacy;
+
+  el.classList.toggle(TOGGLE_ACTIVE_CLASS, enabled);
+  el.classList.toggle(TOGGLE_INACTIVE_CLASS, !enabled);
+  el.title = text;
+  if (btn) {
+    // ComfyButton 的响应式属性：icon 触发附图更新，tooltip 同步 title
+    btn.icon = icon;
+    btn.tooltip = text;
+  }
+
+  // 图标为 MDI 字体 class（mdi-translate / mdi-translate-off），直接替换显示
+  const iconEl = el.querySelector(".mdi");
+  if (iconEl) {
+    for (const cls of Array.from(iconEl.classList)) {
+      if (cls.startsWith("mdi-")) iconEl.classList.remove(cls);
+    }
+    iconEl.classList.add(`mdi-${icon}`);
+  }
+  return true;
+}
+
 /**
  * 在顶部菜单栏添加翻译切换按钮（兼容新旧 UI）
  * @param {object} app - ComfyUI app 实例
  */
 export function addPanelButtons(app) {
+  // 状态同步监听只注册一次：切换语言/开关时就地更新按钮，绝不重建
+  if (!window.__UIIIAIII_TOGGLE_LISTENER__) {
+    window.__UIIIAIII_TOGGLE_LISTENER__ = true;
+    window.addEventListener("uiiaiii-translation-state-changed", () => {
+      if (!syncToggleButtonState()) {
+        addPanelButtons(window.comfyAPI?.app?.app || window.app);
+      }
+    });
+  }
+
   try {
     // 去重：新旧按钮都以 toggle-translation-button 标识（游离节点也能查到）
     if (document.querySelector(".toggle-translation-button")) return;
 
     const translationEnabled = isTranslationEnabled();
-    const locale = currentConfig.locale;
 
     // 按钮文本优先取翻译字典（翻译开启时显示中文），否则回退英文原文
-    const menuT = window.__UiTranslated?.Menu || {};
-    const onBase = menuT["Translation ON"] || "Translation ON";
-    const offBase = menuT["Translation OFF"] || "Translation OFF";
-    const onText = `${onBase} (${locale})`;
-    const offText = `${offBase} (${locale})`;
+    const { on: onText, off: offText } = getToggleButtonTexts();
 
     const styleElem = document.createElement("style");
     styleElem.textContent = `
@@ -211,8 +271,8 @@ export function addPanelButtons(app) {
     `;
     document.head.appendChild(styleElem);
 
-    const activeClass = "translation-active-plain";
-    const inactiveClass = "translation-inactive-plain";
+    const activeClass = TOGGLE_ACTIVE_CLASS;
+    const inactiveClass = TOGGLE_INACTIVE_CLASS;
 
     // 旧版菜单按钮（文本兜底，缩小尺寸）
     // 用原生 DOM 创建：不再依赖已废弃的 /scripts/ui.js 中的 $el
@@ -246,6 +306,8 @@ export function addPanelButtons(app) {
 
         if (btn.element) {
           btn.element.classList.add(translationEnabled ? activeClass : inactiveClass);
+          // 保存实例，供切换语言/开关时就地更新（不重建按钮）
+          window.__UIIIAIII_TRANSLATE_BTN__ = btn;
         }
 
         // 交给共享协调器挂载：与"翻译插件"按钮（translator_menu.js）合并进同一胶囊
@@ -395,7 +457,7 @@ function buildPluginPanel(parentEl) {
       if (!cb.checked) newDisabled.push(cb.dataset.plugin);
     });
     await saveConfig(currentConfig.translation_enabled, currentConfig.locale, "plain", newDisabled, currentConfig.translate_options);
-    location.reload();
+    await window.__UiUtils?.switchLocale?.(currentConfig.locale);
   });
 
   // 折叠状态提示：展开时显示 ▾，收起时显示 ▸

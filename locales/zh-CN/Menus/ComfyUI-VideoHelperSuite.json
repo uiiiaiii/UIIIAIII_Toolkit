@@ -1,4 +1,5 @@
-{   "🎥🅥🅗🅢": "🎥视频节点",
+{
+    "🎥🅥🅗🅢": "🎥视频节点",
     "Previews": "预览",
     "Mute videos by default": "默认静音视频",
     "Deadline": "截止时间",
@@ -7,23 +8,16 @@
     "Sampling": "采样",
     "Playback rate override.": "播放速率覆盖。",
     "Display animated previews when sampling": "采样时显示动态预览",
-    
     "Input Only": "仅输入",
     "Never": "从不",
     "Always": "总是",
     "realtime": "实时",
     "good": "高质量",
-    
-    "Output": "输出",
     "Keep required intermediate files after successful execution": "成功执行后保留所需的中间文件",
     "Save png of first frame for metadata": "保存第一帧的PNG用于元数据",
     "Keep required intermediate files after sucessful execution": "成功执行后保留所需的中间文件",
-    
     "Force a specific frame rate for the playback of latent frames. This should not be confused with the output frame rate and will not match for video models.": "强制指定潜在帧的播放帧率。这不应与输出帧率混淆，且不会与视频模型匹配。",
-    
     "Automatically transcode previews on request. Required for advanced functionality": "根据请求自动转码预览。高级功能需要此项。",
-    
     "Advanced previews have their resolution downscaled to the node size for performance. While a node can be resized to increase preview quality, a minimum width can be set that previews won't be downscaled beneath. Preveiws will never be upscaled, so this can safely be set large.": "为了性能考虑，高级预览的分辨率会缩小到节点大小。虽然可以调整节点大小来提高预览质量，但可以设置一个最小宽度，预览不会缩小到低于此值。预览永远不会被放大，所以这个值可以安全地设置得较大。",
-    
     "Determines how much time can be spent when encoding advanced previews. Realtime results in reduced quality, but good will likely cause the preview to stutter as initial generation occurs": "决定编码高级预览时可以花费的时间。实时会导致质量下降，但高质量可能会导致初始生成时预览出现卡顿。"
 }

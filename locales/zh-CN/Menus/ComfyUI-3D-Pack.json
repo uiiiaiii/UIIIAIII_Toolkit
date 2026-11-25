@@ -1,14 +1,11 @@
 {
     "big": "大型",
-    "small": "小型",
     "tiny": "微型",
     "Static": "静态",
     "Pan Up": "向上平移",
     "Pan Down": "向下平移",
     "Pan Left": "向左平移",
     "Pan Right": "向右平移",
-    "Zoom In": "前推",
-    "Zoom Out": "后移",
     "Roll Clockwise": "顺时针转",
     "Roll Anticlockwise": "逆时针转",
     "Tilt Down": "向下倾斜",
@@ -16,7 +13,6 @@
     "Tilt Left": "向左倾斜",
     "Tilt Right": "向右倾斜",
     "Foreground": "前景",
-    "Background": "背景",
     "top-left": "左上",
     "top-center": "中上",
     "top-right": "右上",
@@ -45,6 +41,5 @@
     "horizontal door": "横向开门",
     "vertical door": "竖向开门",
     "circle": "圆形",
-    "fade": "消失",
-    "View": "视图"
+    "fade": "消失"
 }

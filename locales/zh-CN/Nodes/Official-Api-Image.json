@@ -23,24 +23,12 @@
     },
     "IdeogramV3": {
         "title": "Ideogram V3",
-        "inputs": {
-            "image": "图像",
-            "mask": "遮罩"
-        },
         "widgets": {
-            "aspect_ratio": "宽高比",
-            "resolution": "分辨率",
-            "magic_prompt_option": "魔法提示词选项",
-            "seed": "随机种子",
-            "num_images": "生成图像数量",
-            "rendering_speed": "渲染速度"
+            "magic_prompt_option": "魔法提示词选项"
         }
     },
     "OpenAIGPTImage1": {
-        "title": "OpenAI GPT Image 1",
-        "inputs": {
-            "mask": "遮罩"
-        }
+        "title": "OpenAI GPT Image 1"
     },
     "KlingVirtualTryOnNode": {
         "title": "Kling 虚拟试穿",
@@ -50,46 +38,6 @@
         },
         "widgets": {
             "model_name": "模型名称"
-        }
-    },
-    "KlingImageGenerationNode": {
-        "title": "Kling 图像生成",
-        "inputs": {
-            "image": "图像"
-        },
-        "widgets": {
-            "image_type": "图像类型",
-            "image_fidelity": "图像保真度",
-            "human_fidelity": "人物保真度",
-            "model_name": "模型名称",
-            "aspect_ratio": "宽高比",
-            "n": "生成数量"
-        }
-    },
-    "FluxKontextProImageNode": {
-        "title": "Flux.1 Kontext [pro] Image",
-        "inputs": {
-            "input_image": "输入图像"
-        },
-        "widgets": {
-            "aspect_ratio": "宽高比",
-            "guidance": "引导系数",
-            "steps": "生成步数",
-            "seed": "随机种子",
-            "prompt_upsampling": "提示词上采样"
-        }
-    },
-    "FluxKontextMaxImageNode": {
-        "title": "Flux.1 Kontext [max] Image",
-        "inputs": {
-            "input_image": "输入图像"
-        },
-        "widgets": {
-            "aspect_ratio": "宽高比",
-            "guidance": "引导系数",
-            "steps": "生成步数",
-            "seed": "随机种子",
-            "prompt_upsampling": "提示词上采样"
         }
     },
     "FluxProCannyNode": {
@@ -141,76 +89,39 @@
         }
     },
     "RecraftTextToImageNode": {
-        "title": "Recraft 文本转图像",
-        "inputs": {
-            "recraft_style": "Recraft 风格",
-            "negative_prompt": "负面提示词",
-            "recraft_controls": "Recraft 控制"
-        },
         "widgets": {
-            "size": "图像尺寸",
-            "n": "生成数量",
-            "seed": "随机种子"
-        }
-    },
-    "RecraftImageToImageNode": {
-        "title": "Recraft 图像到图像",
-        "inputs": {
-            "image": "图像",
-            "recraft_style": "Recraft 风格",
-            "recraft_controls": "Recraft 控制"
-        }
-    },
-    "RecraftImageInpaintingNode": {
-        "title": "Recraft 图像修复",
-        "inputs": {
-            "image": "图像",
-            "mask": "遮罩",
-            "recraft_style": "Recraft 风格"
+            "n": "图像数量"
         }
     },
     "RecraftStyleV3RealisticImage": {
-        "title": "Recraft 风格 - 真实图像",
         "outputs": {
-            "recraft_style": "Recraft 风格"
+            "recraft_style": "Recraft风格"
         }
     },
     "RecraftStyleV3DigitalIllustration": {
-        "title": "Recraft 风格 - 数字插画",
         "outputs": {
-            "recraft_style": "Recraft 风格"
+            "recraft_style": "Recraft风格"
         }
     },
     "RecraftStyleV3LogoRaster": {
-        "title": "Recraft 风格 - 标志光栅图",
         "outputs": {
-            "recraft_style": "Recraft 风格"
+            "recraft_style": "Recraft风格"
         }
     },
     "RecraftStyleV3InfiniteStyleLibrary": {
-        "title": "Recraft 风格 - 无限风格库",
         "outputs": {
-            "recraft_style": "Recraft 风格",
-            "style_id": "风格标识"
+            "recraft_style": "Recraft风格",
+            "style_id": "风格ID"
         }
     },
     "RecraftColorRGB": {
-        "title": "Recraft 颜色 RGB",
-        "inputs": {
-            "recraft_color": "Recraft 颜色"
-        },
         "outputs": {
-            "recraft_color": "Recraft 颜色"
+            "recraft_color": "Recraft色彩"
         }
     },
     "RecraftControls": {
-        "title": "Recraft 控件",
-        "inputs": {
-            "colors": "颜色",
-            "background_color": "背景色"
-        },
         "outputs": {
-            "recraft_controls": "Recraft 控件"
+            "recraft_controls": "Recraft控制"
         }
     },
     "StabilityStableImageUltraNode": {
@@ -245,15 +156,6 @@
         "title": "Stability AI 保守放大",
         "inputs": {
             "image": "图像"
-        }
-    },
-    "RunwayTextToImageNode": {
-        "title": "Runway 文本转图像",
-        "inputs": {
-            "reference_image": "参考图像"
-        },
-        "widgets": {
-            "ratio": "宽高比"
         }
     }
 }

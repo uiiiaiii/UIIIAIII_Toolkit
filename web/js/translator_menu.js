@@ -141,19 +141,15 @@ function registerTranslatorExtensionWhenReady(tries = 0) {
     }
 
     /**
-     * 翻译完成后自动刷新前端
+     * 翻译完成后实时重载翻译，不刷新页面
      *
-     * ComfyUI 会自动保存当前工作流，刷新页面后：
-     * - UIIIAIII Toolkit 从本插件 locales 目录重新读取翻译 JSON
-     * - 所有节点重建，翻译自然应用
-     *
-     * 这是唯一可靠的方式，因为主插件前端（main.js）的 applyNodeTranslation
-     * 有跳过已翻译节点的逻辑，无法在不重建节点的情况下覆盖旧翻译。
+     * 重新读取本插件 locales 目录的字典，并恢复/重新应用当前界面。
      */
     function refreshTranslation() {
-        // 延迟 500ms 刷新，让用户看到翻译成功的提示
+        // 延迟 500ms，让用户看到翻译成功的提示
         setTimeout(() => {
-            window.location.reload();
+            const locale = window.__UiConfig?.locale || "zh-CN";
+            window.__UiUtils?.switchLocale?.(locale);
         }, 500);
         return true;
     }

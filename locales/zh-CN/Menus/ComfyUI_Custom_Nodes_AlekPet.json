@@ -162,7 +162,6 @@
     "Volume:": "音量：",
     "Rate:": "语速：",
     "Pitch:": "音调：",
-    "Reset to default": "重置为默认值",
     "Test speech": "测试语音",
     "🔸 Preview images and videos in the list": "🔸在列表中预览图像和视频",
     "Display image size:": "显示图像尺寸",
@@ -174,6 +173,5 @@
     "🔸 Managing JSON data storage": "🔸管理JSON数据存储",
     "Managing Data": "管理数据",
     "JSON storage data": "JSON存储数据",
-    "Refresh": "刷新",
     "Records is not found!": "未找到记录！"
 }

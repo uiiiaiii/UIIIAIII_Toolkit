@@ -263,7 +263,6 @@
         }
     },
     "SaveAudio": {
-        "title": "保存音频",
         "inputs": {
             "waveforms": "波形",
             "sample_rate": "采样率"

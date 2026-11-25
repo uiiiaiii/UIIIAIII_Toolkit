@@ -1,5 +1,5 @@
 {
-    "Crystools":"🪛Crystools工具组",
+    "Crystools": "🪛Crystools工具组",
     "🪛 Configuration": "🪛 配置",
     "Pixel Width": "图像宽度",
     "Pixel Height": "图像高度",
@@ -10,7 +10,6 @@
     "🪛 Progress Bar": "🪛 进度条",
     "Show progress bar": "显示进度条",
     "🪛 Show GPU [${index}] ${name}": "🪛 显示GPU [${index}] ${name}",
-    "Usage": "使用率",
     "VRAM": "显存",
     "Temperature": "温度",
     "🪛 Show Hard Disk": "🪛 显示硬盘",
@@ -18,7 +17,6 @@
     "Show HDD Used": "显示硬盘使用情况",
     "RAM": "内存",
     "Temp": "温度",
-    
     "This apply only on \"Disabled\" (old) menu": "这仅适用于\"禁用\"(旧)菜单",
     "The width of the monitor in pixels on the UI (only on top/bottom UI)": "UI上监视器的宽度(像素)(仅适用于顶部/底部UI)",
     "The height of the monitor in pixels on the UI (only on top/bottom UI)": "UI上监视器的高度(像素)(仅适用于顶部/底部UI)",
