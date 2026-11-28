@@ -149,7 +149,8 @@ function registerTranslatorExtensionWhenReady(tries = 0) {
         // 延迟 500ms，让用户看到翻译成功的提示
         setTimeout(() => {
             const locale = window.__UiConfig?.locale || "zh-CN";
-            window.__UiUtils?.switchLocale?.(locale);
+            // 翻译已写入字典文件，必须强制重载，不能复用旧字典缓存
+            window.__UiUtils?.switchLocale?.(locale, { force: true });
         }, 500);
         return true;
     }

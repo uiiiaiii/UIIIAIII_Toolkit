@@ -1914,6 +1914,41 @@ function registerWhenReady(tries = 0) {
         async setup() {
             window.__CM__ = CM; // 调试句柄
             waitAndFirstApply();
+
+            // 翻译开关/语言切换后，用最新字典重新计算分类显示路径。
+            // 分类管理器就绪后翻译模块不再写 category，分类由本模块统一维护。
+            let retranslateTimer = null;
+            const retranslateCategories = (event) => {
+                if (!CM.ready) return;
+                // 关闭翻译时用上一份字典把已记录的中文基准反查回英文。
+                // 蓝图节点不在 /object_info 中，没有 rawCategory，基准可能被记成中文，
+                // 关闭后字典已清空就再也无法反查。
+                const prev = event?.detail?.previousCategories;
+                if (prev && Object.keys(prev).length) {
+                    const rev = {};
+                    for (const [k, v] of Object.entries(prev)) {
+                        if (k && v && k !== v && rev[v] === undefined) rev[v] = k;
+                    }
+                    if (Object.keys(rev).length) {
+                        for (const [name, base] of CM.baseCategory) {
+                            if (!base) continue;
+                            const fixed = String(base).split("/").map((seg) => rev[seg] || seg).join("/");
+                            if (fixed !== base) CM.baseCategory.set(name, fixed);
+                        }
+                    }
+                }
+                clearTimeout(retranslateTimer);
+                retranslateTimer = setTimeout(() => {
+                    try {
+                        reapply();
+                        applyOrderRules();
+                    } catch (e) {
+                        console.error(`[${CM_NAMESPACE}] 翻译切换后重算分类失败：`, e);
+                    }
+                }, 0);
+            };
+            window.addEventListener("uiiaiii-translation-state-changed", retranslateCategories);
+            window.addEventListener("uiiaiii-locale-changed", retranslateCategories);
         },
     });
 

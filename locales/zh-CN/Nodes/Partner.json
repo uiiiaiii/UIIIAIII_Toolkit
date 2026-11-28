@@ -1,0 +1,29 @@
+{
+    "MeshyImageToReliefNode": {
+        "title": "Meshy：图像转浮雕"
+    },
+    "MeshyTextureN1Node": {
+        "title": "Meshy：纹理模型（N1）"
+    },
+    "HeyGenVoiceCloneTextToSpeechNode": {
+        "title": "HeyGen Voice 1.0 即时克隆文本转语音"
+    },
+    "TypeSafeJevChoice": {
+        "title": "TypeSafe Jev（选择）"
+    },
+    "TypeSafeJevPickImage": {
+        "title": "TypeSafe Jev（选择图像）"
+    },
+    "TypeSafeJevScore": {
+        "title": "TypeSafe Jev（评分）"
+    },
+    "TypeSafeJevYesNo": {
+        "title": "TypeSafe Jev（是/否）"
+    },
+    "PrunaAvatarNode": {
+        "title": "Pruna P-Video-2 Pro 数字人"
+    },
+    "PrunaReferenceToVideoNode": {
+        "title": "Pruna P-Video-2 Pro 参考图生视频"
+    }
+}

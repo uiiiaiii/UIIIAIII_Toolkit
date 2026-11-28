@@ -61,6 +61,17 @@ class TExe {
     const templated = this.matchTemplate(txt);
     if (templated) return templated;
 
+    // 菜单项常把快捷键拼进文案，如 "Cleanup Of VRAM Usage (Shift+r)"；
+    // 字典只收录不带快捷键的文案，去掉后缀再查一次，译文后原样补回快捷键。
+    const rawText = String(txt);
+    const hotkey = rawText.match(/\s*\((Shift|Ctrl|Alt|Cmd|Meta|Option|Control)(\s*\+\s*[A-Za-z0-9]+)+\)\s*$/i);
+    if (hotkey && hotkey.index > 0) {
+      const baseText = rawText.slice(0, hotkey.index).trim();
+      const suffix = rawText.slice(hotkey.index);
+      const baseT = this.T?.Menu?.[baseText] || this.matchTemplate(baseText);
+      if (baseT) return `${baseT}${suffix}`;
+    }
+
     // 通用规则：节点属性面板标题 "<节点名> Properties"。
     // 标题是运行时拼接的（字典里通常只有节点标题），这里按类名去后缀匹配，
     // 输出 "<节点标题> 属性"；不依赖完整标题词条。
@@ -104,25 +115,44 @@ class TExe {
         for (const [en, zh] of Object.entries(T.Menu)) {
           if (typeof en !== "string" || typeof zh !== "string") continue;
           if (!en.includes("{") || !zh) continue;
-          const names = [];
-          const esc = en.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-          const pattern = esc.replace(/\\\{([A-Za-z0-9_$]+)\\\}/g, (m, name) => {
-            names.push(name);
-            return "(.+?)";
-          });
-          if (!names.length) continue;
-          let re;
-          try { re = new RegExp("^" + pattern + "$"); } catch (e) { continue; }
-          const tpl = { re, names, zh };
-          this._templates.push(tpl);
-          const first = en[0] || "";
-          if (!index.has(first)) index.set(first, []);
-          index.get(first).push(tpl);
+
+          // 官方复数模板 "A | B"：运行时只显示其中一个分支
+          // （如 "0 active"），必须拆成独立模板才能匹配。
+          let pairs = [[en, zh]];
+          if (en.includes("|")) {
+            const enParts = en.split(/\s*\|\s*/);
+            const zhParts = zh.split(/\s*\|\s*/);
+            if (enParts.length > 1
+                && enParts.every((p) => /\{[A-Za-z0-9_$]+\}/.test(p))
+                && zhParts.length === enParts.length) {
+              pairs = enParts.map((p, i) => [p, zhParts[i]]);
+            }
+          }
+
+          for (const [enText, zhText] of pairs) {
+            const names = [];
+            const esc = enText.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+            const pattern = esc.replace(/\\\{([A-Za-z0-9_$]+)\\\}/g, (m, name) => {
+              names.push(name);
+              return "(.+?)";
+            });
+            if (!names.length) continue;
+            let re;
+            try { re = new RegExp("^" + pattern + "$"); } catch (e) { continue; }
+            const tpl = { re, names, zh: zhText };
+            this._templates.push(tpl);
+            const first = enText[0] || "";
+            if (!index.has(first)) index.set(first, []);
+            index.get(first).push(tpl);
+          }
         }
         this._templateIndex = index;
       }
 
-      const group = this._templateIndex?.get(key[0]) || this._templates || [];
+      const group = this._templateIndex?.get(key[0])
+        || this._templateIndex?.get("{")
+        || this._templates
+        || [];
       for (const tpl of group) {
         const m = tpl.re.exec(key);
         if (!m) continue;
@@ -176,7 +206,8 @@ class TExe {
     this.excludeClass = [
       "lite-search-item-type",
       "p-tree",            // 拦截扩展节点组 (Vue Tree)
-      "p-virtualscroller"  // 拦截模版搜索中的虚拟滚动列表
+      "p-virtualscroller", // 拦截模版搜索中的虚拟滚动列表
+      "lg-node"            // 画布节点由节点数据层首帧写入译文，禁止 DOM 二次翻译造成刷新
     ];
     this.observers = [];
     
@@ -194,6 +225,36 @@ class TExe {
       // 性能优化：文本节点直接查父级，精准匹配黑名单组件
       const el = node.nodeType === Node.TEXT_NODE ? node.parentElement : node;
       if (!el || typeof el.closest !== 'function') return false;
+
+      // 画布节点根必须允许继续递归：否则在 .lg-node 处直接 return，
+      // 子树里的子图入口按钮永远得不到翻译。
+      if (el.classList?.contains("lg-node")) return false;
+
+      // 图标字体元素里的字符不参与翻译
+      if (el.closest("i, svg, [class*='icon-'], [class*='lucide']")) return true;
+
+      // 画布节点内部交给节点数据层首帧写入；但节点上的操作按钮
+      // （Issues / Show advanced / Enter subgraph 等）只在 DOM 上，需要放行。
+      if (el.closest(".lg-node")) {
+        const btn = el.closest('button, [role="button"]');
+        if (btn) {
+          // 按钮 textContent 可能混入图标字符，只取真实文本节点
+          let btnText = "";
+          const walker = document.createTreeWalker(btn, NodeFilter.SHOW_TEXT);
+          let tn;
+          while ((tn = walker.nextNode())) {
+            const parent = tn.parentElement;
+            if (parent?.closest("i, svg, [class*='icon-'], [class*='lucide']")) continue;
+            btnText += tn.nodeValue || "";
+          }
+          btnText = btnText.trim();
+          // 按钮文案命中字典，或子图入口按钮，都交给 DOM 翻译
+          if (btnText && this.T?.Menu?.[btnText]) return false;
+          if (/^(Enter|Exit)( subgraph)?$/i.test(btnText)) return false;
+        }
+        return !el.closest('[data-testid="subgraph-enter-button"]');
+      }
+
       return this.excludeClass.some((cls) => el.closest(`.${cls}`));
     } catch (e) {
       return false;

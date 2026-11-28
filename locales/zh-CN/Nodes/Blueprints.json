@@ -1,0 +1,350 @@
+{
+    "Audio Generation (Stable Audio 3 Medium Base)": {
+        "title": "音频生成（Stable Audio 3 Medium Base）"
+    },
+    "Audio Generation (Stable Audio 3 Medium)": {
+        "title": "音频生成（Stable Audio 3 Medium）"
+    },
+    "Brightness and Contrast": {
+        "title": "亮度与对比度"
+    },
+    "Canny to Image (Z-Image-Turbo)": {
+        "title": "Canny 转图像（Z-Image-Turbo）"
+    },
+    "Canny to Video (LTX 2.0)": {
+        "title": "Canny 转视频（LTX 2.0）"
+    },
+    "Character Replacement (SCAIL-2 Base)": {
+        "title": "角色替换（SCAIL-2 Base）"
+    },
+    "Character Replacement (SCAIL-2 Extend)": {
+        "title": "角色替换（SCAIL-2 Extend）"
+    },
+    "Character Replacement (SCAIL-2 Int8 Base)": {
+        "title": "角色替换（SCAIL-2 Int8 Base）"
+    },
+    "Chromatic Aberration": {
+        "title": "色差"
+    },
+    "Color Adjustment": {
+        "title": "颜色调整"
+    },
+    "Color Balance": {
+        "title": "色彩平衡"
+    },
+    "Color Curves": {
+        "title": "颜色曲线"
+    },
+    "Control to Image (Anima LLLite)": {
+        "title": "控制图转图像（Anima LLLite）"
+    },
+    "ControlNet (Z-Image-Turbo)": {
+        "title": "ControlNet（Z-Image-Turbo）"
+    },
+    "Crop Images 2x2": {
+        "title": "裁剪图像 2×2"
+    },
+    "Crop Images 3x3": {
+        "title": "裁剪图像 3×3"
+    },
+    "Depth to Image (Z-Image-Turbo)": {
+        "title": "深度转图像（Z-Image-Turbo）"
+    },
+    "Depth to Video (ltx 2.0)": {
+        "title": "深度转视频（ltx 2.0）"
+    },
+    "Edge-Preserving Blur": {
+        "title": "边缘保留模糊"
+    },
+    "Edit Image (Boogu Image Edit)": {
+        "title": "编辑图像（Boogu Image Edit）"
+    },
+    "Film Grain": {
+        "title": "胶片颗粒"
+    },
+    "First & Last Frame to Video (LTX-2.5)": {
+        "title": "首尾帧转视频（LTX-2.5）"
+    },
+    "First-Last-Frame to Video (LTX-2.3)": {
+        "title": "首尾帧转视频（LTX-2.3）"
+    },
+    "First-Last-Frame to Video": {
+        "title": "首尾帧转视频"
+    },
+    "FLF2V (Wan2.1 VACE)": {
+        "title": "首尾帧转视频（Wan2.1 VACE）"
+    },
+    "Frame Interpolation": {
+        "title": "帧插值"
+    },
+    "Geometry Estimation (MoGe)": {
+        "title": "几何估计（MoGe）"
+    },
+    "Get Any Video Frame": {
+        "title": "获取任意视频帧"
+    },
+    "Glow": {
+        "title": "泛光"
+    },
+    "Hue and Saturation": {
+        "title": "色相与饱和度"
+    },
+    "Image Albedo Estimation (Marigold V2)": {
+        "title": "图像反照率估计（Marigold V2）"
+    },
+    "Image Blur": {
+        "title": "图像模糊"
+    },
+    "Image Captioning (gemini)": {
+        "title": "图像描述（gemini）"
+    },
+    "Image Channels": {
+        "title": "图像通道"
+    },
+    "Image Depth Estimation (Depth Anything 3)": {
+        "title": "图像深度估计（Depth Anything 3）"
+    },
+    "Image Depth Estimation (Lotus Depth)": {
+        "title": "图像深度估计（Lotus Depth）"
+    },
+    "Image Depth Estimation (Marigold V2)": {
+        "title": "图像深度估计（Marigold V2）"
+    },
+    "Image Depth Estimation (MoGe)": {
+        "title": "图像深度估计（MoGe）"
+    },
+    "Image Edit (Bernini-R)": {
+        "title": "图像编辑（Bernini-R）"
+    },
+    "Image Edit (FireRed Image Edit 1.1)": {
+        "title": "图像编辑（FireRed Image Edit 1.1）"
+    },
+    "Image Edit (Flux.2 Dev)": {
+        "title": "图像编辑（Flux.2 Dev）"
+    },
+    "Image Edit (Flux.2 Klein 4B)": {
+        "title": "图像编辑（Flux.2 Klein 4B）"
+    },
+    "Image Edit (Joy Image Edit)": {
+        "title": "图像编辑（Joy Image Edit）"
+    },
+    "Image Edit (LongCat Image Edit)": {
+        "title": "图像编辑（LongCat Image Edit）"
+    },
+    "Image Edit (Mage-Flow-Edit Turbo)": {
+        "title": "图像编辑（Mage-Flow-Edit Turbo）"
+    },
+    "Image Edit (Mage-Flow-Edit)": {
+        "title": "图像编辑（Mage-Flow-Edit）"
+    },
+    "Image Edit (Qwen 2509)": {
+        "title": "图像编辑（Qwen 2509）"
+    },
+    "Image Edit (Qwen 2511)": {
+        "title": "图像编辑（Qwen 2511）"
+    },
+    "Image Face Detection (Mediapipe)": {
+        "title": "图像人脸检测（Mediapipe）"
+    },
+    "Image Inpainting (Flux.1 Fill Dev)": {
+        "title": "图像局部重绘（Flux.1 Fill Dev）"
+    },
+    "Image Inpainting (Qwen-image)": {
+        "title": "图像局部重绘（Qwen-image）"
+    },
+    "Image Levels": {
+        "title": "图像色阶"
+    },
+    "Image Normal Estimation (Marigold V2)": {
+        "title": "图像法线估计（Marigold V2）"
+    },
+    "Image Outpainting (Qwen-Image)": {
+        "title": "图像外扩（Qwen-Image）"
+    },
+    "Image Segmentation (SAM3)": {
+        "title": "图像分割（SAM3）"
+    },
+    "Image Style Reference (Krea-2 Turbo)": {
+        "title": "图像风格参考（Krea-2 Turbo）"
+    },
+    "Image to Gaussian Splat (TripoSplat)": {
+        "title": "图像转高斯泼溅（TripoSplat）"
+    },
+    "Image to Layers(Qwen-Image-Layered)": {
+        "title": "图像分层（Qwen-Image-Layered）"
+    },
+    "Image to Model (Hunyuan3d 2.1)": {
+        "title": "图像转模型（Hunyuan3d 2.1）"
+    },
+    "Image to Pose Map (SDPose Multi-Person)": {
+        "title": "图像转姿态图（SDPose Multi-Person）"
+    },
+    "Image to Pose Map (SDPose-OOD)": {
+        "title": "图像转姿态图（SDPose-OOD）"
+    },
+    "Image to Video (LTX-2.3)": {
+        "title": "图像转视频（LTX-2.3）"
+    },
+    "Image to Video (LTX-2.5)": {
+        "title": "图像转视频（LTX-2.5）"
+    },
+    "Image to Video (MiniMax H3)": {
+        "title": "图像转视频（MiniMax H3）"
+    },
+    "Image to Video (Wan 2.2)": {
+        "title": "图像转视频（Wan 2.2）"
+    },
+    "Image to Video (Wan Dancer)": {
+        "title": "图像转视频（Wan Dancer）"
+    },
+    "Image Upscale(Z-image-Turbo)": {
+        "title": "图像放大（Z-image-Turbo）"
+    },
+    "Merge Videos": {
+        "title": "合并视频"
+    },
+    "Motion Transfer (Wan Animate 2 Distilled)": {
+        "title": "动作迁移（Wan Animate 2 Distilled）"
+    },
+    "Motion Transfer (Wan Animate 2)": {
+        "title": "动作迁移（Wan Animate 2）"
+    },
+    "Music Cover (YuE2)": {
+        "title": "音乐翻唱（YuE2）"
+    },
+    "Pose to Image (Z-Image-Turbo)": {
+        "title": "姿态转图像（Z-Image-Turbo）"
+    },
+    "Pose to Video (LTX 2.0)": {
+        "title": "姿态转视频（LTX 2.0）"
+    },
+    "Prompt Enhance": {
+        "title": "提示词增强"
+    },
+    "Remove Background (BiRefNet)": {
+        "title": "去除背景（BiRefNet）"
+    },
+    "Select Per-Line Text by Index": {
+        "title": "按索引选择每行文本"
+    },
+    "Sharpen": {
+        "title": "锐化"
+    },
+    "Split Image Grid to Tiles": {
+        "title": "图像网格切块"
+    },
+    "Text to Audio (ACE-Step 1.5)": {
+        "title": "文本转音频（ACE-Step 1.5）"
+    },
+    "Text to Image (Anima Base 1.0)": {
+        "title": "文本生成图像（Anima Base 1.0）"
+    },
+    "Text to Image (Anima)": {
+        "title": "文本生成图像（Anima）"
+    },
+    "Text to Image (Boogu Turbo)": {
+        "title": "文本生成图像（Boogu Turbo）"
+    },
+    "Text to Image (Ernie Image Turbo)": {
+        "title": "文本生成图像（Ernie Image Turbo）"
+    },
+    "Text to Image (Ernie Image)": {
+        "title": "文本生成图像（Ernie Image）"
+    },
+    "Text to Image (Flux.1 Dev)": {
+        "title": "文本生成图像（Flux.1 Dev）"
+    },
+    "Text to Image (Flux.1 Krea Dev)": {
+        "title": "文本生成图像（Flux.1 Krea Dev）"
+    },
+    "Text to Image (Flux.2 Dev)": {
+        "title": "文本生成图像（Flux.2 Dev）"
+    },
+    "Text to Image (Ideogram v4)": {
+        "title": "文本生成图像（Ideogram v4）"
+    },
+    "Text to Image (Krea-2 Turbo)": {
+        "title": "文本生成图像（Krea-2 Turbo）"
+    },
+    "Text to Image (Mage-Flow Turbo)": {
+        "title": "文本生成图像（Mage-Flow Turbo）"
+    },
+    "Text to Image (Mage-Flow)": {
+        "title": "文本生成图像（Mage-Flow）"
+    },
+    "Text to Image (NetaYume Lumina)": {
+        "title": "文本生成图像（NetaYume Lumina）"
+    },
+    "Text to Image (Qwen-Image 2512)": {
+        "title": "文本生成图像（Qwen-Image 2512）"
+    },
+    "Text to Image (Qwen-Image)": {
+        "title": "文本生成图像（Qwen-Image）"
+    },
+    "Text to Image (Z-Image-Base)": {
+        "title": "文本生成图像（Z-Image-Base）"
+    },
+    "Text to Image (Z-Image-Turbo)": {
+        "title": "文本生成图像（Z-Image-Turbo）"
+    },
+    "Text to Image": {
+        "title": "文本生成图像"
+    },
+    "Text to Music (MiniMax Music 3)": {
+        "title": "文本生成音乐（MiniMax Music 3）"
+    },
+    "Text to Music (YuE2)": {
+        "title": "文本生成音乐（YuE2）"
+    },
+    "Text to Video (LTX-2.3)": {
+        "title": "文本转视频（LTX-2.3）"
+    },
+    "Text to Video (LTX-2.5)": {
+        "title": "文本转视频（LTX-2.5）"
+    },
+    "Text to Video (Wan 2.2)": {
+        "title": "文本转视频（Wan 2.2）"
+    },
+    "Unsharp Mask": {
+        "title": "USM 锐化"
+    },
+    "Upscale Video (SeedVR2 3B Int8)": {
+        "title": "视频放大（SeedVR2 3B Int8）"
+    },
+    "Video Captioning (Gemini)": {
+        "title": "视频描述（Gemini）"
+    },
+    "Video Depth Estimation (Depth Anything 3)": {
+        "title": "视频深度估计（Depth Anything 3）"
+    },
+    "Video Depth Estimation (MoGe)": {
+        "title": "视频深度估计（MoGe）"
+    },
+    "Video Edit (Bernini-R)": {
+        "title": "视频编辑（Bernini-R）"
+    },
+    "Video Face Detection (Mediapipe)": {
+        "title": "视频人脸检测（Mediapipe）"
+    },
+    "Video Generation (LTX-2.3 IC-LoRA)": {
+        "title": "视频生成（LTX-2.3 IC-LoRA）"
+    },
+    "Video Inpaint (VOID)": {
+        "title": "视频局部重绘（VOID）"
+    },
+    "Video Inpainting (Wan2.1 VACE)": {
+        "title": "视频局部重绘（Wan2.1 VACE）"
+    },
+    "Video Segmentation (SAM3)": {
+        "title": "视频分割（SAM3）"
+    },
+    "Video Stitch": {
+        "title": "视频拼接"
+    },
+    "Video to Pose Map (SDPose Multi-Person)": {
+        "title": "视频转姿态图（SDPose Multi-Person）"
+    },
+    "Video Upscale(GAN x4)": {
+        "title": "视频放大（GAN x4）"
+    }
+}
