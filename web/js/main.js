@@ -1452,14 +1452,22 @@ export class TUtils {
           // 控件名标签
           for (const wEl of root.querySelectorAll('[data-testid="node-widget"][data-widget-name]')) {
             const name = wEl.getAttribute("data-widget-name");
-            const labelEl = wEl.querySelector('[data-testid="widget-layout-field-label"]');
-            if (!labelEl || !name) continue;
+            if (!name) continue;
+            // combo/数字等控件用 widget-layout-field-label；
+            // 多行文本（textarea）等控件用组件内的浮动 <label>，没有该 testid
+            const labelEl = wEl.querySelector('[data-testid="widget-layout-field-label"]')
+              || wEl.querySelector("label");
             const widget = (node.widgets || []).find(item => item && item.name === name);
-            if (this.isUserCustomLabel(widget)) continue;
+            if (this.isUserCustomLabel(widget, node)) continue;
             const translated = this.getNodeFieldTranslation(node, "widgets", name);
-            if (translated && labelEl.textContent !== translated) {
+            if (translated && labelEl && labelEl.textContent !== translated) {
+              if (labelEl.dataset.uiiaiiiOrigText === undefined) {
+                labelEl.dataset.uiiaiiiOrigText = labelEl.textContent;
+              }
               labelEl.textContent = translated;
             }
+            // 布尔开关（Enable/Disable）文案
+            this.syncToggleLabels(widget, wEl);
           }
 
           // 输入/输出端口名
@@ -1472,14 +1480,66 @@ export class TUtils {
             const index = parseInt(match[1], 10);
             const slot = (isInput ? node.inputs : node.outputs)?.[index];
             if (!slot || typeof slot.name !== "string") continue;
-            if (this.isUserCustomLabel(slot)) continue;
-            const translated = this.getNodeFieldTranslation(node, isInput ? "inputs" : "outputs", slot.name);
+            if (this.isUserCustomLabel(slot, node)) continue;
+            const section = isInput ? "inputs" : "outputs";
+            let translated = this.getNodeFieldTranslation(node, section, slot.name);
+            if (!translated) {
+              // 官方 nodeDefs 用输出索引作 key（"0"/"1"），按索引再查一次
+              const cls = node.constructor?.comfyClass || node.constructor?.type;
+              const byIndex = cls ? this.T.Nodes?.[cls]?.[section]?.[String(index)] : null;
+              if (typeof byIndex === "string" && byIndex) translated = byIndex;
+            }
+            if (!translated && typeof slot.label === "string") {
+              translated = this.T.Menu?.[slot.label] || null;
+            }
             if (!translated) continue;
             const labelEl = slotEl.querySelector(".editable-text span") || slotEl.querySelector("span");
             if (labelEl && labelEl.textContent !== translated) {
+              if (labelEl.dataset.uiiaiiiOrigText === undefined) {
+                labelEl.dataset.uiiaiiiOrigText = labelEl.textContent;
+              }
               labelEl.textContent = translated;
             }
           }
+        }
+      }
+    } catch (e) { /* 忽略 */ }
+  }
+
+  /**
+   * 布尔开关控件（WidgetToggleSwitch）：插件的 on/off 文案是英文 Enable/Disable，
+   * 由 Vue 按 widget.options.on/off 直接渲染，不在通用 DOM 翻译范围内。
+   * 这里把 options 改成译文（Vue 重渲染后仍是中文），并同步当前 DOM 文本。
+   */
+  static syncToggleLabels(widget, wEl = null) {
+    try {
+      const options = widget?.options;
+      if (!options) return;
+      const dict = this.T?.Menu || {};
+      for (const key of ["on", "off"]) {
+        const value = options[key];
+        if (typeof value !== "string" || !value) continue;
+        const origKey = `_uiiaiii_orig_${key}`;
+        if (options[origKey] !== undefined) continue;
+        const translated = dict[value];
+        if (!translated || translated === value) continue;
+        options[origKey] = value;
+        options[key] = translated;
+      }
+      if (!wEl) return;
+      // Vue 不会因普通 options 变更立即重绘，直接同步文本节点
+      for (const btn of wEl.querySelectorAll("button, [role='radio']")) {
+        const walker = document.createTreeWalker(btn, NodeFilter.SHOW_TEXT);
+        let node;
+        while ((node = walker.nextNode())) {
+          const raw = node.nodeValue || "";
+          const key = raw.trim();
+          if (!key) continue;
+          if (key !== options._uiiaiii_orig_on && key !== options._uiiaiii_orig_off) continue;
+          const translated = dict[key];
+          if (!translated || translated === key) continue;
+          node.nodeValue = raw.replace(key, translated);
+          btn.dataset.uiiaiiiOrigText = key;
         }
       }
     } catch (e) { /* 忽略 */ }
@@ -1737,13 +1797,22 @@ export class TUtils {
   }
 
   /** 用户手动改过的端口/控件名：有自定义 label 且不是插件写入的译文标记 */
-  static isUserCustomLabel(item) {
+  static isUserCustomLabel(item, node = null) {
     if (!item) return false;
     if (item._uiiaiii_label !== undefined || item._uiiaiii_applied !== undefined) return false;
     const label = item.label;
     if (typeof label !== "string" || !label || label === item.name) return false;
     // 命中字典译文的 label 是翻译残留，不是用户自定义，关闭时要恢复
     if (isAlreadyTranslatedText(label)) return false;
+    // 节点字典里存在该字段译文时，英文 label 是插件提供的显示名
+    // （例如多行文本控件的浮动标签），不是用户手动改的名字
+    if (node) {
+      const cls = node.constructor?.comfyClass || node.constructor?.type;
+      const dict = cls ? this.T.Nodes?.[cls] : null;
+      if (dict?.widgets?.[item.name] || dict?.inputs?.[item.name] || dict?.outputs?.[item.name]) {
+        return false;
+      }
+    }
     return true;
   }
 
@@ -1805,10 +1874,29 @@ export class TUtils {
 
           for (const wEl of root.querySelectorAll('[data-testid="node-widget"][data-widget-name]')) {
             const name = wEl.getAttribute("data-widget-name");
-            const labelEl = wEl.querySelector('[data-testid="widget-layout-field-label"]');
-            if (!labelEl || !name) continue;
+            if (!name) continue;
+            const labelEl = wEl.querySelector('[data-testid="widget-layout-field-label"]')
+              || wEl.querySelector("label");
             const widget = (node.widgets || []).find(item => item && item.name === name);
-            if (this.isUserCustomLabel(widget)) continue;
+            // 布尔开关的 on/off 文案恢复为插件原始英文
+            if (widget?.options) {
+              for (const k of ["on", "off"]) {
+                const origKey = `_uiiaiii_orig_${k}`;
+                if (widget.options[origKey] !== undefined) {
+                  widget.options[k] = widget.options[origKey];
+                  delete widget.options[origKey];
+                }
+              }
+            }
+            if (!labelEl || this.isUserCustomLabel(widget, node)) continue;
+            if (labelEl.dataset.uiiaiiiOrigText !== undefined) {
+              // 优先恢复翻译前的真实英文文本
+              if (labelEl.textContent !== labelEl.dataset.uiiaiiiOrigText) {
+                labelEl.textContent = labelEl.dataset.uiiaiiiOrigText;
+              }
+              delete labelEl.dataset.uiiaiiiOrigText;
+              continue;
+            }
             const label = widget?.label;
             const english = (typeof label === "string" && label && !isAlreadyTranslatedText(label))
               ? label
@@ -1825,10 +1913,22 @@ export class TUtils {
             const index = parseInt(match[1], 10);
             const slot = (isInput ? node.inputs : node.outputs)?.[index];
             if (!slot || typeof slot.name !== "string") continue;
-            if (this.isUserCustomLabel(slot)) continue;
+            if (this.isUserCustomLabel(slot, node)) continue;
             const labelEl = slotEl.querySelector(".editable-text span") || slotEl.querySelector("span");
-            if (labelEl && labelEl.textContent !== slot.name) {
-              labelEl.textContent = slot.name;
+            if (!labelEl) continue;
+            if (labelEl.dataset.uiiaiiiOrigText !== undefined) {
+              if (labelEl.textContent !== labelEl.dataset.uiiaiiiOrigText) {
+                labelEl.textContent = labelEl.dataset.uiiaiiiOrigText;
+              }
+              delete labelEl.dataset.uiiaiiiOrigText;
+              continue;
+            }
+            // 端口英文名优先用 slot.label（插件的显示名），没有时才用后端字段名
+            const english = (typeof slot.label === "string" && slot.label && !isAlreadyTranslatedText(slot.label))
+              ? slot.label
+              : slot.name;
+            if (labelEl.textContent !== english) {
+              labelEl.textContent = english;
             }
           }
         }

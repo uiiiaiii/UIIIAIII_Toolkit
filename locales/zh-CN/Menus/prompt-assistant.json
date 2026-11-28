@@ -345,5 +345,19 @@
     "Preview frames": "采样的预览帧",
     "Select Kontext preset": "选择Kontext预设",
     "Enter additional prompts here, sent with the preset": "输入额外的具体要求,将与预设一起发送给模型",
-    "Generated creative instruction": "生成的创意转换指令"
+    "Generated creative instruction": "生成的创意转换指令",
+    "Rule": "规则预设",
+    "Custom Rule": "自定义规则",
+    "Custom Rule Content": "自定义规则内容",
+    "User Prompt": "用户提示词",
+    "LLM Service": "LLM服务",
+    "Auto Unload": "自动释放显存",
+    "Source Text": "原文输入",
+    "Prompt Output": "提示词输出",
+    "VLM Service": "视觉服务",
+    "Prompt List": "提示词列表",
+    "Translate Service": "翻译服务",
+    "Sampling Mode": "抽帧策略",
+    "Frame Count": "抽帧数量",
+    "Manual Indices": "手动帧索引"
 }

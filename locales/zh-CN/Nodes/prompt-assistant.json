@@ -23,6 +23,8 @@
             "seed": "随机种子"
         },
         "outputs": {
+            "0": "提示词输出",
+            "enhanced_text": "提示词输出",
             "Prompt Output": "提示词输出"
         }
     },
@@ -50,6 +52,10 @@
             "seed": "随机种子"
         },
         "outputs": {
+            "0": "提示词输出",
+            "1": "提示词列表",
+            "caption_text": "提示词输出",
+            "caption_list": "提示词列表",
             "Prompt Output": "提示词输出",
             "Prompt List": "提示词列表"
         }
@@ -71,7 +77,13 @@
             "ollama_auto_unload": "自动释放显存",
             "seed": "随机种子"
         },
+        "options": {
+            "English": "英文",
+            "Chinese": "中文"
+        },
         "outputs": {
+            "0": "提示词输出",
+            "translated_text": "提示词输出",
             "Prompt Output": "提示词输出"
         }
     },
@@ -106,7 +118,15 @@
             "video_frames": "图像",
             "seed": "随机种子"
         },
+        "options": {
+            "Auto (Uniform)": "自动(均匀)",
+            "Manual (Indices)": "手动(帧索引)"
+        },
         "outputs": {
+            "0": "提示词输出",
+            "1": "预览帧",
+            "caption_text": "提示词输出",
+            "preview_frames": "预览帧",
             "Prompt Output": "提示词输出",
             "Preview frames": "预览帧"
         }
@@ -131,6 +151,8 @@
             "seed": "随机种子"
         },
         "outputs": {
+            "0": "提示词输出",
+            "system_prompt": "提示词输出",
             "Prompt Output": "提示词输出"
         }
     }
